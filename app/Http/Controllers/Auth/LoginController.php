@@ -32,19 +32,19 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, false)) {
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'));
+            return redirect()->intended(route('dashboard'))->with('success', 'Berhasil masuk.');
         }
-
+        
         return back()
-            ->withErrors(['login' => 'Kredensial salah atau akun tidak aktif.'])
-            ->onlyInput('login');
+        ->withErrors(['login' => 'Kredensial salah atau akun tidak aktif.'])
+        ->onlyInput('login');
     }
-
+    
     public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('login');
+        return redirect()->intended(route('login'))->with('success', 'Berhasil keluar.');
     }
 }

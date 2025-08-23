@@ -61,10 +61,5 @@
     <link rel="stylesheet" href="{{ asset('mazer/assets/extensions/perfect-scrollbar/perfect-scrollbar.css') }}">
   @endif
 
-  {{-- Theme init pre-script (untuk menghindari FOUC saat toggle dark) --}}
-  @if (file_exists(public_path('mazer/assets/static/js/initTheme.js')))
-    <script src="{{ asset('mazer/assets/static/js/initTheme.js') }}"></script>
-  @endif
-
   @stack('styles')
 </head>

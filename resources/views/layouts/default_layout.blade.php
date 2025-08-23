@@ -53,6 +53,54 @@
     </div>
 
     @include('includes.page-js')
+
+    <script>
+    $(document).ready(function() {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+
+        // Show success toast
+        @if(Session::has('success'))
+            Toast.fire({
+                icon: "success",
+                title: "{{ Session::get('success') }}"
+            });
+        @endif
+
+        // Show error toast
+        @if(Session::has('error'))
+            Toast.fire({
+                icon: "error",
+                title: "{{ Session::get('error') }}"
+            });
+        @endif
+
+        // Show info toast
+        @if(Session::has('info'))
+            Toast.fire({
+                icon: "info",
+                title: "{{ Session::get('info') }}"
+            });
+        @endif
+
+        // Show warning toast
+        @if(Session::has('warning'))
+            Toast.fire({
+                icon: "warning",
+                title: "{{ Session::get('warning') }}"
+            });
+        @endif
+    });
+    </script>
     @stack('scripts')
 </body>
 </html>

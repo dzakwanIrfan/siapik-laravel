@@ -93,6 +93,7 @@
 {{-- Summernote, Quill, TinyMCE (WYSIWYG) --}}
 @if (file_exists(public_path('mazer/assets/extensions/summernote/summernote-lite.min.js')))
   <script src="{{ asset('mazer/assets/extensions/summernote/summernote-lite.min.js') }}"></script>
+  <script src="{{ asset('mazer/assets/extensions/summernote/summernote-lite.min.js') }}"></script>
   @if (file_exists(public_path('mazer/assets/extensions/summernote/lang/summernote-id-ID.min.js')))
     <script src="{{ asset('mazer/assets/extensions/summernote/lang/summernote-id-ID.min.js') }}"></script>
   @endif
@@ -107,6 +108,9 @@
 {{-- SweetAlert2 & Toastify --}}
 @if (file_exists(public_path('mazer/assets/extensions/sweetalert2/sweetalert2.min.js')))
   <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.min.js') }}"></script>
+  <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.all.js') }}"></script>
+  <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.js') }}"></script>
+  <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.all.min.js') }}"></script>
 @endif
 @if (file_exists(public_path('mazer/assets/extensions/toastify-js/src/toastify.js')))
   <script src="{{ asset('mazer/assets/extensions/toastify-js/src/toastify.js') }}"></script>
@@ -183,6 +187,120 @@
     }
   });
 </script>
+
+{{-- SELALU paksa LIGHT di awal muat halaman --}}
+<script>
+    (function () {
+    try {
+        var KEY = 'theme';
+        localStorage.setItem(KEY, 'light'); // timpa preferensi
+        document.documentElement.classList.remove('theme-dark');
+        document.documentElement.setAttribute('data-bs-theme', 'light');
+    } catch (e) {}
+    })();
+</script>
+
+{{-- Auto Loading Button untuk semua form submit --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('Auto form loading initialized'); // Debug log
+    
+    // Handler untuk semua form submit
+    document.addEventListener('submit', function(e) {
+        console.log('Form submitted!', e.target); // Debug log
+        
+        const form = e.target;
+        
+        // Cari tombol submit dalam form
+        const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+        console.log('Found submit buttons:', submitButtons.length); // Debug log
+        
+        submitButtons.forEach(function(btn) {
+            console.log('Processing button:', btn); // Debug log
+            
+            // Simpan teks asli
+            const originalText = btn.textContent || btn.value;
+            const originalHtml = btn.innerHTML;
+            
+            // Disable button
+            btn.disabled = true;
+            
+            // Tambah class loading Bootstrap
+            btn.classList.add('btn-loading');
+            
+            // Ganti teks dengan spinner
+            if (btn.tagName.toLowerCase() === 'button') {
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
+                console.log('Button text changed to loading'); // Debug log
+            } else {
+                btn.value = 'Memproses...';
+            }
+            
+            // Reset setelah 15 detik (fallback jika redirect gagal)
+            setTimeout(function() {
+                console.log('Resetting button after timeout'); // Debug log
+                btn.disabled = false;
+                btn.classList.remove('btn-loading');
+                if (btn.tagName.toLowerCase() === 'button') {
+                    btn.innerHTML = originalHtml;
+                } else {
+                    btn.value = originalText;
+                }
+            }, 15000);
+        });
+    });
+    
+    // Handler khusus untuk tombol dengan data-loading-text
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('button[data-loading-text]');
+        if (btn && btn.form) {
+            const loadingText = btn.getAttribute('data-loading-text');
+            
+            // Set custom loading text jika ada (akan override yang di submit handler)
+            setTimeout(function() {
+                if (btn.disabled) {
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + loadingText;
+                }
+            }, 10);
+        }
+    });
+    
+    // Alternative: Direct click handler untuk button submit (backup method)
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('button[type="submit"], input[type="submit"]')) {
+            const btn = e.target;
+            const form = btn.closest('form');
+            
+            if (form && !btn.disabled) {
+                console.log('Direct button click detected'); // Debug log
+                
+                // Small delay to let form validation run first
+                setTimeout(function() {
+                    if (!btn.disabled) { // Only proceed if not disabled by validation
+                        const originalHtml = btn.innerHTML;
+                        
+                        btn.disabled = true;
+                        btn.classList.add('btn-loading');
+                        
+                        if (btn.tagName.toLowerCase() === 'button') {
+                            const loadingText = btn.getAttribute('data-loading-text') || 'Memproses...';
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + loadingText;
+                        }
+                        
+                        // Reset after timeout
+                        setTimeout(function() {
+                            btn.disabled = false;
+                            btn.classList.remove('btn-loading');
+                            btn.innerHTML = originalHtml;
+                        }, 15000);
+                    }
+                }, 100);
+            }
+        }
+    });
+});
+</script>
+
 {{-- SELALU paksa LIGHT di awal muat halaman --}}
 <script>
     (function () {
