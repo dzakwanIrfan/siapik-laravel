@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\SubmissionController;
 
 Route::get('/', function () {return view('welcome');});
 
@@ -16,4 +17,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::middleware(['auth'])->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
+
+    // Submission Letter routes
+    Route::get('/create-submission', [SubmissionController::class, 'create'])->name('submission.create');
 });
