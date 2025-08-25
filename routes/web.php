@@ -19,5 +19,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
 
     // Submission Letter routes
-    Route::get('/create-submission', [SubmissionController::class, 'create'])->name('submission.create');
+    Route::get('/create-submission', [SubmissionController::class, 'index'])->name('submission.create');
+
+    // Ambil HTML field dinamis (untuk inject ke modal)
+    Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('submissions.type.form');
+
+    // Submit pengajuan
+    Route::post('/submissions', [SubmissionController::class, 'store'])->name('submissions.store');
 });

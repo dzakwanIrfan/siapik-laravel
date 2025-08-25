@@ -75,8 +75,12 @@
         </div>
         
         <div class="modal-body p-4">
-          <form id="dynamicForm" data-parsley-validate>
-            <div id="dynamicFields"></div>
+          <form id="dynamicForm"
+                action="{{ route('submissions.store') }}"
+                method="POST"
+                enctype="multipart/form-data"
+                data-parsley-validate>
+            <div id="dynamicFields"><!-- akan diisi via AJAX --></div>
           </form>
         </div>
         
@@ -91,182 +95,165 @@
 
 @push('scripts')
 <script>
-  window.FIELDS_BY_TYPE = @json($preload ?? []);
+(function () {
+  const modal     = document.getElementById('letterModal');        // id modal kamu
+  const form      = document.getElementById('dynamicForm');        // <form id="dynamicForm" ... data-parsley-validate>
+  const wrap      = document.getElementById('dynamicFields');      // container isi form dinamis
+  const submitBtn = document.getElementById('btnDummySubmit');     // tombol submit di modal
 
-  function esc(s){
-    return String(s ?? '').replace(/[&<>"']/g, function(c){
-      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]);
-    });
-  }
-
-  function optionTag(val, label){
-    const v = String(val ?? '');
-    const l = String(label ?? val ?? '');
-    return `<option value="${esc(v)}">${esc(l)}</option>`;
-  }
-
-  function parsleyAttrs(validation){
-    if(!validation || typeof validation !== 'object') return '';
-    return Object.entries(validation).map(([k,v]) => `data-parsley-${k}="${esc(v)}"`).join(' ');
-  }
-
-  function buildFieldGroup(f){
-    const id = `fld_${f.name}`;
-    const required = f.required ? 'required' : '';
-    const pattrs = parsleyAttrs(f.validation);
-    const help = f.help ? `<div class="form-text text-muted small">${esc(f.help)}</div>` : '';
-    let control = '';
-
-    switch (f.type) {
-      case 'textarea':
-        control = `<textarea class="form-control" id="${id}" name="fields[${esc(f.name)}]" ${required} ${pattrs} rows="3" placeholder="${esc(f.label)}"></textarea>`;
-        break;
-
-      case 'select':
-        {
-          const opts = Array.isArray(f.options) ? f.options : [];
-          const optHtml = ['<option value="">-- Pilih --</option>'].concat(
-            opts.map(o => {
-              if (o && typeof o === 'object') {
-                return optionTag(o.value ?? o.id ?? o.key, o.label ?? o.text ?? o.name ?? o.value ?? o.id);
-              } else {
-                return optionTag(o, o);
-              }
-            })
-          ).join('');
-          control = `<select class="form-select default-select2" id="${id}" name="fields[${esc(f.name)}]" ${required} ${pattrs}>${optHtml}</select>`;
-        }
-        break;
-
-      case 'date':
-        control = `<input type="text" class="form-control flatpickr-input" id="${id}" name="fields[${esc(f.name)}]" ${required} ${pattrs} placeholder="Pilih tanggal" autocomplete="off" readonly>`;
-        break;
-
-      case 'file':
-        {
-          const acceptAttr = (f.validation && f.validation.accept) ? `accept="${esc(f.validation.accept)}"` : '';
-          control = `<input type="file" class="filepond" id="${id}" name="fields[${esc(f.name)}]" ${required} ${pattrs} ${acceptAttr} data-max-files="1">`;
-        }
-        break;
-
-      case 'number':
-        control = `<input type="number" class="form-control" id="${id}" name="fields[${esc(f.name)}]" ${required} ${pattrs} placeholder="${esc(f.label)}">`;
-        break;
-
-      case 'email':
-        control = `<input type="email" class="form-control" id="${id}" name="fields[${esc(f.name)}]" ${required} ${pattrs} placeholder="${esc(f.label)}">`;
-        break;
-
-      default:
-        control = `<input type="text" class="form-control" id="${id}" name="fields[${esc(f.name)}]" ${required} ${pattrs} placeholder="${esc(f.label)}">`;
-    }
-
-    return `
-      <div class="mb-3">
-        <label for="${id}" class="form-label fw-medium">
-          ${esc(f.label)} ${f.required ? '<span class="text-danger">*</span>' : ''}
-        </label>
-        ${control}
-        ${help}
-      </div>`;
-  }
-
-  function hydrateModal(typeId, typeName){
-    document.getElementById('modalLetterName').textContent = typeName;
-    const fields = (window.FIELDS_BY_TYPE && window.FIELDS_BY_TYPE[typeId]) ? window.FIELDS_BY_TYPE[typeId] : [];
-    
-    if (fields.length === 0) {
-      document.getElementById('dynamicFields').innerHTML = `
-        <div class="text-center py-4">
-          <i class="bi bi-exclamation-circle text-warning fs-1"></i>
-          <h6 class="mt-3 text-warning">Belum Ada Form</h6>
-          <p class="text-muted">Form untuk jenis surat ini belum dikonfigurasi.</p>
-        </div>`;
-      return;
-    }
-    
-    const html = fields.map(buildFieldGroup).join('');
-    document.getElementById('dynamicFields').innerHTML = html;
-
-    document.querySelectorAll('#dynamicFields .default-select2').forEach(function(el){
-      new Choices(el, { searchEnabled: true, removeItemButton: false, shouldSort: false, placeholder: true });
-    });
-
-    if (window.flatpickr) {
-      flatpickr('.flatpickr-input', { 
-        dateFormat: 'Y-m-d',
-        altInput: true,
-        altFormat: 'd/m/Y',
-        allowInput: true
+  // --- Helpers: inisialisasi plugin UI (tanpa custom CSS) ---
+  function initSelect2(scope) {
+    if (window.jQuery && jQuery.fn.select2) {
+      jQuery(scope).find('.default-select2').each(function () {
+        if (jQuery(this).data('select2')) return;
+        jQuery(this).select2({
+          width: '100%',
+          dropdownParent: jQuery('#letterModal')
+        });
       });
     }
-
+  }
+  function initFlatpickr(scope) {
+    if (window.flatpickr) {
+      scope.querySelectorAll('.flatpickr-input').forEach(function (el) {
+        if (!el._fp) {
+          flatpickr(el, {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd/m/Y',
+            allowInput: true
+          });
+        }
+      });
+    }
+  }
+  function initFilePond(scope) {
     if (window.FilePond) {
       try {
         if (window.FilePondPluginImagePreview) FilePond.registerPlugin(FilePondPluginImagePreview);
         if (window.FilePondPluginFileValidateType) FilePond.registerPlugin(FilePondPluginFileValidateType);
-      } catch (e) {}
-      document.querySelectorAll('#dynamicFields input[type="file"].filepond').forEach(function(el){
-        FilePond.create(el, {
-          allowMultiple: false,
-          credits: false,
-          storeAsFile: true,
-          allowImagePreview: true,
-          stylePanelLayout: 'compact',
-          labelIdle: 'Seret & lepas atau <span class="filepond--label-action">pilih file</span>'
-        });
-      });
-    }
-
-    if (window.jQuery && jQuery.fn.parsley) {
-      jQuery('#dynamicForm').parsley({
-        errorClass: 'is-invalid',
-        successClass: 'is-valid',
-        errorsWrapper: '<div class="invalid-feedback"></div>',
-        errorTemplate: '<span></span>'
+      } catch(e){}
+      scope.querySelectorAll('input[type="file"].filepond').forEach(function (el) {
+        if (!el._pond) {
+          const pond = FilePond.create(el, {
+            allowMultiple: false,
+            credits: false,
+            storeAsFile: true
+          });
+          el._pond = pond;
+        }
       });
     }
   }
 
-  document.addEventListener('click', function(e){
+  // --- Parsley: destroy + re-init tiap kali form dinamis dimuat ---
+  function initParsley() {
+    if (!(window.jQuery && jQuery.fn.parsley && form)) return;
+    const $form = jQuery(form);
+    try { $form.parsley().destroy(); } catch (e) {}
+
+    $form.parsley({
+      trigger: 'change',
+      errorClass: 'is-invalid',
+      successClass: 'is-valid',
+      errorsWrapper: '<div class="invalid-feedback"></div>',
+      errorTemplate: '<span></span>',
+      // taruh class invalid ke elemen yang kelihatan (select2/filepond)
+      classHandler: function (field) {
+        const $el = field.$element;
+        // Select2
+        if ($el.hasClass('select2-hidden-accessible')) {
+          return $el.next('.select2').find('.select2-selection');
+        }
+        // FilePond
+        if ($el.hasClass('filepond') && $el.get(0)?._pond) {
+          return jQuery($el.get(0)._pond.element);
+        }
+        // Default: input/textarea/select biasa
+        return $el;
+      },
+      // letak pesan error
+      errorsContainer: function (field) {
+        const $el = field.$element;
+        return $el.closest('.form-group');
+      }
+    });
+  }
+
+  function initEnhancersAndParsley() {
+    initSelect2(wrap);
+    initFlatpickr(wrap);
+    initFilePond(wrap);
+    initParsley();
+  }
+
+  // --- Load partial form saat klik kartu ---
+  document.addEventListener('click', async function (e) {
     const btn = e.target.closest('.btn-open-letter');
     if (!btn) return;
-    hydrateModal(btn.getAttribute('data-type-id'), btn.getAttribute('data-type-name'));
-  });
 
-  document.getElementById('btnDummySubmit').addEventListener('click', function(){
-    const btn = this;
-    if (window.jQuery && jQuery.fn.parsley) {
-      const parsley = jQuery('#dynamicForm').parsley();
-      const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        didOpen: (toast) => {
-          toast.onmouseenter = Swal.stopTimer;
-          toast.onmouseleave = Swal.resumeTimer;
-        }
+    const typeId   = btn.getAttribute('data-type-id');
+    const typeName = btn.getAttribute('data-type-name') || '';
+    const titleEl  = document.getElementById('modalLetterName');
+    if (titleEl) titleEl.textContent = typeName;
+
+    wrap.innerHTML = '<div class="text-center py-5"><div class="spinner-border" role="status"></div><div class="mt-2">Memuat formulir...</div></div>';
+
+    try {
+      const res  = await fetch(`{{ url('/submissions/types') }}/${typeId}/form`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
       });
-      if (parsley.validate()) {
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
-        btn.disabled = true;
-        setTimeout(() => {
-          btn.innerHTML = 'Kirim Pengajuan';
-          btn.disabled = false;
-          Toast.fire({
-            icon: "success",
-            title: "Pengajuan surat berhasil dikirim"
-          });
-        }, 1000);
-      } else {
-        Toast.fire({
-          icon: "error",
-          title: "Data tidak lengkap"
-        });
-      }
+      const html = await res.text();
+      wrap.innerHTML = html;
+      initEnhancersAndParsley();
+    } catch (err) {
+      wrap.innerHTML = '<div class="alert alert-danger">Gagal memuat formulir.</div>';
     }
   });
+
+  // Reset state validasi saat modal dibuka
+  if (modal && window.bootstrap) {
+    modal.addEventListener('shown.bs.modal', function () {
+      if (window.jQuery && jQuery.fn.parsley) {
+        jQuery(form).parsley().reset();
+      }
+    });
+  }
+
+  // --- Submit: validasi Parsley -> spinner -> submit; error -> toast ---
+  if (submitBtn && form) {
+    submitBtn.addEventListener('click', function () {
+      const btn   = this;
+      const Toast = (typeof Swal !== 'undefined')
+        ? Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (t) => { t.onmouseenter = Swal.stopTimer; t.onmouseleave = Swal.resumeTimer; }
+          })
+        : null;
+
+      let valid = true;
+      if (window.jQuery && jQuery.fn.parsley) {
+        valid = jQuery(form).parsley().validate();
+      } else {
+        valid = form.checkValidity();
+        if (!valid) form.reportValidity();
+      }
+
+      if (valid) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+        form.submit();
+      } else {
+        Toast && Toast.fire({ icon: "error", title: "Data tidak lengkap" });
+      }
+    });
+  }
+})();
 </script>
 @endpush
+
+
