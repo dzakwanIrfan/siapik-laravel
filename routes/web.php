@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\SubmissionController;
 
 Route::get('/', function () {return view('welcome');});
 
@@ -16,4 +17,13 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::middleware(['auth'])->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
+
+    // Submission Letter routes
+    Route::get('/create-submission', [SubmissionController::class, 'index'])->name('submission.create');
+
+    // Ambil HTML field dinamis (untuk inject ke modal)
+    Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('submissions.type.form');
+
+    // Submit pengajuan
+    Route::post('/submissions', [SubmissionController::class, 'store'])->name('submissions.store');
 });
