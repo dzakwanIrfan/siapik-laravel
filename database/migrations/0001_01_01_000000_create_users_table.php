@@ -16,11 +16,9 @@ return new class extends Migration
             $table->string('txtFullName');
             $table->string('txtEmail')->unique();
             $table->string('txtPassword');
-            $table->string('txtNim')->unique();
             $table->enum('txtGender', ['L', 'P']);
             $table->string('txtBirthPlace');
             $table->datetime('dtmBirthDate');
-            $table->string('txtYear')->nullable();
             $table->string('txtPhone')->nullable();
             $table->string('txtInsertedBy')->nullable();
             $table->datetime('dtmInserted')->nullable();

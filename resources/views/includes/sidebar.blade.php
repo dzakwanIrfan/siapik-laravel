@@ -56,7 +56,7 @@
                     <i class="bi bi-file-earmark-text-fill"></i><span>Surat</span>
                 </a>
             </li>
-            
+
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
                     <i class="bi bi-clock-fill"></i><span>Riwayat Surat</span>
@@ -81,10 +81,10 @@
                     <i class="bi bi-stack"></i><span>Data Master</span>
                 </a>
                 <ul class="submenu">
-                    <li class="submenu-item"><a href="#">Mahasiswa</a></li>
-                    <li class="submenu-item"><a href="#">Dosen</a></li>
-                    <li class="submenu-item"><a href="#">Admin</a></li>
-                    <li class="submenu-item"><a href="#">Program Studi</a></li>
+                    <li class="submenu-item"><a href="{{ route('users.index', ['role' => 'mahasiswa']) }}">Mahasiswa</a></li>
+                    <li class="submenu-item"><a href="{{ route('users.index', ['role' => 'dosen']) }}">Dosen</a></li>
+                    <li class="submenu-item"><a href="{{ route('users.index', ['role' => 'admin']) }}">Admin</a></li>
+                    <li class="submenu-item"><a href="{{ route('prodi.index') }}">Program Studi</a></li>
                     <li class="submenu-item"><a href="#">Konsentrasi</a></li>
                     <li class="submenu-item"><a href="#">Level</a></li>
                     <li class="submenu-item"><a href="#">Role</a></li>

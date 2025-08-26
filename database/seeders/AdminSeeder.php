@@ -20,7 +20,6 @@ class AdminSeeder extends Seeder
             [
                 'txtFullName'  => 'Administrator',
                 'txtPassword'  => 'admin123', // akan ter-hash oleh cast
-                'txtNim'       => '0000000000',
                 'txtGender'    => 'L',
                 'txtBirthPlace'=> 'Purwokerto',
                 'dtmBirthDate' => now()->subYears(30),
