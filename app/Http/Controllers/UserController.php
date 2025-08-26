@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Major;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +18,8 @@ class UserController extends Controller
     public function index()
     {
         $roles = Role::pluck('name', 'name')->all();
-        return view('master.user', compact('roles'));
+        $majors = Major::all();
+        return view('master.user', compact('roles', 'majors'));
     }
 
     public function data(Request $request)
@@ -47,31 +50,70 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi
-        error_log('Request data: ' . json_encode($request->all()));
-        Validator::make($request->all(), [
+        // 1. Validasi data user dasar
+        $userValidator = Validator::make($request->all(), [
             'txtFullName' => 'required|string|max:255',
             'txtEmail' => 'required|email|unique:users,txtEmail',
-            'txtBirthPlace' => 'required|string|max:255', // Wajib diisi
-            'dtmBirthDate' => 'required|date',         // Wajib diisi
+            'txtBirthPlace' => 'required|string|max:255',
+            'dtmBirthDate' => 'required|date',
             'role' => 'required',
             'txtPassword' => 'required|min:8',
-        ])->validate();
+        ]);
 
-        $dataToStore = $request->all();
-        $dataToStore['txtPassword'] = Hash::make($request->txtPassword);
-        $dataToStore['txtInsertedBy'] = Auth::user()->txtFullName;
+        // Jika validasi user gagal, lempar exception
+        if ($userValidator->fails()) {
+            return response()->json(['errors' => $userValidator->errors()], 422);
+        }
 
-        $user = User::create($dataToStore);
-        $user->assignRole($request->role);
+        DB::beginTransaction();
+        try {
+            $user = User::create([
+                'txtFullName' => $request->txtFullName,
+                'txtEmail' => $request->txtEmail,
+                'txtBirthPlace' => $request->txtBirthPlace,
+                'dtmBirthDate' => $request->dtmBirthDate,
+                'txtPassword' => Hash::make($request->txtPassword),
+                'txtInsertedBy' => Auth::user()->txtFullName,
+            ]);
 
-        return response()->json(['success' => 'User berhasil ditambahkan.']);
+            $user->assignRole($request->role);
+
+            // 2. Validasi dan simpan profil mahasiswa jika role-nya 'mahasiswa'
+            if ($request->role == 'mahasiswa') {
+                $profileValidator = Validator::make($request->all(), [
+                    'txtNIM' => 'required|string|unique:mahasiswa_profiles,txtNIM',
+                    'intMajor_ID' => 'required|exists:majors,intMajor_ID',
+                    'intConcentrate_ID' => 'required|exists:concentrates,intConcentrate_ID',
+                ]);
+
+                // Jika validasi profil gagal, batalkan transaksi dan kirim error
+                if ($profileValidator->fails()) {
+                    DB::rollBack();
+                    return response()->json(['errors' => $profileValidator->errors()], 422);
+                }
+
+                $user->mahasiswaProfile()->create([
+                    'txtNIM' => $request->txtNIM,
+                    'txtYear' => $request->txtYear,
+                    'intMajor_ID' => $request->intMajor_ID,
+                    'intConcentrate_ID' => $request->intConcentrate_ID,
+                    'txtInsertedBy' => Auth::user()->txtFullName,
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['success' => 'User berhasil ditambahkan.']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
     }
 
     public function edit(User $user)
     {
         // Eager load roles
-        $user->load('roles');
+        $user->load('roles','mahasiswaProfile');
         return response()->json($user);
     }
 

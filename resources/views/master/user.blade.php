@@ -57,10 +57,6 @@
                             <label for="txtEmail" class="form-label">Email</label>
                             <input type="email" class="form-control" id="txtEmail" name="txtEmail" required data-parsley-type="email">
                         </div>
-                        {{-- <div class="col-md-6 mb-3">
-                            <label for="txtNim" class="form-label">NIM</label>
-                            <input type="text" class="form-control" id="txtNim" name="txtNim" required>
-                        </div> --}}
                     </div>
 
                     {{-- ====================================================== --}}
@@ -102,12 +98,47 @@
                             <label for="role" class="form-label">Role</label>
                             <select class="form-select" id="role" name="role" required>
                                 <option value="">Pilih Role</option>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role }}">{{ ucfirst($role) }}</option>
+                                @foreach($roles as $roleName)
+                                    <option value="{{ $roleName }}">{{ ucfirst($roleName) }}</option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
+                    {{-- ====================================================== --}}
+                    {{-- FORM TAMBAHAN UNTUK PROFIL MAHASISWA (SEMBUNYI DEFAULT) --}}
+                    {{-- ====================================================== --}}
+                    <div id="mahasiswa-fields" style="display: none;">
+                        <hr>
+                        <h5>Profil Mahasiswa</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="txtNIM" class="form-label">NIM</label>
+                                <input type="text" class="form-control" id="txtNIM" name="txtNIM">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="txtYear" class="form-label">Tahun Angkatan</label>
+                                <input type="text" class="form-control" id="txtYear" name="txtYear">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="intMajor_ID" class="form-label">Prodi</label>
+                                <select class="form-select" id="intMajor_ID" name="intMajor_ID">
+                                    <option value="">Pilih Prodi</option>
+                                    @foreach($majors as $major)
+                                        <option value="{{ $major->intMajor_ID }}">{{ $major->txtNameMajor }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="intConcentrate_ID" class="form-label">Peminatan</label>
+                                <select class="form-select" id="intConcentrate_ID" name="intConcentrate_ID">
+                                    <option value="">Pilih Prodi terlebih dahulu</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- ====================================================== --}}
                     <div class="mb-3">
                         <label for="txtPassword" class="form-label">Password</label>
                         <input type="password" class="form-control" id="txtPassword" name="txtPassword">
@@ -147,6 +178,43 @@ $(document).ready(function() {
         ]
     });
 
+    // Fungsi untuk menampilkan/menyembunyikan form mahasiswa
+    function toggleMahasiswaFields() {
+        if ($('#role').val() === 'mahasiswa') {
+            $('#mahasiswa-fields').slideDown();
+            // Tambahkan atribut 'required' ke field yang wajib
+            $('#txtNIM, #intMajor_ID, #intConcentrate_ID').attr('required', true);
+        } else {
+            $('#mahasiswa-fields').slideUp();
+            // Hapus atribut 'required' agar tidak divalidasi saat form disembunyikan
+            $('#txtNIM, #intMajor_ID, #intConcentrate_ID').attr('required', false);
+        }
+    }
+
+    // Panggil fungsi saat dropdown role berubah
+    $('#role').on('change', function() {
+        toggleMahasiswaFields();
+    });
+
+    // Fungsi untuk memuat peminatan berdasarkan prodi yang dipilih
+    $('#intMajor_ID').on('change', function() {
+        var majorId = $(this).val();
+        var concentrateSelect = $('#intConcentrate_ID');
+        concentrateSelect.empty().append('<option value="">Memuat...</option>');
+
+        if (majorId) {
+            // Ganti URL ini dengan route yang sesuai untuk mengambil data peminatan
+            $.get('/api/concentrates-by-major/' + majorId, function(data) {
+                concentrateSelect.empty().append('<option value="">Pilih Peminatan</option>');
+                $.each(data, function(key, value) {
+                    concentrateSelect.append('<option value="' + value.intConcentrate_ID + '">' + value.txtNameConcentrate + '</option>');
+                });
+            });
+        } else {
+            concentrateSelect.empty().append('<option value="">Pilih Prodi terlebih dahulu</option>');
+        }
+    });
+
     // Tombol Tambah: Buka Modal
     $('#btn-add-user').click(function() {
         $('#user-form').trigger("reset").parsley().reset();
@@ -154,6 +222,7 @@ $(document).ready(function() {
         $('#userModalLabel').text('Tambah User Baru');
         $('#txtPassword').attr('required', true);
         $('#user-modal').modal('show');
+        toggleMahasiswaFields();
     });
 
     // Tombol Edit: Ambil data & buka modal
@@ -182,6 +251,18 @@ $(document).ready(function() {
                 $('#role').val(data.roles[0].name);
             }
             $('#txtPassword').attr('required', false);
+            // Cek dan isi data profil mahasiswa jika ada
+            if (data.mahasiswa_profile) {
+                $('#txtNIM').val(data.mahasiswa_profile.txtNIM);
+                $('#txtYear').val(data.mahasiswa_profile.txtYear);
+                $('#intMajor_ID').val(data.mahasiswa_profile.intMajor_ID).trigger('change'); // trigger change untuk load peminatan
+
+                // Beri jeda agar peminatan selesai dimuat
+                setTimeout(function() {
+                    $('#intConcentrate_ID').val(data.mahasiswa_profile.intConcentrate_ID);
+                }, 500);
+            }
+            toggleMahasiswaFields();
             $('#user-modal').modal('show');
         });
     });

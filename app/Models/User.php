@@ -45,4 +45,9 @@ class User extends Authenticatable
     {
         return $this->txtPassword;
     }
+
+    public function mahasiswaProfile()
+    {
+        return $this->hasOne(MahasiswaProfile::class, 'intUser_ID', 'intUser_ID');
+    }
 }
