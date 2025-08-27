@@ -2,19 +2,19 @@
 @if (file_exists(public_path('mazer/assets/static/js/components/dark.js')))
   <script src="{{ asset('mazer/assets/static/js/components/dark.js') }}"></script>
 @endif
-@if (file_exists(public_path('mazer/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/perfect-scrollbar/perfect-scrollbar.js')))
+  <script src="{{ asset('mazer/assets/extensions/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
 @endif
 <script src="{{ asset('mazer/assets/compiled/js/app.js') }}"></script>
 
 {{-- jQuery (untuk plugin yang membutuhkannya) --}}
-@if (file_exists(public_path('mazer/assets/extensions/jquery/jquery.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/jquery/jquery.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/jquery/jquery.js')))
+  <script src="{{ asset('mazer/assets/extensions/jquery/jquery.js') }}"></script>
 @endif
 
 {{-- Day.js + locale Indonesia --}}
-@if (file_exists(public_path('mazer/assets/extensions/dayjs/dayjs.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/dayjs/dayjs.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/dayjs/dayjs.js')))
+  <script src="{{ asset('mazer/assets/extensions/dayjs/dayjs.js') }}"></script>
   @if (file_exists(public_path('mazer/assets/extensions/dayjs/locale/id.js')))
     <script src="{{ asset('mazer/assets/extensions/dayjs/locale/id.js') }}"></script>
     <script>try{dayjs.locale('id')}catch(e){}</script>
@@ -27,8 +27,8 @@
 @endif
 
 {{-- ApexCharts --}}
-@if (file_exists(public_path('mazer/assets/extensions/apexcharts/apexcharts.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/apexcharts/apexcharts.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/apexcharts/apexcharts.js')))
+  <script src="{{ asset('mazer/assets/extensions/apexcharts/apexcharts.js') }}"></script>
   {{-- Set locale ID (jika bundle locale tersedia) --}}
   <script>
     if (window.Apex) {
@@ -43,11 +43,11 @@
 @endif
 
 {{-- Datatables (jQuery + Bootstrap 5 skin) --}}
-@if (file_exists(public_path('mazer/assets/extensions/datatables.net/js/jquery.dataTables.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/datatables.net/js/jquery.dataTables.js')))
+  <script src="{{ asset('mazer/assets/extensions/datatables.net/js/jquery.dataTables.js') }}"></script>
 @endif
-@if (file_exists(public_path('mazer/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.js')))
+  <script src="{{ asset('mazer/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.js') }}"></script>
 @endif
 
 {{-- Simple-DataTables (versi tanpa jQuery) --}}
@@ -56,8 +56,8 @@
 @endif
 
 {{-- Flatpickr + locale ID + plugin confirmDate (jika ada) --}}
-@if (file_exists(public_path('mazer/assets/extensions/flatpickr/flatpickr.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/flatpickr/flatpickr.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/flatpickr/flatpickr.js')))
+  <script src="{{ asset('mazer/assets/extensions/flatpickr/flatpickr.js') }}"></script>
   @if (file_exists(public_path('mazer/assets/extensions/flatpickr/l10n/id.js')))
     <script src="{{ asset('mazer/assets/extensions/flatpickr/l10n/id.js') }}"></script>
     <script>try{flatpickr.localize(flatpickr.l10ns.id);}catch(e){}</script>
@@ -68,22 +68,22 @@
 @endif
 
 {{-- Choices.js (select yang cakep) --}}
-@if (file_exists(public_path('mazer/assets/extensions/choices.js/public/assets/scripts/choices.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/choices.js/public/assets/scripts/choices.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/choices.js/public/assets/scripts/choices.js')))
+  <script src="{{ asset('mazer/assets/extensions/choices.js/public/assets/scripts/choices.js') }}"></script>
 @endif
 
 {{-- FilePond + plugins umum --}}
-@if (file_exists(public_path('mazer/assets/extensions/filepond/filepond.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/filepond/filepond.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/filepond/filepond.js')))
+  <script src="{{ asset('mazer/assets/extensions/filepond/filepond.js') }}"></script>
 @endif
 @foreach ([
-  'filepond-plugin-file-validate-type/filepond-plugin-file-validate-type.min.js',
-  'filepond-plugin-file-validate-size/filepond-plugin-file-validate-size.min.js',
-  'filepond-plugin-image-preview/filepond-plugin-image-preview.min.js',
-  'filepond-plugin-image-exif-orientation/filepond-plugin-image-exif-orientation.min.js',
-  'filepond-plugin-image-crop/filepond-plugin-image-crop.min.js',
-  'filepond-plugin-image-resize/filepond-plugin-image-resize.min.js',
-  'filepond-plugin-image-filter/filepond-plugin-image-filter.min.js',
+  'filepond-plugin-file-validate-type/filepond-plugin-file-validate-type.js',
+  'filepond-plugin-file-validate-size/filepond-plugin-file-validate-size.js',
+  'filepond-plugin-image-preview/filepond-plugin-image-preview.js',
+  'filepond-plugin-image-exif-orientation/filepond-plugin-image-exif-orientation.js',
+  'filepond-plugin-image-crop/filepond-plugin-image-crop.js',
+  'filepond-plugin-image-resize/filepond-plugin-image-resize.js',
+  'filepond-plugin-image-filter/filepond-plugin-image-filter.js',
 ] as $pond)
   @if (file_exists(public_path("mazer/assets/extensions/$pond")))
     <script src="{{ asset("mazer/assets/extensions/$pond") }}"></script>
@@ -91,50 +91,50 @@
 @endforeach
 
 {{-- Summernote, Quill, TinyMCE (WYSIWYG) --}}
-@if (file_exists(public_path('mazer/assets/extensions/summernote/summernote-lite.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/summernote/summernote-lite.min.js') }}"></script>
-  <script src="{{ asset('mazer/assets/extensions/summernote/summernote-lite.min.js') }}"></script>
-  @if (file_exists(public_path('mazer/assets/extensions/summernote/lang/summernote-id-ID.min.js')))
-    <script src="{{ asset('mazer/assets/extensions/summernote/lang/summernote-id-ID.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/summernote/summernote-lite.js')))
+  <script src="{{ asset('mazer/assets/extensions/summernote/summernote-lite.js') }}"></script>
+  <script src="{{ asset('mazer/assets/extensions/summernote/summernote-lite.js') }}"></script>
+  @if (file_exists(public_path('mazer/assets/extensions/summernote/lang/summernote-id-ID.js')))
+    <script src="{{ asset('mazer/assets/extensions/summernote/lang/summernote-id-ID.js') }}"></script>
   @endif
 @endif
-@if (file_exists(public_path('mazer/assets/extensions/quill/quill.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/quill/quill.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/quill/quill.js')))
+  <script src="{{ asset('mazer/assets/extensions/quill/quill.js') }}"></script>
 @endif
-@if (file_exists(public_path('mazer/assets/extensions/tinymce/tinymce.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/tinymce/tinymce.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/tinymce/tinymce.js')))
+  <script src="{{ asset('mazer/assets/extensions/tinymce/tinymce.js') }}"></script>
 @endif
 
 {{-- SweetAlert2 & Toastify --}}
-@if (file_exists(public_path('mazer/assets/extensions/sweetalert2/sweetalert2.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/sweetalert2/sweetalert2.js')))
+  <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.js') }}"></script>
   <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.all.js') }}"></script>
   <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.js') }}"></script>
-  <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.all.min.js') }}"></script>
+  <script src="{{ asset('mazer/assets/extensions/sweetalert2/sweetalert2.all.js') }}"></script>
 @endif
 @if (file_exists(public_path('mazer/assets/extensions/toastify-js/src/toastify.js')))
   <script src="{{ asset('mazer/assets/extensions/toastify-js/src/toastify.js') }}"></script>
 @endif
 
 {{-- Maps --}}
-@if (file_exists(public_path('mazer/assets/extensions/jsvectormap/js/jsvectormap.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/jsvectormap/js/jsvectormap.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/jsvectormap/js/jsvectormap.js')))
+  <script src="{{ asset('mazer/assets/extensions/jsvectormap/js/jsvectormap.js') }}"></script>
   @if (file_exists(public_path('mazer/assets/extensions/jsvectormap/maps/world.js')))
     <script src="{{ asset('mazer/assets/extensions/jsvectormap/maps/world.js') }}"></script>
   @endif
 @endif
 
 {{-- Lain-lain: Dragula, Rater.js --}}
-@if (file_exists(public_path('mazer/assets/extensions/dragula/dragula.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/dragula/dragula.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/dragula/dragula.js')))
+  <script src="{{ asset('mazer/assets/extensions/dragula/dragula.js') }}"></script>
 @endif
 @if (file_exists(public_path('mazer/assets/extensions/rater-js/index.js')))
   <script src="{{ asset('mazer/assets/extensions/rater-js/index.js') }}"></script>
 @endif
 
 {{-- Parsley (validasi form) + i18n ID --}}
-@if (file_exists(public_path('mazer/assets/extensions/parsleyjs/parsley.min.js')))
-  <script src="{{ asset('mazer/assets/extensions/parsleyjs/parsley.min.js') }}"></script>
+@if (file_exists(public_path('mazer/assets/extensions/parsleyjs/parsley.js')))
+<script src="{{ asset('mazer/assets/extensions/parsleyjs/parsley.js') }}"></script>
   @if (file_exists(public_path('mazer/assets/extensions/parsleyjs/i18n/id.js')))
     <script src="{{ asset('mazer/assets/extensions/parsleyjs/i18n/id.js') }}"></script>
     <script>try{window.Parsley.addMessages('id', window.Parsley.getMessages('id')); window.Parsley.setLocale('id');}catch(e){}</script>

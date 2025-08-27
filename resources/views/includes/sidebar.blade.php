@@ -45,15 +45,15 @@
         <ul class="menu">
             <li class="sidebar-title">Menu</li>
 
-            <li class="sidebar-item {{ request()->is('/') ? 'active' : '' }}">
+            <li class="sidebar-item {{ request()->routeIs('home') || request()->routeIs('dashboard') ? 'active' : '' }}">
                 <a href="{{ url('/') }}" class="sidebar-link">
                     <i class="bi bi-grid-fill"></i><span>Beranda</span>
                 </a>
             </li>
 
-            <li class="sidebar-item">
-                <a href="" class="sidebar-link">
-                    <i class="bi bi-file-earmark-text-fill"></i><span>Surat</span>
+            <li class="sidebar-item {{ request()->routeIs('submission.create') ? 'active' : '' }}">
+                <a href="{{ route('submission.create') }}" class="sidebar-link">
+                    <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
                 </a>
             </li>
 

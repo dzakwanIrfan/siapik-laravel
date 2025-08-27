@@ -5,8 +5,7 @@
   <title>@yield('title', config('app.name').' - Admin')</title>
 
   {{-- Favicon sederhana --}}
-  <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 33 34'%3e%3ccircle cx='16.5' cy='8.8' r='8.8' fill='%2341bbdd'/%3e%3cellipse cx='16.5' cy='29' rx='13.5' ry='6' fill='%23435ebe'/%3e%3c/svg%3e">
+  <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.ico') }}">
 
   {{-- Core Mazer CSS (compiled) --}}
   <link rel="stylesheet" href="{{ asset('mazer/assets/compiled/css/app.css') }}">
