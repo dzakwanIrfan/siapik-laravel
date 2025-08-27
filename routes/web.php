@@ -5,6 +5,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\MajorController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ConcentrateController;
+use App\Http\Controllers\RequirementController;
 
 Route::get('/', function () {return view('welcome');});
 
@@ -47,5 +48,14 @@ Route::group(['middleware' => ['role:admin|akademik']], function () {
         Route::get('/{concentrate}/edit', 'edit')->name('edit');
         Route::put('/{concentrate}', 'update')->name('update');
         Route::delete('/{concentrate}', 'destroy')->name('destroy');
+    });
+
+    Route::prefix('requirements')->controller(RequirementController::class)->name('requirements.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/data', 'data')->name('data');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{requirement}/edit', 'edit')->name('edit');
+        Route::put('/{requirement}', 'update')->name('update');
+        Route::delete('/{requirement}', 'destroy')->name('destroy');
     });
 });

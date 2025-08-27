@@ -50,7 +50,7 @@ class MajorController extends Controller
 
         return response()->json(['success' => 'Major berhasil ditambahkan.']);
     }
-
+    
     public function edit(Major $major)
     {
         return response()->json($major);
