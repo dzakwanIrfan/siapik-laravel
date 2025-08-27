@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MajorController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ConcentrateController;
+use App\Http\Controllers\RequirementController;
 use App\Http\Controllers\SubmissionController;
 
 Route::get('/', function () {return view('welcome');});
@@ -30,44 +32,40 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/submissions', [SubmissionController::class, 'store'])->name('submissions.store');
 });
 
-Route::group(['middleware' => ['role:admin']], function () {
+Route::group(['middleware' => ['role:admin|akademik']], function () {
     Route::prefix('users')->controller(UserController::class)->name('users.')->group(function () {
-        // Halaman utama, URI akan menjadi 'users/'
         Route::get('/', 'index')->name('index');
-
-        // Sumber data untuk DataTables
         Route::get('/data', 'data')->name('data');
-
-        // Menyimpan data baru, URI akan menjadi 'users/' (POST)
         Route::post('/', 'store')->name('store');
-
-        // Mengambil data untuk diedit, URI akan menjadi 'users/{id}/edit'
         Route::get('/{user}/edit', 'edit')->name('edit');
-
-        // Mengupdate data, URI akan menjadi 'users/{id}' (PUT)
         Route::put('/{user}', 'update')->name('update');
-
-        // Menghapus data, URI akan menjadi 'users/{id}' (DELETE)
         Route::delete('/{user}', 'destroy')->name('destroy');
     });
 
     Route::prefix('prodi')->controller(MajorController::class)->name('prodi.')->group(function () {
-        // Halaman utama, URI akan menjadi 'prodi/'
         Route::get('/', 'index')->name('index');
-
-        // Sumber data untuk DataTables
         Route::get('/data', 'data')->name('data');
-
-        // Menyimpan data baru, URI akan menjadi 'users/' (POST)
         Route::post('/', 'store')->name('store');
-
-        // Mengambil data untuk diedit, URI akan menjadi 'users/{id}/edit'
         Route::get('/{major}/edit', 'edit')->name('edit');
-
-        // Mengupdate data, URI akan menjadi 'users/{id}' (PUT)
         Route::put('/{major}', 'update')->name('update');
-
-        // Menghapus data, URI akan menjadi 'users/{id}' (DELETE)
         Route::delete('/{major}', 'destroy')->name('destroy');
+    });
+
+    Route::prefix('concentrates')->controller(ConcentrateController::class)->name('concentrates.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/data', 'data')->name('data');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{concentrate}/edit', 'edit')->name('edit');
+        Route::put('/{concentrate}', 'update')->name('update');
+        Route::delete('/{concentrate}', 'destroy')->name('destroy');
+    });
+
+    Route::prefix('requirements')->controller(RequirementController::class)->name('requirements.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/data', 'data')->name('data');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{requirement}/edit', 'edit')->name('edit');
+        Route::put('/{requirement}', 'update')->name('update');
+        Route::delete('/{requirement}', 'destroy')->name('destroy');
     });
 });

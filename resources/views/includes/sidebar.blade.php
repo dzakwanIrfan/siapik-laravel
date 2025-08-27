@@ -85,11 +85,11 @@
                     <li class="submenu-item"><a href="{{ route('users.index', ['role' => 'dosen']) }}">Dosen</a></li>
                     <li class="submenu-item"><a href="{{ route('users.index', ['role' => 'admin']) }}">Admin</a></li>
                     <li class="submenu-item"><a href="{{ route('prodi.index') }}">Program Studi</a></li>
-                    <li class="submenu-item"><a href="#">Konsentrasi</a></li>
+                    <li class="submenu-item"><a href="{{ route('concentrates.index') }}">Konsentrasi</a></li>
                     <li class="submenu-item"><a href="#">Level</a></li>
                     <li class="submenu-item"><a href="#">Role</a></li>
                     <li class="submenu-item"><a href="#">Format Surat</a></li>
-                    <li class="submenu-item"><a href="#">Requirement</a></li>
+                    <li class="submenu-item"><a href="{{ route('requirements.index') }}">Requirement</a></li>
                 </ul>
             </li>
 

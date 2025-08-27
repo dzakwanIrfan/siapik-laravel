@@ -21,4 +21,9 @@ class Major extends Model
         'dtmUpdated',
         'bitActive',
     ];
+
+    public function concentrates()
+    {
+        return $this->hasMany(Concentrate::class, 'intMajor_ID', 'intMajor_ID');
+    }
 }
