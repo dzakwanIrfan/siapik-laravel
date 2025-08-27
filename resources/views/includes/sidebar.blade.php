@@ -89,7 +89,7 @@
                     <li class="submenu-item"><a href="#">Level</a></li>
                     <li class="submenu-item"><a href="#">Role</a></li>
                     <li class="submenu-item"><a href="#">Format Surat</a></li>
-                    <li class="submenu-item"><a href="{{ route('requirements.index') }}">Requirement</a></li>
+                    <li class="submenu-item"><a href="#">Requirement</a></li>
                 </ul>
             </li>
 

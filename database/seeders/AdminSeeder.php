@@ -11,7 +11,7 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         // Roles dasar (hapus jika tidak pakai Spatie)
-        foreach (['mahasiswa', 'kaprodi', 'akademik', 'admin'] as $r) {
+        foreach (['mahasiswa', 'kaprodi', 'dosen', 'akademik', 'admin'] as $r) {
             Role::firstOrCreate(['name' => $r, 'guard_name' => 'web']);
         }
 

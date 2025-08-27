@@ -50,9 +50,4 @@ class User extends Authenticatable
     {
         return $this->hasOne(MahasiswaProfile::class, 'intUser_ID', 'intUser_ID');
     }
-
-    public function dosenProfile()
-    {
-        return $this->hasOne(DosenProfile::class, 'intUser_ID', 'intUser_ID');
-    }
 }

@@ -12,11 +12,14 @@
         @include('includes.sidebar')
       </div>
 
+      {{-- Tambah class khusus saat navbar atas dipakai --}}
       <div id="main" class="{{ ($layoutNavbar ?? false) ? 'layout-navbar navbar-fixed' : '' }}">
+        {{-- TOP NAVBAR (opsional) --}}
         @if ($layoutNavbar ?? false)
           @include('includes.topbar')
         @endif
 
+        {{-- Header kecil untuk burger di mobile (saat tanpa navbar atas) --}}
         @unless ($layoutNavbar ?? false)
             <header class="mb-3">
                 <a href="#" class="burger-btn d-block d-xl-none">
@@ -49,31 +52,10 @@
       </div>
     </div>
 
-    {{-- =================================================================
-     BAGIAN PENTING: SEMUA FILE JAVASCRIPT DIMUAT DI SINI
-    ================================================================== --}}
+    @include('includes.page-js')
 
-    {{-- 1. MUAT SEMUA LIBRARY EKSTERNAL TERLEBIH DAHULU --}}
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    @include('includes.page-js') {{-- Script dari template Mazer --}}
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/parsley.js/2.9.2/parsley.min.js"></script>
-
-    {{-- 2. SETELAH LIBRARY SIAP, JALANKAN KODE JQUERY ANDA --}}
     <script>
     $(document).ready(function() {
-
-        // TAMBAHKAN AJAX SETUP DI SINI
-        // Ini akan berlaku untuk semua halaman yang memakai layout ini
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        // Kode Toast SweetAlert2 Anda (ini sudah benar)
         const Toast = Swal.mixin({
             toast: true,
             position: "top-end",
@@ -86,17 +68,39 @@
             }
         });
 
+        // Show success toast
         @if(Session::has('success'))
-            Toast.fire({ icon: "success", title: "{{ Session::get('success') }}" });
+            Toast.fire({
+                icon: "success",
+                title: "{{ Session::get('success') }}"
+            });
         @endif
 
+        // Show error toast
         @if(Session::has('error'))
-            Toast.fire({ icon: "error", title: "{{ Session::get('error') }}" });
+            Toast.fire({
+                icon: "error",
+                title: "{{ Session::get('error') }}"
+            });
+        @endif
+
+        // Show info toast
+        @if(Session::has('info'))
+            Toast.fire({
+                icon: "info",
+                title: "{{ Session::get('info') }}"
+            });
+        @endif
+
+        // Show warning toast
+        @if(Session::has('warning'))
+            Toast.fire({
+                icon: "warning",
+                title: "{{ Session::get('warning') }}"
+            });
         @endif
     });
     </script>
-
-    {{-- 3. TERAKHIR, JALANKAN SCRIPT SPESIFIK PER HALAMAN (dari @push) --}}
     @stack('scripts')
 </body>
 </html>

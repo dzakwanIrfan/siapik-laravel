@@ -139,38 +139,6 @@
                         </div>
                     </div>
                     {{-- ====================================================== --}}
-                    {{-- FORM TAMBAHAN UNTUK PROFIL DOSEN (SEMBUNYI DEFAULT) --}}
-                    {{-- ====================================================== --}}
-                    <div id="dosen-fields" style="display: none;">
-                        <hr>
-                        <h5>Profil Dosen</h5>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="txtNIP" class="form-label">NIP</label>
-                                <input type="text" class="form-control" id="txtNIP" name="txtNIP">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="txtNIDN" class="form-label">NIDN</label>
-                                <input type="text" class="form-control" id="txtNIDN" name="txtNIDN">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="intMajor_ID_dosen" class="form-label">Homebase Prodi</label>
-                                <select class="form-select" id="intMajor_ID_dosen" name="intMajor_ID_dosen">
-                                    <option value="">Pilih Prodi</option>
-                                    @foreach($majors as $major)
-                                        <option value="{{ $major->intMajor_ID }}">{{ $major->txtNameMajor }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="txtFieldOfKnowledge" class="form-label">Bidang Keilmuan</label>
-                                <input type="text" class="form-control" id="txtFieldOfKnowledge" name="txtFieldOfKnowledge">
-                            </div>
-                        </div>
-                    </div>
-                    {{-- ====================================================== --}}
                     <div class="mb-3">
                         <label for="txtPassword" class="form-label">Password</label>
                         <input type="password" class="form-control" id="txtPassword" name="txtPassword">
@@ -210,32 +178,22 @@ $(document).ready(function() {
         ]
     });
 
-    // Fungsi untuk menampilkan/menyembunyikan form dinamis
-    function toggleRoleFields() {
-        var selectedRole = $('#role').val();
-
-        // Logika untuk Mahasiswa
-        if (selectedRole === 'mahasiswa') {
+    // Fungsi untuk menampilkan/menyembunyikan form mahasiswa
+    function toggleMahasiswaFields() {
+        if ($('#role').val() === 'mahasiswa') {
             $('#mahasiswa-fields').slideDown();
+            // Tambahkan atribut 'required' ke field yang wajib
             $('#txtNIM, #intMajor_ID, #intConcentrate_ID').attr('required', true);
         } else {
             $('#mahasiswa-fields').slideUp();
+            // Hapus atribut 'required' agar tidak divalidasi saat form disembunyikan
             $('#txtNIM, #intMajor_ID, #intConcentrate_ID').attr('required', false);
-        }
-
-        // Logika untuk Dosen
-        if (selectedRole === 'dosen') {
-            $('#dosen-fields').slideDown();
-            $('#txtNIP, #txtNIDN, #intMajor_ID_dosen').attr('required', true);
-        } else {
-            $('#dosen-fields').slideUp();
-            $('#txtNIP, #txtNIDN, #intMajor_ID_dosen').attr('required', false);
         }
     }
 
     // Panggil fungsi saat dropdown role berubah
     $('#role').on('change', function() {
-        toggleRoleFields();
+        toggleMahasiswaFields();
     });
 
     // Fungsi untuk memuat peminatan berdasarkan prodi yang dipilih
@@ -264,7 +222,7 @@ $(document).ready(function() {
         $('#userModalLabel').text('Tambah User Baru');
         $('#txtPassword').attr('required', true);
         $('#user-modal').modal('show');
-        toggleRoleFields();
+        toggleMahasiswaFields();
     });
 
     // Tombol Edit: Ambil data & buka modal
@@ -304,14 +262,7 @@ $(document).ready(function() {
                     $('#intConcentrate_ID').val(data.mahasiswa_profile.intConcentrate_ID);
                 }, 500);
             }
-            // Cek dan isi data profil dosen jika ada
-            if (data.dosen_profile) {
-                $('#txtNIP').val(data.dosen_profile.txtNIP);
-                $('#txtNIDN').val(data.dosen_profile.txtNIDN);
-                $('#txtFieldOfKnowledge').val(data.dosen_profile.txtFieldOfKnowledge);
-                $('#intMajor_ID_dosen').val(data.dosen_profile.intMajor_ID);
-            }
-            toggleRoleFields();
+            toggleMahasiswaFields();
             $('#user-modal').modal('show');
         });
     });
