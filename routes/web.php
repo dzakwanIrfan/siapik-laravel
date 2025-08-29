@@ -22,15 +22,30 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::middleware(['auth'])->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
+});
 
-    // Submission Letter routes
-    Route::get('/create-submission', [SubmissionController::class, 'index'])->name('submission.create');
+Route::name('submissions.')->middleware(['web','auth'])->group(function () {
+    Route::get('/', [SubmissionController::class, 'index'])->name('create');
 
-    // Ambil HTML field dinamis (untuk inject ke modal)
+    // form dinamis 
     Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('submissions.type.form');
 
-    // Submit pengajuan
-    Route::post('/submissions', [SubmissionController::class, 'store'])->name('submissions.store');
+
+    // store pengajuan
+    Route::post('/', [SubmissionController::class, 'store'])->name('store');
+
+    // receipt + opsi download
+    Route::get('/{submission}/receipt', [SubmissionController::class, 'receipt'])
+        ->whereNumber('submission')
+        ->name('receipt');
+
+    // Download PDF
+    Route::get('/{submission}/download', [SubmissionController::class, 'download'])
+        ->whereNumber('submission')
+        ->name('download');
+
+    Route::get('/my-submissions', [SubmissionController::class, 'mySubmissions'])->name('index');
+    Route::get('/my-submissions/datatable', [SubmissionController::class, 'mySubmissionsDatatable'])->name('index.datatable');
 });
 
 Route::group(['middleware' => ['role:admin|akademik']], function () {

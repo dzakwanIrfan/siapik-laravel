@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\User;
+use App\Models\LetterType;
+use App\Models\SubmissionValue;
 use Illuminate\Database\Eloquent\Model;
 
 class Submission extends Model
