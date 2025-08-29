@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\LetterType;
+use App\Models\Submission;
 use App\Models\LetterField;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use App\Models\SubmissionValue;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
 
 class SubmissionController extends Controller
 {
@@ -16,25 +19,33 @@ class SubmissionController extends Controller
     {
         $letter_types = LetterType::where('bitActive', 1)
             ->orderBy('txtNameLetterType')
-            ->withCount(['letterFields' => function ($q) {
-                $q->where('bitActive', 1);
-            }])
+            ->withCount(['letterFields' => fn ($q) => $q->where('bitActive', 1)])
             ->get();
 
-        // Tidak preload fields; akan diambil via AJAX partial agar ringan
         return view('pages.submissions.create.index', compact('letter_types'));
     }
 
-    // HTML partial untuk field dinamis di modal
-    public function form($letterTypeId)
+    // Return potongan view fields untuk modal via AJAX
+    public function form(int $letterTypeId)
     {
         $letterType = LetterType::with(['letterFields' => function ($q) {
-                $q->where('bitActive', 1)->orderBy('intFieldOrder');
-            }/*, 'requirements' */]) // aktifkan jika kamu punya tabel requirements
-            ->findOrFail($letterTypeId);
+            $q->where('bitActive', 1)->orderBy('intFieldOrder');
+        }])->findOrFail($letterTypeId);
 
-        $fieldOptions = $this->prepareFieldOptions($letterType->letterFields);
+        // Siapkan opsi select per field (keyed by field name)
+        $fieldOptions = [];
+        foreach ($letterType->letterFields as $f) {
+            if ($f->txtFieldType === 'select') {
+                $opts = [];
+                $cfg  = $this->decodeJson($f->jsonFieldOptions);
+                if (($cfg['source'] ?? 'static') === 'static') {
+                    $opts = $cfg['options'] ?? [];
+                }
+                $fieldOptions[$f->txtFieldName] = $opts;
+            }
+        }
 
+        // Pakai view yang kamu lampirkan
         return view('pages.submissions.create.components._dynamic_fields', [
             'letterType'   => $letterType,
             'fieldOptions' => $fieldOptions,
@@ -44,176 +55,212 @@ class SubmissionController extends Controller
     // Simpan pengajuan
     public function store(Request $request)
     {
-        $request->merge([
-            'letter_type_id' => $request->input('letter_type_id'),
+        $request->validate([
+            'letter_type_id' => 'required|integer|exists:letter_types,intLetterType_ID',
         ]);
 
         $letterType = LetterType::with(['letterFields' => function ($q) {
             $q->where('bitActive', 1)->orderBy('intFieldOrder');
         }])->findOrFail($request->letter_type_id);
 
-        $rules = $this->buildValidationRules($letterType->letterFields);
-
-        // NB: field file dari letterFields akan tervalidasi dari Parsley front-end;
-        // kalau ingin validasi file di backend, tambahkan mapping 'file' ke 'mimes|max' di jsonFieldValidation.
-        $validated = $request->validate($rules);
+        // Bangun rules validasi berdasar definisi field
+        [$rules, $selectInMap] = $this->buildValidationRules($letterType->letterFields);
+        $validated = $request->validate($rules); // menghasilkan fields[xxx]
 
         DB::beginTransaction();
         try {
-            // === Simpan header pengajuan (silakan ganti ke model Submission kamu) ===
-            // Contoh minimal tanpa model khusus:
-            $submissionId = DB::table('submissions')->insertGetId([
-                'user_id'         => auth()->id(),
-                'intLetterType_ID'=> $letterType->intLetterType_ID,
-                'submission_number' => $this->generateSubmissionNumber(),
-                'status'          => 'pending',
-                'submitted_at'    => now(),
-                'created_at'      => now(),
-                'updated_at'      => now(),
+            // 1) Create submission
+            $submission = Submission::create([
+                'intLetterType_ID' => $letterType->intLetterType_ID,
+                'intUser_ID'       => auth()->id(),
+                'txtReceiptNumber' => $this->generateSubmissionNumber(),
+                'bitActive'        => 1,
+                'txtInsertedBy'    => optional(auth()->user())->name ?? 'System',
+                'dtmInserted'      => now(),
+                'txtUpdatedBy'     => optional(auth()->user())->name ?? 'System',
+                'dtmUpdated'       => now(),
             ]);
 
-            // === Simpan detail field dinamis ===
-            $fields = $request->input('fields', []);
+            // 2) Simpan tiap nilai field
+            $fieldInputs = $request->input('fields', []);
             foreach ($letterType->letterFields as $field) {
-                $name = $field->txtFieldName;
+                $name   = $field->txtFieldName;
+                $label  = $field->txtFieldLabel;
+                $type   = $field->txtFieldType;
+                $value  = null;
+                $meta   = null;
 
-                // nilai text/number/date/email/select
-                $value = Arr::get($fields, $name);
+                if ($type === 'file') {
+                    if ($request->hasFile("fields.$name")) {
+                        $file = $request->file("fields.$name");
 
-                // kalau type file dan ada file diunggah
-                if ($field->txtFieldType === 'file' && $request->hasFile("fields.$name")) {
-                    $file = $request->file("fields.$name");
-                    $path = $file->store("submissions/{$submissionId}", 'public');
-                    $value = $path;
+                        // simpan di storage/app/public/submissions/{id}/
+                        $dir  = "submissions/{$submission->intSubmission_ID}";
+                        $path = $file->store($dir, ['disk' => 'public']);
+
+                        $value = $path; // simpan path relatif
+                        $meta  = [
+                            'original_name' => $file->getClientOriginalName(),
+                            'mime'          => $file->getClientMimeType(),
+                            'size'          => $file->getSize(),
+                            'disk'          => 'public',
+                            'url'           => Storage::disk('public')->url($path),
+                        ];
+                    }
+                } else {
+                    // text/textarea/number/date/select
+                    $value = Arr::get($fieldInputs, $name);
                 }
 
-                DB::table('submission_data')->insert([
-                    'submission_id' => $submissionId,
-                    'field_name'    => $name,
-                    'field_value'   => is_scalar($value) ? (string)$value : json_encode($value),
-                    'created_at'    => now(),
-                    'updated_at'    => now(),
+                SubmissionValue::create([
+                    'intSubmission_ID'  => $submission->intSubmission_ID,
+                    'intLetterField_ID' => $field->intLetterField_ID,
+                    'txtFieldName'      => $name,
+                    'txtFieldLabel'     => $label,
+                    'txtFieldType'      => $type,
+                    'txtFieldValue'     => is_array($value) ? json_encode($value) : $value,
+                    'jsonFieldMeta'     => $meta,
+                    'bitActive'         => 1,
+                    'txtInsertedBy'     => optional(auth()->user())->name ?? 'System',
+                    'dtmInserted'       => now(),
+                    'txtUpdatedBy'      => optional(auth()->user())->name ?? 'System',
+                    'dtmUpdated'        => now(),
                 ]);
             }
-
-            // === (Opsional) Simpan dokumen persyaratan jika punya tabel requirements ===
-            // foreach ($letterType->requirements as $req) { ... }
 
             DB::commit();
 
             return redirect()
-                ->route('submission.create')
-                ->with('success', 'Pengajuan berhasil dibuat!');
+                ->route('submissions.receipt', $submission->intSubmission_ID)
+                ->with('success', 'Pengajuan berhasil dibuat.');
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
-
-            return back()->withInput()->with('error', 'Gagal menyimpan pengajuan.');
+            return back()->with('error', 'Gagal menyimpan pengajuan.')->withInput();
         }
     }
 
-    // ===== Helpers =====
-
-    private function prepareFieldOptions($letterFields)
+    // Halaman receipt
+    public function receipt(int $submissionId)
     {
-        $options = [];
-        foreach ($letterFields as $field) {
-            if ($field->txtFieldType === 'select' && !empty($field->jsonFieldOptions)) {
-                $options[$field->txtFieldName] = $this->getSelectOptions($field->jsonFieldOptions);
+        $submission = Submission::with(['letterType', 'values.letterField'])
+            ->findOrFail($submissionId);
+
+        // Process file values dengan helper
+        $submission->values->transform(function ($value) {
+            if ($value->txtFieldType === 'file' && $value->txtFieldValue) {
+                $meta = $value->jsonFieldMeta ?? [];
+                $value->file_url = $meta['url'] ?? Storage::disk('public')->url($value->txtFieldValue);
+                $value->is_image = str_starts_with($meta['mime'] ?? '', 'image/');
+                $value->original_name = $meta['original_name'] ?? basename($value->txtFieldValue);
+                $value->file_size = !empty($meta['size']) ? number_format($meta['size']/1024, 1) . ' KB' : '';
             }
-        }
-        return $options;
+            return $value;
+        });
+
+        return view('pages.submissions.receipt.receipt', compact('submission'));
     }
 
-    private function getSelectOptions($fieldOptions)
+    // Unduh PDF (opsional): butuh barryvdh/laravel-dompdf
+    public function download(int $submissionId)
     {
-        // Format:
-        // {"source":"database","table":"majors","value_field":"id","label_field":"name"}
-        // atau {"source":"static","options":{"S2":"Magister","S3":"Doktor"}}
+        $submission = Submission::with(['letterType', 'values'])
+            ->findOrFail($submissionId);
 
-        if (!is_array($fieldOptions)) {
-            // casting dari model sudah array; kalau masih string → decode
-            $fieldOptions = @json_decode($fieldOptions, true) ?: [];
+        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            // fallback: kembalikan HTML untuk dicetak (tanpa custom CSS)
+            return $this->receipt($submissionId);
         }
 
-        if (($fieldOptions['source'] ?? null) === 'database') {
-            $table = $fieldOptions['table'] ?? null;
-            $value = $fieldOptions['value_field'] ?? 'id';
-            $label = $fieldOptions['label_field'] ?? 'name';
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pages.submissions.receipt-pdf', [
+            'submission' => $submission,
+        ])->setPaper('A4');
 
-            switch ($table) {
-                // case 'majors':
-                //     return \App\Models\Major::pluck($label, $value)->toArray();
+        $filename = 'Receipt_'.$submission->txtReceiptNumber.'.pdf';
+        return $pdf->download($filename);
+    }
 
-                // case 'concentrates':
-                //     return \App\Models\Concentrate::pluck($label, $value)->toArray();
+    private function buildValidationRules($fields): array
+    {
+        $rules = ['fields' => 'required|array'];
+        $selectIn = []; // map name => allowed values (untuk select)
 
-                case 'users':
-                    return User::where('role', 'dosen')->pluck($label, $value)->toArray();
+        foreach ($fields as $f) {
+            $name   = $f->txtFieldName;
+            $type   = $f->txtFieldType;
+            $extra  = $this->decodeJson($f->jsonFieldValidation);
+            $req    = (int)$f->bitRequired === 1;
+
+            $r = [];
+            $r[] = $req ? 'required' : 'nullable';
+
+            switch ($type) {
+                case 'text':
+                case 'textarea':
+                    $r[] = 'string';
+                    if (isset($extra['maxlength'])) $r[] = 'max:'.$extra['maxlength'];
+                    if (isset($extra['minlength'])) $r[] = 'min:'.$extra['minlength'];
+                    if (isset($extra['pattern']))   $r[] = 'regex:'.$extra['pattern'];
+                    break;
+
+                case 'email':
+                    $r[] = 'email';
+                    break;
+
+                case 'number':
+                    $r[] = 'numeric';
+                    if (isset($extra['min'])) $r[] = 'min:'.$extra['min'];
+                    if (isset($extra['max'])) $r[] = 'max:'.$extra['max'];
+                    break;
+
+                case 'date':
+                    $r[] = 'date';
+                    break;
+
+                case 'select':
+                    $r[] = 'string';
+                    $opts = $this->decodeJson($f->jsonFieldOptions);
+                    if (($opts['source'] ?? 'static') === 'static') {
+                        $allowed = array_keys($opts['options'] ?? []);
+                        // handle array numerik [a,b] => value=label
+                        if ($allowed === array_values($allowed)) {
+                            $allowed = $opts['options'] ?? [];
+                        }
+                        if (!empty($allowed)) {
+                            $selectIn[$name] = $allowed;
+                            $r[] = 'in:'.implode(',', array_map(fn($v) => str_replace(',', '\,', $v), $allowed));
+                        }
+                    }
+                    break;
+
+                case 'file':
+                    $r[] = 'file';
+                    if (!empty($extra['mimes']))     $r[] = 'mimes:'.implode(',', (array)$extra['mimes']);
+                    if (!empty($extra['mimetypes'])) $r[] = 'mimetypes:'.implode(',', (array)$extra['mimetypes']);
+                    if (!empty($extra['max']))       $r[] = 'max:'.$extra['max']; // KB
+                    break;
 
                 default:
-                    return [];
+                    $r[] = 'nullable';
             }
+
+            $rules["fields.$name"] = implode('|', $r);
         }
 
-        if (($fieldOptions['source'] ?? null) === 'static') {
-            // options bisa array numerik/string atau key=>label
-            $opts = $fieldOptions['options'] ?? [];
-            return is_array($opts) ? $opts : [];
-        }
+        return [$rules, $selectIn];
+    }
 
+    private function decodeJson($val): array
+    {
+        if (is_array($val)) return $val;
+        if (is_string($val) && strlen($val)) {
+            $d = json_decode($val, true);
+            return is_array($d) ? $d : [];
+        }
         return [];
     }
 
-    private function buildValidationRules($letterFields)
-    {
-        $rules = [];
-
-        foreach ($letterFields as $field) {
-            $fieldRules = [];
-
-            if ((int)$field->bitRequired === 1) {
-                $fieldRules[] = 'required';
-            }
-
-            // Tambah rule default berdasar tipe
-            switch ($field->txtFieldType) {
-                case 'email':
-                    $fieldRules[] = 'email';
-                    break;
-                case 'date':
-                    $fieldRules[] = 'date';
-                    break;
-                case 'number':
-                    $fieldRules[] = 'numeric';
-                    break;
-                case 'file':
-                    // kalau ada config di jsonFieldValidation, baca di bawah
-                    break;
-            }
-
-            // Tambah rule kustom dari jsonFieldValidation (array)
-            $extra = $field->jsonFieldValidation ?? [];
-            if (is_string($extra)) $extra = @json_decode($extra, true) ?: [];
-            foreach ($extra as $key => $val) {
-                // contoh: ["max"=>255] → "max:255", ["mimes"=>"pdf,jpg"]
-                if (is_bool($val)) {
-                    if ($val) $fieldRules[] = $key; // e.g. "required"
-                } else {
-                    $fieldRules[] = "{$key}:{$val}";
-                }
-            }
-
-            if (!empty($fieldRules)) {
-                // name pakai fields[txtFieldName] supaya rapi
-                $rules["fields.{$field->txtFieldName}"] = $fieldRules;
-            }
-        }
-
-        return $rules;
-    }
-
-    private function generateSubmissionNumber()
+    private function generateSubmissionNumber(): string
     {
         $year  = date('Y');
         $month = date('m');
@@ -224,5 +271,35 @@ class SubmissionController extends Controller
             ->count() + 1;
 
         return sprintf('RCP/%s/%s/%04d', $year, $month, $count);
+    }
+
+    public function mySubmissions(Request $request)
+    {
+        return view('pages.submissions.history.index');
+    }
+
+    public function mySubmissionsDatatable()
+    {
+        $query = Submission::join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
+                ->where('submissions.bitActive', 1)
+                ->where('intUser_ID', auth()->id())
+                ->select('submissions.*', 'letter_types.txtNameLetterType');
+
+        return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('letter_type', fn($row) => $row->letterType->txtNameLetterType ?? '-')
+                ->addColumn('action', function ($r) {
+                    return '<div class="btn-group" role="group">
+                                <button type="button" class="btn btn-info btn-action btn-view"><i class="fas fa-eye"></i></button>
+                                <button type="button" class="btn btn-warning btn-action btn-edit"><i class="fas fa-edit"></i></button>
+                                <button type="button" class="btn btn-danger btn-action btn-delete"><i class="fas fa-trash-alt"></i></button>
+                            </div>';
+                })
+                ->filterColumn('letter_type', function($query, $keyword) {
+                    $query->whereHas('letterType', function($q) use ($keyword) {
+                        $q->where('txtNameLetterType', 'like', "%{$keyword}%");
+                    });
+                })
+                ->make(true);
     }
 }
