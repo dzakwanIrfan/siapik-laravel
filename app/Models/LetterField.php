@@ -12,6 +12,24 @@ class LetterField extends Model
     public $incrementing = true;
     protected $keyType = 'int';
 
+        public $timestamps = false; // Nonaktifkan timestamps bawaan
+
+    protected $fillable = [
+        'intLetterType_ID',
+        'txtFieldName',
+        'txtFieldLabel',
+        'txtFieldType',
+        'jsonFieldOptions',
+        'bitRequired',
+        'intFieldOrder',
+        'jsonFieldValidation',
+        'bitActive',
+        'txtInsertedBy',
+        'txtInserted',
+        'txtUpdatedBy',
+        'txtUpdated',
+    ];
+
     protected $casts = [
         'jsonFieldOptions'    => 'array',
         'jsonFieldValidation' => 'array',
