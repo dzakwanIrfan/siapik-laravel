@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('submissions', function (Blueprint $table) {
-            $table->id('intSubmission_ID');
-            $table->foreignId('intLetterType_ID')->constrained('letter_types', 'intLetterType_ID')->onDelete('cascade');
-            $table->foreignId('intUser_ID')->constrained('users', 'intUser_ID')->onDelete('cascade');
-            $table->string('txtStatus');
-            $table->text('txtKaprodiNote');
-            $table->text('txtAkademikNote');
-            $table->json('jsonDataForm')->nullable();
+        Schema::create('files', function (Blueprint $table) {
+            $table->id('intFile_ID');
+            $table->string('txtFileName');
+            $table->string('txtOriginalFileName');
+            $table->string('txtFilePath');
             $table->string('txtInsertedBy')->nullable();
             $table->datetime('dtmInserted')->nullable();
             $table->string('txtUpdatedBy')->nullable();
@@ -33,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('submissions');
+        Schema::dropIfExists('files');
     }
 };
