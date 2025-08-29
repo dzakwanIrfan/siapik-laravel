@@ -45,21 +45,21 @@
         <ul class="menu">
             <li class="sidebar-title">Menu</li>
 
-            <li class="sidebar-item {{ request()->routeIs('home') || request()->routeIs('dashboard') ? 'active' : '' }}">
-                <a href="{{ url('/') }}" class="sidebar-link">
+            <li class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                <a href="{{ route('dashboard') }}" class="sidebar-link">
                     <i class="bi bi-grid-fill"></i><span>Beranda</span>
                 </a>
             </li>
 
-            <li class="sidebar-item {{ request()->routeIs('submission.create') ? 'active' : '' }}">
-                <a href="{{ route('submission.create') }}" class="sidebar-link">
+            <li class="sidebar-item {{ request()->routeIs('submissions.create') ? 'active' : '' }}">
+                <a href="{{ route('submissions.create') }}" class="sidebar-link">
                     <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
                 </a>
             </li>
 
-            <li class="sidebar-item">
-                <a href="" class="sidebar-link">
-                    <i class="bi bi-clock-fill"></i><span>Riwayat Surat</span>
+            <li class="sidebar-item {{ request()->routeIs('submissions.index') ? 'active' : '' }}">
+                <a href="{{ route('submissions.index') }}" class="sidebar-link">
+                    <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
                 </a>
             </li>
 

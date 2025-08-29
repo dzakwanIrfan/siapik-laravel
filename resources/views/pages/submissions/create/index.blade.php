@@ -27,9 +27,10 @@
       <div class="col d-flex">
         <div class="card border shadow-sm w-100 h-100">
           <div class="card-header bg-white border-bottom">
-            <div class="d-flex align-items-center justify-content-between">
-              <h6 class="mb-0 text-dark text-truncate">{{ $type->txtNameLetterType }}</h6>
-              <span class="badge bg-secondary flex-shrink-0">{{ $type->txtCode }}</span>
+            <div class="d-flex flex-column">
+              <h6 class="mb-1 text-dark lh-sm text-wrap text-break">
+                {{ $type->txtNameLetterType }}
+              </h6>
             </div>
           </div>
 
