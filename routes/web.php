@@ -48,7 +48,7 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
     Route::get('/submissions/{submission}/statuses/data', [SubmissionController::class, 'submissionStatusesDatatable'])->name('statuses.data');
 });
 
-Route::group(['middleware' => ['role:admin|akademik']], function () {
+Route::group(['middleware' => ['role:akademik']], function () {
     Route::prefix('users')->controller(UserController::class)->name('users.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/data', 'data')->name('data');
