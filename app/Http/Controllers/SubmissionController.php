@@ -267,8 +267,8 @@ class SubmissionController extends Controller
         $month = date('m');
 
         $count = DB::table('submissions')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
+            ->whereYear('dtmInserted', $year)
+            ->whereMonth('dtmInserted', $month)
             ->count() + 1;
 
         return sprintf('RCP/%s/%s/%04d', $year, $month, $count);

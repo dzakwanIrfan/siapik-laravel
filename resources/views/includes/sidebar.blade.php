@@ -65,18 +65,6 @@
                 </li>
             @endhasrole
 
-            <li class="sidebar-item {{ request()->routeIs('submissions.create') ? 'active' : '' }}">
-                <a href="{{ route('submissions.create') }}" class="sidebar-link">
-                    <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
-                </a>
-            </li>
-
-            <li class="sidebar-item {{ request()->routeIs('submissions.index') ? 'active' : '' }}">
-                <a href="{{ route('submissions.index') }}" class="sidebar-link">
-                    <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
-                </a>
-            </li>
-
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
                     <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
