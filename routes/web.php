@@ -20,24 +20,22 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', fn () => redirect()->route('dashboard'));
+    Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
     Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
 });
 
 Route::name('submissions.')->middleware(['web','auth'])->group(function () {
-    Route::get('/', [SubmissionController::class, 'index'])->name('create');
+    Route::get('/submissions', [SubmissionController::class, 'index'])->name('create');
 
     // form dinamis 
-    Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('submissions.type.form');
+    Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('type.form');
 
 
     // store pengajuan
     Route::post('/', [SubmissionController::class, 'store'])->name('store');
 
     // receipt + opsi download
-    Route::get('/{submission}/receipt', [SubmissionController::class, 'receipt'])
-        ->whereNumber('submission')
-        ->name('receipt');
+    Route::get('/submissions/{submission}/receipt', [SubmissionController::class, 'receipt'])->name('receipt');
 
     // Download PDF
     Route::get('/{submission}/download', [SubmissionController::class, 'download'])

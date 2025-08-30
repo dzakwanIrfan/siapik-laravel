@@ -45,7 +45,7 @@
         <ul class="menu">
             <li class="sidebar-title">Menu</li>
 
-            <li class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <li class="sidebar-item {{ request()->routeIs('dashboard') || request()->routeIs('home') ? 'active' : '' }}">
                 <a href="{{ route('dashboard') }}" class="sidebar-link">
                     <i class="bi bi-grid-fill"></i><span>Beranda</span>
                 </a>
@@ -62,7 +62,7 @@
                     <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
                 </a>
             </li>
-
+            
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
                     <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>

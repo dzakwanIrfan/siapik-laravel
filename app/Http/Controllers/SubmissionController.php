@@ -143,21 +143,8 @@ class SubmissionController extends Controller
     // Halaman receipt
     public function receipt(int $submissionId)
     {
-        $submission = Submission::with(['letterType', 'values.letterField'])
+        $submission = Submission::with(['letterType', 'values', 'user'])
             ->findOrFail($submissionId);
-
-        // Process file values dengan helper
-        $submission->values->transform(function ($value) {
-            if ($value->txtFieldType === 'file' && $value->txtFieldValue) {
-                $meta = $value->jsonFieldMeta ?? [];
-                $value->file_url = $meta['url'] ?? Storage::disk('public')->url($value->txtFieldValue);
-                $value->is_image = str_starts_with($meta['mime'] ?? '', 'image/');
-                $value->original_name = $meta['original_name'] ?? basename($value->txtFieldValue);
-                $value->file_size = !empty($meta['size']) ? number_format($meta['size']/1024, 1) . ' KB' : '';
-            }
-            return $value;
-        });
-
         return view('pages.submissions.receipt.receipt', compact('submission'));
     }
 
