@@ -20,32 +20,32 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', fn () => redirect()->route('dashboard'));
+    Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
     Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
 });
 
 Route::name('submissions.')->middleware(['web','auth'])->group(function () {
-    Route::get('/', [SubmissionController::class, 'index'])->name('create');
+    Route::get('/submissions', [SubmissionController::class, 'index'])->name('create');
 
     // form dinamis 
-    Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('submissions.type.form');
-
+    Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('type.form');
 
     // store pengajuan
     Route::post('/', [SubmissionController::class, 'store'])->name('store');
 
-    // receipt + opsi download
-    Route::get('/{submission}/receipt', [SubmissionController::class, 'receipt'])
-        ->whereNumber('submission')
-        ->name('receipt');
-
-    // Download PDF
-    Route::get('/{submission}/download', [SubmissionController::class, 'download'])
-        ->whereNumber('submission')
-        ->name('download');
+    // receipt
+    Route::get('/submissions/{submission}/receipt', [SubmissionController::class, 'receipt'])->name('receipt');
+    
+    // download receipt as PDF
+    Route::get('/submissions/{submission}/receipt/download', [SubmissionController::class, 'downloadReceipt'])->name('receipt.download');
+    
+    // print receipt
+    Route::get('/submissions/{submission}/receipt/print', [SubmissionController::class, 'printReceipt'])->name('receipt.print');
 
     Route::get('/my-submissions', [SubmissionController::class, 'mySubmissions'])->name('index');
     Route::get('/my-submissions/datatable', [SubmissionController::class, 'mySubmissionsDatatable'])->name('index.datatable');
+
+    Route::get('/submissions/{submission}/statuses/data', [SubmissionController::class, 'submissionStatusesDatatable'])->name('statuses.data');
 });
 
 Route::group(['middleware' => ['role:admin|akademik']], function () {

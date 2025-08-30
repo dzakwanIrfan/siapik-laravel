@@ -8,6 +8,16 @@
   $extra  = $field->jsonFieldValidation ?? [];
   if (is_string($extra)) $extra = @json_decode($extra, true) ?: [];
 
+  // KHUSUS: Validasi IPK (0.00–4.00, 2 desimal)
+	$isIPK = ($type === 'number' && $name === 'intIPK');
+	if ($isIPK) {
+		// Tambahkan/merge aturan Parsley (frontend)
+		$extra = array_merge([
+			'pattern' => '^(?:[0-3]\\.[0-9]{2}|4\\.00)$', // 0.00–3.99 atau 4.00
+			'pattern-message' => 'IPK harus antara 0.00 dan 4.00 dengan dua angka di belakang koma, contoh: 3.98',
+		], $extra);
+	}
+
   // Parsley attributes dari jsonFieldValidation
   $parsley = [];
   foreach ($extra as $k => $v) {
@@ -36,11 +46,17 @@
     @case('email')
     @case('number')
       <input
-        type="{{ $type === 'text' ? 'text' : ($type === 'email' ? 'email' : 'number') }}"
+        type="number"
         class="form-control bg-white shadow-sm @error("fields.$name") is-invalid @enderror"
-        id="{{ $name }}" name="fields[{{ $name }}]"
+        id="{{ $name }}"
+        name="fields[{{ $name }}]"
         value="{{ old("fields.$name", $value) }}"
-        {{ $req ? 'required' : '' }} {!! $attrs ? ''.$attrs : '' !!}>
+        {{ $req ? 'required' : '' }}
+        {!! $attrs ? ''.$attrs : '' !!}
+        {{-- Khusus IPK --}}
+        @if($isIPK) min="0" max="4" step="0.01" inputmode="decimal" @endif
+        placeholder="{{ $isIPK ? 'cth: 3.98' : '' }}"
+      >
       @break
 
     @case('date')

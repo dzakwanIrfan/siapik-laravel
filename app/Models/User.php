@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\FileSubmission;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
+use App\Models\MahasiswaProfile;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
