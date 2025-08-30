@@ -288,6 +288,7 @@ class SubmissionController extends Controller
         return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('letter_type', fn($row) => $row->letterType->txtNameLetterType ?? '-')
+                ->addColumn('dtmCreated', fn($row) => $row->dtmCreated ?? '-')
                 ->addColumn('action', function ($r) {
                     return '<div class="btn-group" role="group">
                                 <button type="button" class="btn btn-info btn-action btn-view"><i class="fas fa-eye"></i></button>
@@ -299,6 +300,9 @@ class SubmissionController extends Controller
                     $query->whereHas('letterType', function($q) use ($keyword) {
                         $q->where('txtNameLetterType', 'like', "%{$keyword}%");
                     });
+                })
+                ->filterColumn('dtmCreated', function($query, $keyword) {
+                    $query->where('dtmCreated', 'like', "%{$keyword}%");
                 })
                 ->make(true);
     }

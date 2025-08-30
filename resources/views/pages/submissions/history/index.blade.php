@@ -15,27 +15,34 @@
 
   <!-- BEGIN page-header -->
   <div>
-    <h3>Dashboard</h3>
-    <p class="text-subtitle text-muted">Welcome back 👋</p>
+    <h3>Riwayat Pengajuan</h3>
+    <p class="text-subtitle text-muted">Sistem Informasi Pembuatan Surat</p>
   </div>
   <!-- END page-header -->
 @endsection
 
 @section('content')
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered align-middle text-nowrap" id="datatables">
-            <thead>
-                <tr class="text-black">
-                    <th>No</th>
-                    <th>Nomor Pembuatan</th>
-                    <th>Nama Surat</th>
-                    <th>Status</th>
-                    <th>Tanggal Pembuatan</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody></tbody> 
-        </table>
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">Data Riwayat Pengajuan</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered align-middle text-nowrap" id="datatables">
+                    <thead>
+                        <tr class="text-black">
+                            <th>No</th>
+                            <th>Nomor Pembuatan</th>
+                            <th>Nama Surat</th>
+                            <th>Status</th>
+                            <th>Tanggal Pembuatan</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody> 
+                </table>
+            </div>
+        </div>
     </div>
 @endsection
 

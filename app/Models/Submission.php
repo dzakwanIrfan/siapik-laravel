@@ -20,8 +20,8 @@ class Submission extends Model
         'txtReceiptNumber',
         'txtStatus',
         'bitActive',
-        'txtInsertedBy', 'txtInserted',
-        'txtUpdatedBy', 'txtUpdated',
+        'txtInsertedBy', 'dtmInserted',
+        'txtUpdatedBy', 'dtmUpdated',
     ];
 
     public function letterType()
