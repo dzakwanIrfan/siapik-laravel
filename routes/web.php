@@ -4,8 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MajorController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\ConcentrateController;
+use App\Http\Controllers\LetterTypeController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\ConcentrateController;
+use App\Http\Controllers\LetterFieldController;
 
 Route::get('/', function () {return view('welcome');});
 
@@ -72,5 +74,23 @@ Route::group(['middleware' => ['role:admin|akademik']], function () {
         Route::get('/{concentrate}/edit', 'edit')->name('edit');
         Route::put('/{concentrate}', 'update')->name('update');
         Route::delete('/{concentrate}', 'destroy')->name('destroy');
+    });
+
+    Route::prefix('letter-types')->controller(LetterTypeController::class)->name('letter-types.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/data', 'data')->name('data');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{letter_type}/edit', 'edit')->name('edit');
+        Route::put('/{letter_type}', 'update')->name('update');
+        Route::delete('/{letter_type}', 'destroy')->name('destroy');
+    });
+
+    Route::prefix('letter-fields')->controller(LetterFieldController::class)->name('letter-fields.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/data', 'data')->name('data');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{letter_field}/edit', 'edit')->name('edit');
+        Route::put('/{letter_field}', 'update')->name('update');
+        Route::delete('/{letter_field}', 'destroy')->name('destroy');
     });
 });
