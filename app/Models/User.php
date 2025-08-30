@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\DosenProfile;
+use App\Models\FileSubmission;
 use App\Models\MahasiswaProfile;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
@@ -50,5 +52,15 @@ class User extends Authenticatable
     public function mahasiswaProfile()
     {
         return $this->hasOne(MahasiswaProfile::class, 'intUser_ID', 'intUser_ID');
+    }
+
+    public function fileSubmissions()
+    {
+        return $this->hasMany(FileSubmission::class, 'intUser_ID', 'intUser_ID');
+    }
+
+    public function dosenProfile()
+    {
+        return $this->hasOne(DosenProfile::class, 'intUser_ID', 'intUser_ID');
     }
 }

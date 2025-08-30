@@ -51,18 +51,32 @@
                 </a>
             </li>
 
+            @hasrole('mahasiswa')
+                <li class="sidebar-item {{ request()->routeIs('submissions.create') ? 'active' : '' }}">
+                    <a href="{{ route('submissions.create') }}" class="sidebar-link">
+                        <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item {{ request()->routeIs('submissions.index') ? 'active' : '' }}">
+                    <a href="{{ route('submissions.index') }}" class="sidebar-link">
+                        <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
+                    </a>
+                </li>
+            @endhasrole
+
             <li class="sidebar-item {{ request()->routeIs('submissions.create') ? 'active' : '' }}">
                 <a href="{{ route('submissions.create') }}" class="sidebar-link">
                     <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
                 </a>
             </li>
-            
+
             <li class="sidebar-item {{ request()->routeIs('submissions.index') ? 'active' : '' }}">
                 <a href="{{ route('submissions.index') }}" class="sidebar-link">
                     <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
                 </a>
             </li>
-            
+
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
                     <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
@@ -75,13 +89,14 @@
                 </a>
             </li>
 
+            @hasrole('akademik')
             <li class="sidebar-title">Admin</li>
             <li class="sidebar-item has-sub {{ request()->routeIs(['users.*', 'prodi.*', 'concentrates.*', 'letter-types.*', 'letter-fields.*']) ? 'active' : '' }}">
                 <a href="#" class="sidebar-link">
                     <i class="bi bi-stack"></i><span>Data Master</span>
                 </a>
                 <ul class="submenu {{ request()->routeIs(['users.*', 'prodi.*', 'concentrates.*', 'letter-types.*', 'letter-fields.*']) ? 'active' : '' }}">
-                    
+
                     {{-- Logika untuk Submenu dengan Pengecekan Parameter 'role' --}}
                     <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'mahasiswa' ? 'active' : '' }}">
                         <a href="{{ route('users.index', ['role' => 'mahasiswa']) }}">Mahasiswa</a>
@@ -89,10 +104,13 @@
                     <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'dosen' ? 'active' : '' }}">
                         <a href="{{ route('users.index', ['role' => 'dosen']) }}">Dosen</a>
                     </li>
-                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'admin' ? 'active' : '' }}">
-                        <a href="{{ route('users.index', ['role' => 'admin']) }}">Admin</a>
+                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'kaprodi' ? 'active' : '' }}">
+                        <a href="{{ route('users.index', ['role' => 'kaprodi']) }}">Kaprodi</a>
                     </li>
-                
+                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'akademik' ? 'active' : '' }}">
+                        <a href="{{ route('users.index', ['role' => 'akademik']) }}">Akademik</a>
+                    </li>
+
                     {{-- Logika untuk Submenu Standar --}}
                     <li class="submenu-item {{ request()->routeIs('prodi.*') ? 'active' : '' }}">
                         <a href="{{ route('prodi.index') }}">Program Studi</a>
@@ -112,11 +130,13 @@
                 </ul>
             </li>
 
+
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
                     <i class="bi bi-file-earmark-spreadsheet-fill"></i><span>Laporan</span>
                 </a>
             </li>
+            @endhasrole
         </ul>
     </div>
 </div>

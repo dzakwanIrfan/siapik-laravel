@@ -22,8 +22,7 @@ class AdminSeeder extends Seeder
             Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
         }
 
-        // 2. Buat 2 user Mahasiswa beserta profilnya
-        for ($i = 0; $i < 2; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $fullName = $faker->name();
             $mahasiswa = User::firstOrCreate(
                 ['txtEmail' => $faker->unique()->safeEmail()],
@@ -51,7 +50,7 @@ class AdminSeeder extends Seeder
         }
 
         // 3. Buat 2 user Dosen beserta profilnya
-        for ($i = 0; $i < 2; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $fullName = $faker->name();
             $dosen = User::firstOrCreate(
                 ['txtEmail' => $faker->unique()->safeEmail()],
@@ -79,7 +78,7 @@ class AdminSeeder extends Seeder
         }
 
         // 4. Buat 2 user Kaprodi
-        for ($i = 0; $i < 2; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $fullName = $faker->name();
             $kaprodi = User::firstOrCreate(
                 ['txtEmail' => $faker->unique()->safeEmail()],
@@ -93,10 +92,21 @@ class AdminSeeder extends Seeder
                 ]
             );
             $kaprodi->assignRole('kaprodi');
+
+            DosenProfile::firstOrCreate(
+                ['intUser_ID' => $kaprodi->intUser_ID],
+                [
+                    'txtNIP'              => $faker->unique()->numerify('198##########'),
+                    'txtNIDN'             => $faker->unique()->numerify('00########'),
+                    'intMajor_ID'         => 2, // Sesuaikan ID Prodi
+                    'txtFieldOfKnowledge' => 'Ilmu Komputer',
+                    'bitActive'           => 1,
+                ]
+            );
         }
 
         // 5. Buat 2 user Akademik
-        for ($i = 0; $i < 2; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $fullName = $faker->name();
             $akademik = User::firstOrCreate(
                 ['txtEmail' => $faker->unique()->safeEmail()],
@@ -111,21 +121,78 @@ class AdminSeeder extends Seeder
             );
             $akademik->assignRole('akademik');
         }
-        $admin = User::firstOrCreate(
-            ['txtEmail' => 'admin@kampus.ac.id'],
+
+        $staticMahasiswa = User::firstOrCreate(
+            ['txtEmail' => 'mahasiswa@test.com'],
             [
-                'txtFullName'  => 'Administrator',
-                'txtPassword'  => 'admin123', // akan ter-hash oleh cast
-                'txtGender'    => 'L',
-                'txtBirthPlace'=> 'Purwokerto',
-                'dtmBirthDate' => now()->subYears(30),
-                'bitActive'    => 1,
+                'txtFullName'   => 'Mahasiswa Uji Coba',
+                'txtPassword'   => 'password',
+                'txtGender'     => 'L',
+                'txtBirthPlace' => 'Jakarta',
+                'dtmBirthDate'  => '2002-05-10',
+                'bitActive'     => 1,
+            ]
+        );
+        $staticMahasiswa->assignRole('mahasiswa');
+        MahasiswaProfile::firstOrCreate(
+            ['intUser_ID' => $staticMahasiswa->intUser_ID],
+            [
+                'txtNIM'            => 'TEST001',
+                'intMajor_ID'       => 1,
+                'intConcentrate_ID' => 1,
+                'txtYear'           => '2022',
+                'bitActive'         => 1,
             ]
         );
 
-         if (method_exists($admin, 'assignRole')) {
-            $admin->assignRole('akademik');
-        }
+        $staticDosen = User::firstOrCreate(
+            ['txtEmail' => 'dosen@test.com'],
+            [
+                'txtFullName'   => 'Dosen Uji Coba',
+                'txtPassword'   => 'password',
+                'txtGender'     => 'P',
+                'txtBirthPlace' => 'Bandung',
+                'dtmBirthDate'  => '1985-11-20',
+                'bitActive'     => 1,
+            ]
+        );
+        $staticDosen->assignRole('dosen');
+        DosenProfile::firstOrCreate(
+            ['intUser_ID' => $staticDosen->intUser_ID],
+            [
+                'txtNIP'              => '198511202010121001',
+                'txtNIDN'             => '0020118501',
+                'intMajor_ID'         => 2,
+                'txtFieldOfKnowledge' => 'Sistem Informasi',
+                'bitActive'           => 1,
+            ]
+        );
+
+        $staticKaprodi = User::firstOrCreate(
+            ['txtEmail' => 'kaprodi@test.com'],
+            [
+                'txtFullName'   => 'Kaprodi Uji Coba',
+                'txtPassword'   => 'password',
+                'txtGender'     => 'L',
+                'txtBirthPlace' => 'Surabaya',
+                'dtmBirthDate'  => '1980-01-15',
+                'bitActive'     => 1,
+            ]
+        );
+        $staticKaprodi->assignRole('kaprodi');
+
+        $staticAkademik = User::firstOrCreate(
+            ['txtEmail' => 'akademik@test.com'],
+            [
+                'txtFullName'   => 'Akademik Uji Coba',
+                'txtPassword'   => 'password',
+                'txtGender'     => 'P',
+                'txtBirthPlace' => 'Medan',
+                'dtmBirthDate'  => '1995-03-25',
+                'bitActive'     => 1,
+            ]
+        );
+        $staticAkademik->assignRole('akademik');
 
     }
 }
