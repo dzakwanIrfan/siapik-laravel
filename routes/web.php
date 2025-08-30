@@ -44,6 +44,8 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
 
     Route::get('/my-submissions', [SubmissionController::class, 'mySubmissions'])->name('index');
     Route::get('/my-submissions/datatable', [SubmissionController::class, 'mySubmissionsDatatable'])->name('index.datatable');
+
+    Route::get('/submissions/{submission}/statuses/data', [SubmissionController::class, 'submissionStatusesDatatable'])->name('statuses.data');
 });
 
 Route::group(['middleware' => ['role:admin|akademik']], function () {

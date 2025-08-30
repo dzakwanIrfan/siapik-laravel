@@ -9,6 +9,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Models\SubmissionValue;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\SubmissionStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -128,6 +129,15 @@ class SubmissionController extends Controller
                     'dtmUpdated'        => now(),
                 ]);
             }
+
+            SubmissionStatus::create([
+                'intSubmission_ID' => $submission->intSubmission_ID,
+                'txtStatus'        => 'Sedang ditinjau Kaprodi',
+                'txtInReview'      => 'Kaprodi',
+                'bitActive'       => 1,
+                'txtInsertedBy'   => auth()->user()->txtFullName ?? 'System',
+                'dtmInserted'     => now(),
+            ]);
 
             DB::commit();
 
@@ -287,6 +297,20 @@ class SubmissionController extends Controller
                                 <button type="button" class="btn btn-danger btn-action btn-delete"><i class="fas fa-trash-alt"></i></button>
                             </div>';
                 })
+                ->addColumn('status', function ($r) {
+                    switch ($r->txtStatus) {
+                        case 'Sedang ditinjau Kaprodi':
+                            return '<button 
+                                        class="btn btn-sm btn-primary rounded-pill show-status-modal"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#submissionModal"
+                                        data-submissions-id="' . $r->intSubmission_ID . '"
+                                        data-type-name="' . $r->letterType->txtNameLetterType . '"
+                                    >Sedang ditinjau Kaprodi</button>';
+                        default:
+                            return e($r->txtStatus ?? '-');
+                    }
+                })
                 ->filterColumn('letter_type', function($query, $keyword) {
                     $query->whereHas('letterType', function($q) use ($keyword) {
                         $q->where('txtNameLetterType', 'like', "%{$keyword}%");
@@ -295,6 +319,24 @@ class SubmissionController extends Controller
                 ->filterColumn('dtmCreated', function($query, $keyword) {
                     $query->where('dtmCreated', 'like', "%{$keyword}%");
                 })
+                ->rawColumns(['action', 'status'])
                 ->make(true);
+    }
+
+    public function submissionStatusesDatatable(Submission $submission)
+    {
+        $query = SubmissionStatus::query()
+            ->where('intSubmission_ID', $submission->intSubmission_ID)
+            ->orderByDesc('dtmInserted');
+
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('bitActive', function ($r) {
+                return $r->bitActive
+                    ? '<span class="badge bg-success">Active</span>'
+                    : '<span class="badge bg-secondary">Inactive</span>';
+            })
+            ->rawColumns(['bitActive'])
+            ->make(true);
     }
 }

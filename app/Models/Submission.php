@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\User;
 use App\Models\LetterType;
 use App\Models\SubmissionValue;
+use App\Models\SubmissionStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class Submission extends Model
@@ -37,5 +38,11 @@ class Submission extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'intUser_ID', 'intUser_ID');
+    }
+
+    public function statuses()
+    {
+        return $this->hasMany(SubmissionStatus::class, 'intSubmission_ID', 'intSubmission_ID')
+            ->orderByDesc('dtmInserted');
     }
 }

@@ -51,17 +51,19 @@
                 </a>
             </li>
 
-            <li class="sidebar-item {{ request()->routeIs('submissions.create') ? 'active' : '' }}">
-                <a href="{{ route('submissions.create') }}" class="sidebar-link">
-                    <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
-                </a>
-            </li>
-
-            <li class="sidebar-item {{ request()->routeIs('submissions.index') ? 'active' : '' }}">
-                <a href="{{ route('submissions.index') }}" class="sidebar-link">
-                    <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
-                </a>
-            </li>
+            @hasrole('mahasiswa')
+                <li class="sidebar-item {{ request()->routeIs('submissions.create') ? 'active' : '' }}">
+                    <a href="{{ route('submissions.create') }}" class="sidebar-link">
+                        <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item {{ request()->routeIs('submissions.index') ? 'active' : '' }}">
+                    <a href="{{ route('submissions.index') }}" class="sidebar-link">
+                        <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
+                    </a>
+                </li>
+            @endhasrole
             
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
@@ -75,42 +77,44 @@
                 </a>
             </li>
 
+            @hasrole('admin')
             <li class="sidebar-title">Admin</li>
             <li class="sidebar-item has-sub {{ request()->routeIs(['users.*', 'prodi.*', 'concentrates.*', 'letter-types.*', 'letter-fields.*']) ? 'active' : '' }}">
                 <a href="#" class="sidebar-link">
                     <i class="bi bi-stack"></i><span>Data Master</span>
                 </a>
-            <ul class="submenu {{ request()->routeIs(['users.*', 'prodi.*', 'concentrates.*', 'letter-types.*', 'letter-fields.*']) ? 'active' : '' }}">
-
-                {{-- Logika untuk Submenu dengan Pengecekan Parameter 'role' --}}
-                <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'mahasiswa' ? 'active' : '' }}">
-                    <a href="{{ route('users.index', ['role' => 'mahasiswa']) }}">Mahasiswa</a>
-                </li>
-                <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'dosen' ? 'active' : '' }}">
-                    <a href="{{ route('users.index', ['role' => 'dosen']) }}">Dosen</a>
-                </li>
-                <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'admin' ? 'active' : '' }}">
-                    <a href="{{ route('users.index', ['role' => 'admin']) }}">Admin</a>
-                </li>
-
-                {{-- Logika untuk Submenu Standar --}}
-                <li class="submenu-item {{ request()->routeIs('prodi.*') ? 'active' : '' }}">
-                    <a href="{{ route('prodi.index') }}">Program Studi</a>
-                </li>
-                <li class="submenu-item {{ request()->routeIs('concentrates.*') ? 'active' : '' }}">
-                    <a href="{{ route('concentrates.index') }}">Konsentrasi</a>
-                </li>
-                <li class="submenu-item"><a href="#">Level</a></li>
-                <li class="submenu-item"><a href="#">Role</a></li>
-                <li class="submenu-item {{ request()->routeIs('letter-types.*') ? 'active' : '' }}">
-                    <a href="{{ route('letter-types.index') }}">Jenis Surat</a>
-                </li>
-                <li class="submenu-item {{ request()->routeIs('letter-fields.*') ? 'active' : '' }}">
-                    <a href="{{ route('letter-fields.index') }}">Field Surat</a>
-                </li>
-                <li class="submenu-item"><a href="#">Requirement</a></li>
-            </ul>
-        </li>
+                <ul class="submenu {{ request()->routeIs(['users.*', 'prodi.*', 'concentrates.*', 'letter-types.*', 'letter-fields.*']) ? 'active' : '' }}">
+                    
+                    {{-- Logika untuk Submenu dengan Pengecekan Parameter 'role' --}}
+                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'mahasiswa' ? 'active' : '' }}">
+                        <a href="{{ route('users.index', ['role' => 'mahasiswa']) }}">Mahasiswa</a>
+                    </li>
+                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'dosen' ? 'active' : '' }}">
+                        <a href="{{ route('users.index', ['role' => 'dosen']) }}">Dosen</a>
+                    </li>
+                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'admin' ? 'active' : '' }}">
+                        <a href="{{ route('users.index', ['role' => 'admin']) }}">Admin</a>
+                    </li>
+                
+                    {{-- Logika untuk Submenu Standar --}}
+                    <li class="submenu-item {{ request()->routeIs('prodi.*') ? 'active' : '' }}">
+                        <a href="{{ route('prodi.index') }}">Program Studi</a>
+                    </li>
+                    <li class="submenu-item {{ request()->routeIs('concentrates.*') ? 'active' : '' }}">
+                        <a href="{{ route('concentrates.index') }}">Konsentrasi</a>
+                    </li>
+                    <li class="submenu-item"><a href="#">Level</a></li>
+                    <li class="submenu-item"><a href="#">Role</a></li>
+                    <li class="submenu-item {{ request()->routeIs('letter-types.*') ? 'active' : '' }}">
+                        <a href="{{ route('letter-types.index') }}">Jenis Surat</a>
+                    </li>
+                    <li class="submenu-item {{ request()->routeIs('letter-fields.*') ? 'active' : '' }}">
+                        <a href="{{ route('letter-fields.index') }}">Field Surat</a>
+                    </li>
+                    <li class="submenu-item"><a href="#">Requirement</a></li>
+                </ul>
+            </li>
+            @endrole
 
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
