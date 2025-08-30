@@ -51,19 +51,17 @@
                 </a>
             </li>
 
-            @hasrole('mahasiswa')
-                <li class="sidebar-item {{ request()->routeIs('submissions.create') ? 'active' : '' }}">
-                    <a href="{{ route('submissions.create') }}" class="sidebar-link">
-                        <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
-                    </a>
-                </li>
-                
-                <li class="sidebar-item {{ request()->routeIs('submissions.index') ? 'active' : '' }}">
-                    <a href="{{ route('submissions.index') }}" class="sidebar-link">
-                        <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
-                    </a>
-                </li>
-            @endhasrole
+            <li class="sidebar-item {{ request()->routeIs('submissions.create') ? 'active' : '' }}">
+                <a href="{{ route('submissions.create') }}" class="sidebar-link">
+                    <i class="bi bi-file-earmark-text-fill"></i><span>Daftar Surat</span>
+                </a>
+            </li>
+            
+            <li class="sidebar-item {{ request()->routeIs('submissions.index') ? 'active' : '' }}">
+                <a href="{{ route('submissions.index') }}" class="sidebar-link">
+                    <i class="bi bi-clock-fill"></i><span>Riwayat Pengajuan</span>
+                </a>
+            </li>
             
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
@@ -77,7 +75,6 @@
                 </a>
             </li>
 
-            @hasrole('admin')
             <li class="sidebar-title">Admin</li>
             <li class="sidebar-item has-sub {{ request()->routeIs(['users.*', 'prodi.*', 'concentrates.*', 'letter-types.*', 'letter-fields.*']) ? 'active' : '' }}">
                 <a href="#" class="sidebar-link">
@@ -114,7 +111,6 @@
                     <li class="submenu-item"><a href="#">Requirement</a></li>
                 </ul>
             </li>
-            @endrole
 
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
