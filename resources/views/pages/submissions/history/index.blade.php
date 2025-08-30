@@ -27,21 +27,19 @@
             <h4 class="card-title">Data Riwayat Pengajuan</h4>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered align-middle text-nowrap table-dark table-hover" id="datatables">
-                    <thead>
-                        <tr class="text-black">
-                            <th>No</th>
-                            <th>Nomor Pembuatan</th>
-                            <th>Nama Surat</th>
-                            <th>Status</th>
-                            <th>Tanggal Pembuatan</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody> 
-                </table>
-            </div>
+            <table class="table table-striped table-bordered align-middle table-dark table-hover" id="datatables">
+                <thead>
+                    <tr class="text-black">
+                        <th>No</th>
+                        <th>Nomor Pembuatan</th>
+                        <th>Nama Surat</th>
+                        <th>Status</th>
+                        <th>Tanggal Pembuatan</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody> 
+            </table>
         </div>
     </div>
 
@@ -56,21 +54,19 @@
                 </div>
                 
                 <div class="modal-body p-4">
-                    <div class="table-responsive">
-                        <table id="submission-status-table" class="table table-striped table-bordered align-middle text-nowrap table-dark table-hover">
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Status</th>
-                                    <th>Modified By</th>
-                                    <th>Modified At</th>
-                                    <th>Being Processed By</th>
-                                    <th>Active</th>
-                                </tr>
-                            </thead>
-                            <tbody><!-- server-side --></tbody>
-                        </table>
-                    </div>
+                    <table id="submission-status-table" class="table table-striped table-bordered align-middle table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Status</th>
+                                <th>Modified By</th>
+                                <th>Modified At</th>
+                                <th>Being Processed By</th>
+                                <th>Active</th>
+                            </tr>
+                        </thead>
+                        <tbody><!-- server-side --></tbody>
+                    </table>
                 </div>
                 
                 <div class="modal-footer border-top">

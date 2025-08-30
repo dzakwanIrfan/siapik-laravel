@@ -180,6 +180,17 @@ class AdminSeeder extends Seeder
             ]
         );
         $staticKaprodi->assignRole('kaprodi');
+        DosenProfile::firstOrCreate(
+            ['intUser_ID' => $staticKaprodi->intUser_ID],
+            [
+                'txtNIP'              => '198001152010121002',
+                'txtNIDN'             => '0020118001',
+                'intMajor_ID'         => 1,
+                'txtFieldOfKnowledge' => 'Teknologi Informasi',
+                'bitActive'           => 1,
+            ]
+        );
+
 
         $staticAkademik = User::firstOrCreate(
             ['txtEmail' => 'akademik@test.com'],

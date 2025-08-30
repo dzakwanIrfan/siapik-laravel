@@ -12,9 +12,13 @@ class Submission extends Model
 {
     protected $table = 'submissions';
     protected $primaryKey = 'intSubmission_ID';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
     protected $fillable = [
         'intLetterType_ID',
         'intUser_ID',
+        'txtReceiptNumber',
         'txtStatus',
         'txtKaprodiNote',
         'txtAkademikNote',
@@ -28,7 +32,12 @@ class Submission extends Model
         'txtUpdatedBy', 'dtmUpdated',
     ];
 
-    public function fileSubmissions()
+    public function letterType()
+    {
+        return $this->belongsTo(LetterType::class, 'intLetterType_ID', 'intLetterType_ID');
+    }
+
+    public function values()
     {
         return $this->hasMany(SubmissionValue::class, 'intSubmission_ID', 'intSubmission_ID');
     }
