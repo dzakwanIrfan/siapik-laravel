@@ -92,6 +92,17 @@ class AdminSeeder extends Seeder
                 ]
             );
             $kaprodi->assignRole('kaprodi');
+
+            DosenProfile::firstOrCreate(
+                ['intUser_ID' => $kaprodi->intUser_ID],
+                [
+                    'txtNIP'              => $faker->unique()->numerify('198##########'),
+                    'txtNIDN'             => $faker->unique()->numerify('00########'),
+                    'intMajor_ID'         => 2, // Sesuaikan ID Prodi
+                    'txtFieldOfKnowledge' => 'Ilmu Komputer',
+                    'bitActive'           => 1,
+                ]
+            );
         }
 
         // 5. Buat 2 user Akademik

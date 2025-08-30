@@ -104,8 +104,11 @@
                     <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'dosen' ? 'active' : '' }}">
                         <a href="{{ route('users.index', ['role' => 'dosen']) }}">Dosen</a>
                     </li>
-                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'admin' ? 'active' : '' }}">
-                        <a href="{{ route('users.index', ['role' => 'admin']) }}">Admin</a>
+                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'kaprodi' ? 'active' : '' }}">
+                        <a href="{{ route('users.index', ['role' => 'kaprodi']) }}">Kaprodi</a>
+                    </li>
+                    <li class="submenu-item {{ request()->routeIs('users.index') && request('role') == 'akademik' ? 'active' : '' }}">
+                        <a href="{{ route('users.index', ['role' => 'akademik']) }}">Akademik</a>
                     </li>
 
                     {{-- Logika untuk Submenu Standar --}}
@@ -127,11 +130,13 @@
                 </ul>
             </li>
 
+
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
                     <i class="bi bi-file-earmark-spreadsheet-fill"></i><span>Laporan</span>
                 </a>
             </li>
+            @endhasrole
         </ul>
     </div>
 </div>
