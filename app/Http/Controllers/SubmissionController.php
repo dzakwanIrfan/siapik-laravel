@@ -8,6 +8,8 @@ use App\Models\LetterField;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Models\SubmissionValue;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\SubmissionStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -128,6 +130,15 @@ class SubmissionController extends Controller
                 ]);
             }
 
+            SubmissionStatus::create([
+                'intSubmission_ID' => $submission->intSubmission_ID,
+                'txtStatus'        => 'Sedang ditinjau Kaprodi',
+                'txtInReview'      => 'Kaprodi',
+                'bitActive'       => 1,
+                'txtInsertedBy'   => auth()->user()->txtFullName ?? 'System',
+                'dtmInserted'     => now(),
+            ]);
+
             DB::commit();
 
             return redirect()
@@ -143,41 +154,31 @@ class SubmissionController extends Controller
     // Halaman receipt
     public function receipt(int $submissionId)
     {
-        $submission = Submission::with(['letterType', 'values.letterField'])
+        $submission = Submission::with(['letterType', 'values', 'user'])
             ->findOrFail($submissionId);
-
-        // Process file values dengan helper
-        $submission->values->transform(function ($value) {
-            if ($value->txtFieldType === 'file' && $value->txtFieldValue) {
-                $meta = $value->jsonFieldMeta ?? [];
-                $value->file_url = $meta['url'] ?? Storage::disk('public')->url($value->txtFieldValue);
-                $value->is_image = str_starts_with($meta['mime'] ?? '', 'image/');
-                $value->original_name = $meta['original_name'] ?? basename($value->txtFieldValue);
-                $value->file_size = !empty($meta['size']) ? number_format($meta['size']/1024, 1) . ' KB' : '';
-            }
-            return $value;
-        });
-
         return view('pages.submissions.receipt.receipt', compact('submission'));
     }
 
-    // Unduh PDF (opsional): butuh barryvdh/laravel-dompdf
-    public function download(int $submissionId)
+    // Download receipt as PDF
+    public function downloadReceipt(int $submissionId)
     {
-        $submission = Submission::with(['letterType', 'values'])
+        $submission = Submission::with(['letterType', 'values', 'user'])
             ->findOrFail($submissionId);
 
-        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-            // fallback: kembalikan HTML untuk dicetak (tanpa custom CSS)
-            return $this->receipt($submissionId);
-        }
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pages.submissions.receipt-pdf', [
-            'submission' => $submission,
-        ])->setPaper('A4');
-
-        $filename = 'Receipt_'.$submission->txtReceiptNumber.'.pdf';
+        $pdf = Pdf::loadView('pages.submissions.receipt.receipt_pdf', compact('submission'));
+        $pdf->setPaper('A4', 'portrait');
+        
+        $filename = 'Receipt_' . $submission->letterType->txtCode . '_' . date('Y-m-d') . '.pdf';
+        
         return $pdf->download($filename);
+    }
+
+    // Print receipt (view optimized for printing)
+    public function printReceipt(int $submissionId)
+    {
+        $submission = Submission::with(['letterType', 'values', 'user'])
+            ->findOrFail($submissionId);
+        return view('pages.submissions.receipt.receipt_print', compact('submission'));
     }
 
     private function buildValidationRules($fields): array
@@ -296,6 +297,20 @@ class SubmissionController extends Controller
                                 <button type="button" class="btn btn-danger btn-action btn-delete"><i class="fas fa-trash-alt"></i></button>
                             </div>';
                 })
+                ->addColumn('status', function ($r) {
+                    switch ($r->txtStatus) {
+                        case 'Sedang ditinjau Kaprodi':
+                            return '<button 
+                                        class="btn btn-sm btn-primary rounded-pill show-status-modal"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#submissionModal"
+                                        data-submissions-id="' . $r->intSubmission_ID . '"
+                                        data-type-name="' . $r->letterType->txtNameLetterType . '"
+                                    >Sedang ditinjau Kaprodi</button>';
+                        default:
+                            return e($r->txtStatus ?? '-');
+                    }
+                })
                 ->filterColumn('letter_type', function($query, $keyword) {
                     $query->whereHas('letterType', function($q) use ($keyword) {
                         $q->where('txtNameLetterType', 'like', "%{$keyword}%");
@@ -304,6 +319,24 @@ class SubmissionController extends Controller
                 ->filterColumn('dtmCreated', function($query, $keyword) {
                     $query->where('dtmCreated', 'like', "%{$keyword}%");
                 })
+                ->rawColumns(['action', 'status'])
                 ->make(true);
+    }
+
+    public function submissionStatusesDatatable(Submission $submission)
+    {
+        $query = SubmissionStatus::query()
+            ->where('intSubmission_ID', $submission->intSubmission_ID)
+            ->orderByDesc('dtmInserted');
+
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('bitActive', function ($r) {
+                return $r->bitActive
+                    ? '<span class="badge bg-success">Active</span>'
+                    : '<span class="badge bg-secondary">Inactive</span>';
+            })
+            ->rawColumns(['bitActive'])
+            ->make(true);
     }
 }
