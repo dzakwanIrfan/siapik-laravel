@@ -28,7 +28,7 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped table-bordered align-middle text-nowrap" id="datatables">
+                <table class="table table-striped table-bordered align-middle text-nowrap table-dark table-hover" id="datatables">
                     <thead>
                         <tr class="text-black">
                             <th>No</th>

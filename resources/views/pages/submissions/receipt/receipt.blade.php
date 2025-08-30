@@ -22,9 +22,56 @@
 
 @section('content')
 	<div class="alert alert-primary"><i class="bi bi-exclamation-triangle"></i> Cetak bukti pengajuan untuk dapat mengambil dokumen.</div>
-	<div class="card">
+	
+	
+	<!-- Receipt Display -->
+	<div class="card" id="receipt-container">
 		<div class="card-body">
 			@include('pages.submissions.receipt.includes._format_receipt')
 		</div>
 	</div>
+	
+	<!-- Action Buttons -->
+	<div class="card">
+		<div class="card-body">
+			<div class="d-flex justify-content-center gap-2">
+				<a href="{{ route('submissions.receipt.download', $submission->intSubmission_ID) }}" 
+				   class="btn btn-success">
+					<i class="bi bi-download"></i> Download PDF
+				</a>
+				<button onclick="printReceipt()" class="btn btn-primary">
+					<i class="bi bi-printer"></i> Cetak Receipt
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Print Styles -->
+	<style>
+		@media print {
+			body * {
+				visibility: hidden;
+			}
+			#receipt-container, #receipt-container * {
+				visibility: visible;
+			}
+			#receipt-container {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 100%;
+			}
+			.card {
+				border: none !important;
+				box-shadow: none !important;
+			}
+		}
+	</style>
+
+	<script>
+		function printReceipt() {
+			// Open print dialog
+			window.print();
+		}
+	</script>
 @endsection

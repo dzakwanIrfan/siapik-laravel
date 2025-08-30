@@ -8,6 +8,7 @@ use App\Models\LetterField;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Models\SubmissionValue;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -148,23 +149,26 @@ class SubmissionController extends Controller
         return view('pages.submissions.receipt.receipt', compact('submission'));
     }
 
-    // Unduh PDF (opsional): butuh barryvdh/laravel-dompdf
-    public function download(int $submissionId)
+    // Download receipt as PDF
+    public function downloadReceipt(int $submissionId)
     {
-        $submission = Submission::with(['letterType', 'values'])
+        $submission = Submission::with(['letterType', 'values', 'user'])
             ->findOrFail($submissionId);
 
-        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-            // fallback: kembalikan HTML untuk dicetak (tanpa custom CSS)
-            return $this->receipt($submissionId);
-        }
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pages.submissions.receipt-pdf', [
-            'submission' => $submission,
-        ])->setPaper('A4');
-
-        $filename = 'Receipt_'.$submission->txtReceiptNumber.'.pdf';
+        $pdf = Pdf::loadView('pages.submissions.receipt.receipt_pdf', compact('submission'));
+        $pdf->setPaper('A4', 'portrait');
+        
+        $filename = 'Receipt_' . $submission->letterType->txtCode . '_' . date('Y-m-d') . '.pdf';
+        
         return $pdf->download($filename);
+    }
+
+    // Print receipt (view optimized for printing)
+    public function printReceipt(int $submissionId)
+    {
+        $submission = Submission::with(['letterType', 'values', 'user'])
+            ->findOrFail($submissionId);
+        return view('pages.submissions.receipt.receipt_print', compact('submission'));
     }
 
     private function buildValidationRules($fields): array

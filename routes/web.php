@@ -30,17 +30,17 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
     // form dinamis 
     Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('type.form');
 
-
     // store pengajuan
     Route::post('/', [SubmissionController::class, 'store'])->name('store');
 
-    // receipt + opsi download
+    // receipt
     Route::get('/submissions/{submission}/receipt', [SubmissionController::class, 'receipt'])->name('receipt');
-
-    // Download PDF
-    Route::get('/{submission}/download', [SubmissionController::class, 'download'])
-        ->whereNumber('submission')
-        ->name('download');
+    
+    // download receipt as PDF
+    Route::get('/submissions/{submission}/receipt/download', [SubmissionController::class, 'downloadReceipt'])->name('receipt.download');
+    
+    // print receipt
+    Route::get('/submissions/{submission}/receipt/print', [SubmissionController::class, 'printReceipt'])->name('receipt.print');
 
     Route::get('/my-submissions', [SubmissionController::class, 'mySubmissions'])->name('index');
     Route::get('/my-submissions/datatable', [SubmissionController::class, 'mySubmissionsDatatable'])->name('index.datatable');
