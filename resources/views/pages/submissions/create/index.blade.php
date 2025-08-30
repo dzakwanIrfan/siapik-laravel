@@ -249,7 +249,7 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
         form.submit();
       } else {
-        Toast && Toast.fire({ icon: "error", title: "Data tidak lengkap" });
+        Toast && Toast.fire({ icon: "error", title: "Data tidak valid/lengkap" });
       }
     });
   }
