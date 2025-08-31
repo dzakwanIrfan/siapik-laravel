@@ -31,7 +31,7 @@ class SubmissionController extends Controller
     public function form(int $letterTypeId)
     {
         $letterType = LetterType::with(['letterFields' => function ($q) {
-            $q->where('bitActive', 1)->orderBy('intFieldOrder');
+            $q->where('bitActive', 1)->where('bitAkademik', 0)->orderBy('intFieldOrder');
         }])->findOrFail($letterTypeId);
 
         // Siapkan opsi select per field (keyed by field name)
@@ -40,9 +40,13 @@ class SubmissionController extends Controller
             if ($f->txtFieldType === 'select') {
                 $opts = [];
                 $cfg  = $this->decodeJson($f->jsonFieldOptions);
+
                 if (($cfg['source'] ?? 'static') === 'static') {
                     $opts = $cfg['options'] ?? [];
+                } else {
+                    $opts = $this->buildDynamicOptions($cfg);
                 }
+
                 $fieldOptions[$f->txtFieldName] = $opts;
             }
         }
@@ -53,6 +57,59 @@ class SubmissionController extends Controller
             'fieldOptions' => $fieldOptions,
         ]);
     }
+
+    private function buildDynamicOptions(array $cfg): array
+    {
+        $model = $cfg['model'] ?? null;
+        if (!$model) return [];
+
+        // Asumsikan model di App\Models\
+        $class = "\\App\\Models\\{$model}";
+        if (!class_exists($class)) return [];
+
+        $query = $class::query();
+
+        // with: ["user", ...]
+        $with = $cfg['with'] ?? [];
+        if (is_array($with) && $with) {
+            $query->with($with);
+        }
+
+        // Optional filter: { "where": { "bitActive": 1, "intMajor_ID": "@auth.dosenProfile.intMajor_ID" } }
+        $where = $cfg['where'] ?? [];
+        foreach ((array) $where as $col => $val) {
+            $query->where($col, $this->resolveDynamicToken($val));
+        }
+
+        $rows  = $query->get();
+        $label = $cfg['label'] ?? 'name';
+        $value = $cfg['value'] ?? 'id';
+
+        $out = [];
+        foreach ($rows as $row) {
+            $val = data_get($row, $value);
+            $lab = data_get($row, $label);
+            if ($val !== null && $lab !== null && $lab !== '') {
+                // format sama seperti "options" static: [value => label]
+                $out[(string) $val] = (string) $lab;
+            }
+        }
+
+        // urutkan label supaya rapi
+        asort($out, SORT_NATURAL | SORT_FLAG_CASE);
+        return $out;
+    }
+
+    private function resolveDynamicToken($val)
+    {
+        // support token seperti "@auth.dosenProfile.intMajor_ID"
+        if (is_string($val) && str_starts_with($val, '@auth.')) {
+            $path = substr($val, 6); // hapus "@auth."
+            return data_get(auth()->user(), $path);
+        }
+        return $val;
+    }
+
 
     // Simpan pengajuan
     public function store(Request $request)

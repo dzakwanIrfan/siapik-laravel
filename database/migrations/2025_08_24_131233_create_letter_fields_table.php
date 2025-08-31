@@ -25,6 +25,7 @@ return new class extends Migration
             $table->tinyInteger('bitRequired');
             $table->integer('intFieldOrder');
             $table->json('jsonFieldValidation');
+            $table->tinyInteger('bitAkademik');
             $table->tinyInteger('bitActive');
             $table->string('txtInsertedBy');
             $table->datetime('txtInserted');

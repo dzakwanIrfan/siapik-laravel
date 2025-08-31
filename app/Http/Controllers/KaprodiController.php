@@ -26,6 +26,7 @@ class KaprodiController extends Controller
             ->join('mahasiswa_profiles', 'users.intUser_ID', '=', 'mahasiswa_profiles.intUser_ID')
             ->when($majorId, fn ($q) => $q->where('mahasiswa_profiles.intMajor_ID', $majorId))
             ->where('submissions.bitActive', 1)
+            ->where('submissions.txtStatus', 'Sedang ditinjau Kaprodi')
             ->select([
                 'submissions.*',
                 'letter_types.txtNameLetterType as letter_type',
