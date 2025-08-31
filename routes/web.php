@@ -53,6 +53,7 @@ Route::group(['middleware' => ['role:kaprodi']], function() {
     Route::prefix('kaprodi')->controller(KaprodiController::class)->name('kaprodi.')->group(function () {
         Route::get('/submissions', 'index')->name('submissions.index');
         Route::get('/submissions/datatable', 'indexDatatable')->name('submissions.index.datatable');
+        Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
     });
 });
 
