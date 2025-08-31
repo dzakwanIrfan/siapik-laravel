@@ -54,6 +54,9 @@ Route::group(['middleware' => ['role:kaprodi']], function() {
         Route::get('/submissions', 'index')->name('submissions.index');
         Route::get('/submissions/datatable', 'indexDatatable')->name('submissions.index.datatable');
         Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
+        Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
+        Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
+        Route::put('/submissions/{submission}/process', 'processSubmission')->name('submissions.process');
     });
 });
 

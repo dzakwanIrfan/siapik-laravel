@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->string('txtReceiptNumber')->unique();
 
             // status sederhana
-            $table->enum('txtStatus', ['Sedang ditinjau Kaprodi'])->default('Sedang ditinjau Kaprodi');
+            $table->enum('txtStatus', ['Sedang ditinjau Kaprodi', 'Disetujui Kaprodi', 'Ditolak Kaprodi'])->default('Sedang ditinjau Kaprodi');
 
             $table->tinyInteger('bitActive')->default(1);
             $table->string('txtInsertedBy')->nullable();
