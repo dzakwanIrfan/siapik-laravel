@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surat Izin Penelitian - Universitas Halu Oleo</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm 1cm;
+        }
+        
+        @media print {
+            body {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0cm 1cm !important;
+                box-shadow: none !important;
+                min-height: auto !important;
+                font-size: 12pt !important;
+            }
+            
+            .header {
+                margin-bottom: 30px !important;
+                page-break-inside: avoid;
+            }
+            
+            .signature {
+                page-break-inside: avoid;
+                margin-top: 40px !important;
+            }
+            
+            .thesis-title {
+                page-break-inside: avoid;
+                margin: 25px 0 !important;
+            }
+        }
+        
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.2;
+            margin: 0;
+            padding: 2cm;
+            background-color: white;
+            color: #000;
+            width: 210mm;
+            max-width: 210mm;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            min-height: 297mm;
+            box-sizing: border-box;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+        }
+        
+        .logo {
+            width: 115px;
+            height: 115px;
+            margin-right: 20px;
+            object-fit: contain;
+        }
+        
+        .header-text {
+            flex: 1;
+        }
+        
+        .header h1 {
+            font-size: 14pt;
+            font-weight: 400;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        
+        .header h2 {
+            font-size: 14pt;
+            font-weight: 400;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        
+        .header h3 {
+            font-size: 14pt;
+            font-weight: 600;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        
+        .header .address {
+            font-size: 11pt;
+            margin: 0px 0 5px 0;
+            line-height: 1.2;
+        }
+        
+        .letter-head {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12pt;
+        }
+        
+        .letter-head .left {
+            text-align: left;
+        }
+        
+        .letter-head .right {
+            text-align: right;
+        }
+        
+        .subject {
+            margin: 5px 0;
+            font-size: 12pt;
+        }
+        
+        .recipient {
+            margin: 25px 0;
+            font-size: 12pt;
+            line-height: 1.2;
+        }
+        
+        .content {
+            margin: 20px 0 10px 0;
+            text-align: justify;
+            line-height: 1.2;
+        }
+        
+        .student-info {
+            margin: 10px 0;
+            line-height: 1.2;
+        }
+        
+        .thesis-title {
+            margin: 10px 0;
+            font-weight: bold;
+            text-align: left;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+        
+        .closing {
+            margin-top: 10px;
+            text-align: justify;
+        }
+        
+        .signature {
+            margin-top: 60px;
+            float: right;
+            text-align: left;
+            clear: both;
+        }
+        
+        .signature-title {
+            margin-bottom: 20px;
+        }
+        
+        .signature-name {
+            font-weight: bold;
+            margin-top: 80px;
+            text-decoration: underline;
+        }
+        
+        .signature-nip {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .blank-line {
+            border-bottom: 1px solid #000;
+            display: inline-block;
+            width: 150px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ asset('images/logo.png') }}" alt="Logo Universitas Halu Oleo" class="logo">
+        <div class="header-text">
+            <h1>Kementerian Pendidikan Tinggi, Sains<br>dan Teknologi</h1>
+            <h2>Universitas Halu Oleo</h2>
+            <h3>Program Pascasarjana</h3>
+            <div class="address">
+                Kampus Pascasarjana Jl. Mayjen S.Parman Kemaraya Kendari, 93121<br>
+                Telp/Fax (0401) 3127187, Email : ppsuho@uho.ac.id, Web. : www.pasca.uho.ac.id
+            </div>
+        </div>
+    </div>
+    
+    <div class="letter-head">
+        <div class="left">
+            Nomor : 
+        </div>
+        <div class="right">
+            Kendari, {{ date('d F Y') }}
+        </div>
+    </div>
+    
+    <div class="subject">
+        Perihal : Izin Penelitian
+    </div>
+    
+    <div class="recipient">
+        Yth. {{ $data['txtTujuanSurat'] ?? 'Kepala Dinas Terkait' }}<br>
+        Di-<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempat
+    </div>
+    
+    <div class="content">
+        Yang bertanda tangan di bawah ini Direktur Program Pascasarjana Universitas Halu Oleo menerangkan bahwa :
+    </div>
+    
+    <div class="student-info">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 200px; padding: 0;">Nama</td>
+                <td style="padding: 0;">: {{ $submission->user->txtFullName ?? 'NAMA MAHASISWA' }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 0;">NIM</td>
+                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->txtNIM ?? 'NIM MAHASISWA' }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 0;">Program Studi</td>
+                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->major->txtNameMajor ?? 'PROGRAM STUDI' }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 0;">Jenjang Pendidikan</td>
+                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->major->txtStrata == 'S2' ? 'Magister S2' : 'Doktor S3' }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="content">
+        Bahwa sehubungan dengan rencana penulisan tesis/disertasi, sebagai salah satu syarat untuk memperoleh gelar {{ $submission->user->mahasiswaProfile->major->txtTitle }} ({{ $submission->user->mahasiswaProfile->major->txtShortTitle }}) pada Prodi {{ $submission->user->mahasiswaProfile->major->txtNameMajor }} Pascasarjana UHO, maka mahasiswa tersebut diwajibkan melaksanakan penelitian sehubungan dengan judul tesis/disertasi yang diajukan yaitu :
+    </div>
+    
+    <div class="thesis-title">
+        {{ $data['txtJudulTesis'] ?? 'JUDUL TESIS BELUM DIISI' }}
+    </div>
+    
+    <div class="closing">
+        Demikian penyampaian kami, atas perhatian dan kerjasama yang baik diucapkan terima kasih.
+    </div>
+    
+    <div class="signature">
+        <div style="margin-bottom: 20px;">
+            Wakil Direktur Bidang Akademik & Kerjasama<br>
+            Program Pascasarjana UHO,
+        </div>
+        
+        <div class="signature-name">
+            Prof. Dr.Eng. Minson Simatupang, S.T., M.T.
+        </div>
+        <div class="signature-nip">
+            NIP 196705021995121001
+        </div>
+    </div>
+</body>
+</html>

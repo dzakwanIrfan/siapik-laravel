@@ -18,7 +18,7 @@ class LetterTypeSeed extends Seeder
                 'txtNameLetterType' => 'Surat Izin Penelitian',
                 'txtCode' => 'SIP',
                 'txtDescription' => 'Pengajuan Surat Izin Penelitian bagi Mahasiswa Pascasarjana Universitas Halu Oleo',
-                'txtTemplatePath' => 'path/to/template_a',
+                'txtTemplatePath' => 'templates.surat_izin_penelitian',
                 'bitActive' => 1,
                 'txtInsertedBy' => 'Seeder',
                 'txtInserted' => now(),
