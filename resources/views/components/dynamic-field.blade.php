@@ -46,7 +46,7 @@
     @case('email')
     @case('number')
       <input
-        type="number"
+        type="text"
         class="form-control bg-white shadow-sm @error("fields.$name") is-invalid @enderror"
         id="{{ $name }}"
         name="fields[{{ $name }}]"

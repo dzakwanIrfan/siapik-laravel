@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MajorController;
+use App\Http\Controllers\KaprodiController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LetterTypeController;
 use App\Http\Controllers\SubmissionController;
@@ -46,6 +47,14 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
     Route::get('/my-submissions/datatable', [SubmissionController::class, 'mySubmissionsDatatable'])->name('index.datatable');
 
     Route::get('/submissions/{submission}/statuses/data', [SubmissionController::class, 'submissionStatusesDatatable'])->name('statuses.data');
+});
+
+Route::group(['middleware' => ['role:kaprodi']], function() {
+    Route::prefix('kaprodi')->controller(KaprodiController::class)->name('kaprodi.')->group(function () {
+        Route::get('/submissions', 'index')->name('submissions.index');
+        Route::get('/submissions/datatable', 'indexDatatable')->name('submissions.index.datatable');
+        Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
+    });
 });
 
 Route::group(['middleware' => ['role:akademik']], function () {
