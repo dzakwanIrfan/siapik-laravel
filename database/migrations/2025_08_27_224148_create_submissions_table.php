@@ -19,6 +19,7 @@ return new class extends Migration {
 
             // nomor tanda terima/receipt
             $table->string('txtReceiptNumber')->unique();
+            $table->string('txtLetterNumber')->unique()->nullable();
 
             // status sederhana
             $table->enum('txtStatus', ['Sedang ditinjau Kaprodi', 'Disetujui Kaprodi', 'Ditolak Kaprodi'])->default('Sedang ditinjau Kaprodi');

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surat Izin Penelitian - Universitas Halu Oleo</title>
+    <title>Surat Keterangan Tidak Terima Beasiswa - Universitas Halu Oleo</title>
     <style>
         @page {
             size: A4;
@@ -22,7 +22,7 @@
             }
             
             .header {
-                margin-bottom: 30px !important;
+                margin-bottom: 25px !important;
                 page-break-inside: avoid;
             }
             
@@ -31,9 +31,9 @@
                 margin-top: 40px !important;
             }
             
-            .thesis-title {
+            .letter-title {
                 page-break-inside: avoid;
-                margin: 25px 0 !important;
+                margin: 10px 0 5px 0 !important;
             }
         }
         
@@ -58,7 +58,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             border-bottom: 2px solid #000;
         }
         
@@ -100,29 +100,19 @@
             line-height: 1.2;
         }
         
-        .letter-head {
-            display: flex;
-            justify-content: space-between;
+        .letter-title {
+            text-align: center;
+            font-weight: bold;
             font-size: 12pt;
+            margin: 10px 0 5px 0;
+            text-transform: uppercase;
+            line-height: 1.3;
         }
         
-        .letter-head .left {
-            text-align: left;
-        }
-        
-        .letter-head .right {
-            text-align: right;
-        }
-        
-        .subject {
-            margin: 5px 0;
+        .letter-number {
+            text-align: center;
             font-size: 12pt;
-        }
-        
-        .recipient {
-            margin: 25px 0;
-            font-size: 12pt;
-            line-height: 1.2;
+            margin: 0px 0 25px 0;
         }
         
         .content {
@@ -136,16 +126,8 @@
             line-height: 1.2;
         }
         
-        .thesis-title {
-            margin: 10px 0;
-            font-weight: bold;
-            text-align: left;
-            text-transform: uppercase;
-            line-height: 1.2;
-        }
-        
         .closing {
-            margin-top: 10px;
+            margin-top: 20px;
             text-align: justify;
         }
         
@@ -154,6 +136,10 @@
             float: right;
             text-align: left;
             clear: both;
+        }
+        
+        .signature-date {
+            margin-bottom: 15px;
         }
         
         .signature-title {
@@ -193,42 +179,36 @@
         </div>
     </div>
     
-    <div class="letter-head">
-        <div class="left">
-            Nomor : {{ $submission->txtLetterNumber ?? 'Belum diisi oleh Akademik' }}
-        </div>
-        <div class="right">
-            Kendari, {{ tanggal_indo(now()) }}
-        </div>
+    <div class="letter-title">
+        Surat Keterangan<br>
+        <span style="text-decoration: underline;">Tidak Sedang Menerima Beasiswa Dari Sumber Lain</span>
     </div>
     
-    <div class="subject">
-        Perihal : Izin Penelitian
-    </div>
-    
-    <div class="recipient">
-        Yth. {{ $data['txtTujuanSurat'] ?? 'Kepala Dinas Terkait' }}<br>
-        Di-<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempat
+    <div class="letter-number">
+        Nomor : {{ $submission->txtLetterNumber ?? 'Belum diisi oleh Akademik' }}
     </div>
     
     <div class="content">
-        Yang bertanda tangan di bawah ini Direktur Program Pascasarjana Universitas Halu Oleo menerangkan bahwa :
+        Yang bertanda tangan dibawah ini Direktur Program Pascasarjana Universitas Halu Oleo menerangkan bahwa :
     </div>
     
-    <div class="student-info">
+    <div class="student-info" style="margin-left: 1cm">
         <table style="width: 100%; border: none;">
             <tr>
                 <td style="width: 200px; padding: 0;">Nama</td>
-                <td style="padding: 0;">: {{ $submission->user->txtFullName ?? 'NAMA MAHASISWA' }}</td>
+                <td style="padding: 0;">: {{ $submission->user->txtFullName }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 0;">Tempat & Tanggal Lahir</td>
+                <td style="padding: 0;">: {{ $submission->user->txtBirthPlace }}, {{ tanggal_indo($submission->user->dtmBirthDate) }}</td>
             </tr>
             <tr>
                 <td style="padding: 0;">NIM</td>
-                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->txtNIM ?? 'NIM MAHASISWA' }}</td>
+                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->txtNIM }}</td>
             </tr>
             <tr>
                 <td style="padding: 0;">Program Studi</td>
-                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->major->txtNameMajor ?? 'PROGRAM STUDI' }}</td>
+                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->major->txtNameMajor }}</td>
             </tr>
             <tr>
                 <td style="padding: 0;">Jenjang Pendidikan</td>
@@ -238,21 +218,21 @@
     </div>
     
     <div class="content">
-        Bahwa sehubungan dengan rencana penulisan tesis/disertasi, sebagai salah satu syarat untuk memperoleh gelar {{ $submission->user->mahasiswaProfile->major->txtTitle }} ({{ $submission->user->mahasiswaProfile->major->txtShortTitle }}) pada Prodi {{ $submission->user->mahasiswaProfile->major->txtNameMajor }} Pascasarjana UHO, maka mahasiswa tersebut diwajibkan melaksanakan penelitian sehubungan dengan judul tesis/disertasi yang diajukan yaitu :
-    </div>
-    
-    <div class="thesis-title">
-        {{ $data['txtJudulTesis'] ?? 'JUDUL TESIS BELUM DIISI' }}
+        Adalah benar mahasiswa Program Pascasarjana Universitas Halu Oleo pada Program Studi {{ $submission->user->mahasiswaProfile->major->txtNameMajor }} yang masih aktif dan berdasarkan surat pernyataan yang dibuat mahasiswa tersebut yang bersangkutan tidak sedang mendapatkan beasiswa dari sumber lain pada Tahun 2025.
     </div>
     
     <div class="closing">
-        Demikian penyampaian kami, atas perhatian dan kerjasama yang baik diucapkan terima kasih.
+        Demikian surat keterangan ini kami berikan untuk dapat dipergunakan dan apabila terdapat kekeliruan akan diperbaiki sebagaimana mestinya.
     </div>
     
     <div class="signature">
-        <div style="margin-bottom: 20px;">
+        <div class="signature-date">
+            Kendari, {{ tanggal_indo(now()) }}
+        </div>
+        
+        <div class="signature-title">
             Wakil Direktur Bidang Akademik & Kerjasama<br>
-            Program Pascasarjana UHO,
+            Pascasarjana Universitas Halu Oleo,
         </div>
         
         <div class="signature-name">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surat Izin Penelitian - Universitas Halu Oleo</title>
+    <title>Surat Pengantar TOEFL - Universitas Halu Oleo</title>
     <style>
         @page {
             size: A4;
@@ -29,11 +29,6 @@
             .signature {
                 page-break-inside: avoid;
                 margin-top: 40px !important;
-            }
-            
-            .thesis-title {
-                page-break-inside: avoid;
-                margin: 25px 0 !important;
             }
         }
         
@@ -104,6 +99,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 12pt;
+            margin-bottom: 5px;
         }
         
         .letter-head .left {
@@ -114,7 +110,7 @@
             text-align: right;
         }
         
-        .subject {
+        .letter-meta {
             margin: 5px 0;
             font-size: 12pt;
         }
@@ -131,21 +127,18 @@
             line-height: 1.2;
         }
         
+        .signatory-info {
+            margin: 10px 0;
+            line-height: 1.2;
+        }
+        
         .student-info {
             margin: 10px 0;
             line-height: 1.2;
         }
         
-        .thesis-title {
-            margin: 10px 0;
-            font-weight: bold;
-            text-align: left;
-            text-transform: uppercase;
-            line-height: 1.2;
-        }
-        
         .closing {
-            margin-top: 10px;
+            margin-top: 20px;
             text-align: justify;
         }
         
@@ -202,64 +195,80 @@
         </div>
     </div>
     
-    <div class="subject">
-        Perihal : Izin Penelitian
+    <div class="letter-meta">
+        Lampiran : 1 ( Satu ) Berkas<br>
+        Hal : Rekomendasi Mengikuti Test TOEFL
     </div>
     
     <div class="recipient">
-        Yth. {{ $data['txtTujuanSurat'] ?? 'Kepala Dinas Terkait' }}<br>
+        Kepada<br>
+        Yth. Ketua UPT Bahasa Universitas Halu Oleo<br>
         Di-<br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempat
     </div>
     
     <div class="content">
-        Yang bertanda tangan di bawah ini Direktur Program Pascasarjana Universitas Halu Oleo menerangkan bahwa :
+        Yang bertanda tangan dibawah ini :
     </div>
     
-    <div class="student-info">
+    <div class="signatory-info">
         <table style="width: 100%; border: none;">
             <tr>
-                <td style="width: 200px; padding: 0;">Nama</td>
-                <td style="padding: 0;">: {{ $submission->user->txtFullName ?? 'NAMA MAHASISWA' }}</td>
+                <td style="width: 120px; padding: 0;">Nama</td>
+                <td style="padding: 0;">: Umar Boki., S.H, M.H</td>
             </tr>
             <tr>
-                <td style="padding: 0;">NIM</td>
-                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->txtNIM ?? 'NIM MAHASISWA' }}</td>
+                <td style="padding: 0;">Jabatan</td>
+                <td style="padding: 0;">: Kasubag Akademik dan Kemahasiswaan Pascasarjana</td>
             </tr>
             <tr>
-                <td style="padding: 0;">Program Studi</td>
-                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->major->txtNameMajor ?? 'PROGRAM STUDI' }}</td>
-            </tr>
-            <tr>
-                <td style="padding: 0;">Jenjang Pendidikan</td>
-                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->major->txtStrata == 'S2' ? 'Magister S2' : 'Doktor S3' }}</td>
+                <td style="padding: 0;">Unit Kerja</td>
+                <td style="padding: 0;">: Pascasarjana UHO</td>
             </tr>
         </table>
     </div>
     
     <div class="content">
-        Bahwa sehubungan dengan rencana penulisan tesis/disertasi, sebagai salah satu syarat untuk memperoleh gelar {{ $submission->user->mahasiswaProfile->major->txtTitle }} ({{ $submission->user->mahasiswaProfile->major->txtShortTitle }}) pada Prodi {{ $submission->user->mahasiswaProfile->major->txtNameMajor }} Pascasarjana UHO, maka mahasiswa tersebut diwajibkan melaksanakan penelitian sehubungan dengan judul tesis/disertasi yang diajukan yaitu :
+        Dengan ini menerangkan bahwa :
     </div>
     
-    <div class="thesis-title">
-        {{ $data['txtJudulTesis'] ?? 'JUDUL TESIS BELUM DIISI' }}
+    <div class="student-info">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 120px; padding: 0;">Nama</td>
+                <td style="padding: 0;">: {{ $submission->user->txtFullName }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 0;">NIM</td>
+                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->txtNIM }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 0;">Program Studi</td>
+                <td style="padding: 0;">: {{ $submission->user->mahasiswaProfile->major->txtNameMajor }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="content">
+        Yang bersangkutan adalah benar benar mahasiswa Pascasarjana universitas Halu Oleo yang masih aktif pada Tahun Ajaran 2025/2026 Semester Ganjil Untuk Mengikuti Test TOEFL di UPT Bahasa Universitas Halu Oleo.
     </div>
     
     <div class="closing">
-        Demikian penyampaian kami, atas perhatian dan kerjasama yang baik diucapkan terima kasih.
+        Demikian surat Rekomendasi ini dibuat untuk dapat digunakan sebagaimana mestinya.
     </div>
     
     <div class="signature">
-        <div style="margin-bottom: 20px;">
-            Wakil Direktur Bidang Akademik & Kerjasama<br>
-            Program Pascasarjana UHO,
+        <div class="signature-title">
+            An. Kepala Bagian Tata Usaha Pascasarjana<br>
+            Kasubag Akademik dan Kemahasiswaan<br>
+            Pascasarjana Universitas Halu Oleo
         </div>
         
         <div class="signature-name">
-            Prof. Dr.Eng. Minson Simatupang, S.T., M.T.
+            Umar Boki., S.H, M.H
         </div>
         <div class="signature-nip">
-            NIP 196705021995121001
+            NIP 196407031991031004
         </div>
     </div>
 </body>
