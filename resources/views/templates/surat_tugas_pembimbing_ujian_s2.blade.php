@@ -140,7 +140,7 @@
 <body>
     <div class="page">
         <div class="header">
-            <img src="../../public/images/logo.png" alt="Logo Universitas Halu Oleo" class="logo"/>
+            <img src="{{ asset('images/logo.png') }}" alt="Logo Universitas Halu Oleo" class="logo"/>
             <div class="header-text">
                 <h1>Kementerian Pendidikan Tinggi, Sains<br/>dan Teknologi</h1>
                 <h2>Universitas Halu Oleo</h2>
@@ -152,14 +152,14 @@
             </div>
         </div>
 
-        <div class="letter-title">Surat Tugas Pembimbing Seminar Proposal</div>
+        <div class="letter-title">Surat Tugas Pembimbing {{ $data['txtJenisUjian'] }}</div>
 
         <div class="letter-number">
-            Nomor : <span class="blank-line"></span>/UN29.19.1/KR/2025
+            Nomor : {{ $submission->txtLetterNumber ?? 'Belum diisi oleh Akademik' }}
         </div>
 
         <div class="reference">
-            Berdasarkan Keputusan Direktur Universitas Halu Oleo nomor : <span class="blank-line-medium"></span> tanggal <span class="blank-line-short"></span> tentang penetapan dosen penguji Ujian Tesis, maka saudara yang namanya tercantum dibawah ini :
+            Berdasarkan Keputusan Direktur Universitas Halu Oleo nomor : {{ $submission->txtLetterNumber ?? 'Belum diisi oleh Akademik' }} tanggal {{ tanggal_indo(now()) }} tentang penetapan dosen penguji {{ $data['txtJenisUjian'] }}, maka saudara yang namanya tercantum dibawah ini :
         </div>
 
         <table class="examiners-table">
@@ -173,24 +173,24 @@
         <tbody>
             <tr>
             <td style="text-align:center; padding:1px;">1</td>
-            <td style="padding:1px 5px;"><span class="blank-line-medium"></span></td>
+            <td style="padding:1px 5px;">{{ $data['txtKetua'] ?? '-' }}</td>
             <td style="padding:1px; text-align:center;">Ketua</td>
             </tr>
             <tr>
             <td style="text-align:center; padding:1px;">2</td>
-            <td style="padding:1px 5px;"><span class="blank-line-medium"></span></td>
+            <td style="padding:1px 5px;">{{ $data['txtSekretaris'] ?? '-' }}</td>
             <td style="padding:1px; text-align:center;">Sekretaris</td>
             </tr>
             <tr>
             <td style="text-align:center; padding:1px;">3</td>
-            <td style="padding:1px 5px;">Prof. Dr. Ine Fausayana, SE., M.Si.</td>
+            <td style="padding:1px 5px;">{{ $data['txtAnggota1'] ?? '-' }}</td>
             <td style="padding:1px; text-align:center;">Anggota</td>
             </tr>
             <tr>
             <td style="text-align:center; padding:1px;">4</td>
             <td style="padding:1px 5px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Dr. Ir. Anas Nikoyan, M.Si.</span>
+                    <span>{{ $data['txtPembimbing1'] ?? '-' }}</span>
                     <span>(P.1)</span>
                 </div>
             </td>
@@ -200,7 +200,7 @@
             <td style="text-align:center; padding:1px;">5</td>
             <td style="padding:1px 5px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Prof. Dr. Iskandar, S.P., M.Si.</span>
+                    <span>{{ $data['txtPembimbing2'] ?? '-' }}</span>
                     <span>(P.2)</span>
                 </div>
             </td>
@@ -216,17 +216,17 @@
                 <tr>
                     <td style="width:150px; padding:0;">Nama</td>
                     <td style="padding:0;">:</td>
-                    <td style="padding:0;">ARWIN</td>
+                    <td style="padding:0;">{{ $submission->user->txtFullName }}</td>
                 </tr>
                 <tr>
                     <td style="padding:0;">Nomor Registrasi</td>
                     <td style="padding:0;">:</td>
-                    <td style="padding:0;">G3IP20023</td>
+                    <td style="padding:0;">{{ $submission->user->mahasiswaProfile->txtNIM }}</td>
                 </tr>
                 <tr>
                     <td style="padding:0;">Program Studi</td>
                     <td style="padding:0;">:</td>
-                    <td style="padding:0;">Ilmu Pertanian (S3)</td>
+                    <td style="padding:0;">{{ $submission->user->mahasiswaProfile->major->txtNameMajor }}</td>
                 </tr>
             </table>
         </div>
@@ -238,22 +238,22 @@
                 <tr>
                     <td style="width:150px; padding:0;">Hari/Tanggal</td>
                     <td style="padding:0 5px;">:</td>
-                    <td style="padding:0;"><span class="blank-line-medium"></span></td>
+                    <td style="padding:0;">{{ $data['txtHariTanggal'] ?? 'Belum diisi oleh Akademik' }}</td>
                 </tr>
                 <tr>
                     <td style="padding:0;">Jam</td>
                     <td style="padding:0 5px;">:</td>
-                    <td style="padding:0;"><span class="blank-line-medium"></span></td>
+                    <td style="padding:0;">{{ $data['txtJam'] ?? 'Belum diisi oleh Akademik' }}</td>
                 </tr>
                 <tr>
                     <td style="padding:0;">Tempat</td>
                     <td style="padding:0 5px;">:</td>
-                    <td style="padding:0;"><span class="blank-line-medium"></span></td>
+                    <td style="padding:0;">{{ $data['txtTempat'] ?? 'Belum diisi oleh Akademik' }}</td>
                 </tr>
                 <tr>
                     <td style="padding:0; vertical-align:top;">Judul</td>
                     <td style="padding:0 5px; vertical-align:top;">:</td>
-                    <td style="padding:0; vertical-align:top; text-align:justify;">Modal Manusia dan Modal Sosial Pada Kinerja Lembaga Ekonomi Masyarakat (LEM) Sejahtera Dalam Pengembangan Agribisnis di Sentra Produksi Kakao Sulawesi Tenggara</td>
+                    <td style="padding:0; vertical-align:top; text-align:justify;">{{ $data['txtJudul'] }}</td>
                 </tr>
             </table>
         </div>
@@ -261,7 +261,7 @@
         <div class="content">Demikian penugasan ini untuk dilaksanakan dengan penuh tanggung jawab.</div>
 
         <div class="signature">
-            <div class="signature-date">Kendari, 23 August 2025</div>
+            <div class="signature-date">Kendari, {{ tanggal_indo(now()) }}</div>
             <div class="signature-title">
                 Wakil Direktur Bidang Akademik & Kemahasiswaan<br/>
                 Pascasarjana Universitas Halu Oleo,
@@ -288,18 +288,18 @@
                 </tr>
                 <tr>
                     <td style="vertical-align:top;">Nomor</td>
-                    <td style="vertical-align:top;">:</td>
+                    <td style="vertical-align:top;">: {{ $submission->txtLetterNumber ?? 'Belum diisi oleh Akademik' }}</td>
                     <td></td>
                 </tr>
                 <tr>
                     <td style="vertical-align:top;">Tanggal</td>
-                    <td style="vertical-align:top;">:</td>
+                    <td style="vertical-align:top;">: {{ tanggal_indo($submission->dtmLetterDate) }}</td>
                     <td></td>
                 </tr>
                 <tr>
                     <td style="vertical-align:top;">Tentang</td>
                     <td style="vertical-align:top;">:</td>
-                    <td style="text-align:justify;">Pengangkatan Dosen Pembimbing Seminar Proposal Mahasiswa Program Studi Ilmu Ekonomi Pascasarjana Universitas Haluoleo.</td>
+                    <td style="text-align:justify;">Pengangkatan Dosen Pembimbing {{ $data['txtJenisUjian'] }} Mahasiswa Program Studi {{ $submission->user->mahasiswaProfile->major->txtNameMajor }} Pascasarjana Universitas Haluoleo.</td>
                 </tr>
             </tbody>
         </table>
@@ -318,33 +318,43 @@
                 <tr>
                     <td style="text-align:center; vertical-align:top; text-align: center; border: 1px solid black; padding: 5px; text-align: center;">01</td>
                     <td style="vertical-align:top; text-align: center; border: 1px solid black; padding: 5px; text-align: center;">
-                        <div>ARWIN</div>
-                        <div style="margin-top:2px;">G3IP20023</div>
+                        <div>{{ $submission->user->txtFullName }}</div>
+                        <div style="margin-top:2px;">{{ $submission->user->mahasiswaProfile->txtNIM }}</div>
                     </td>
-                    <td style="vertical-align:top; text-align: center; border: 1px solid black; padding: 5px; text-align: center;">Modal Manusia dan Modal Sosial Pada Kinerja Lembaga Ekonomi Masyarakat (LEM) Sejahtera Dalam Pengembangan Agribisnis di Sentra Produksi Kakao Sulawesi Tenggara</td>
-                    <td style="vertical-align:top; text-align: center; border: 1px solid black; padding: 5px; text-align: center;">Ilmu Pertanian (S3)</td>
+                    <td style="vertical-align:top; text-align: center; border: 1px solid black; padding: 5px; text-align: center;">{{ $data['txtJudul'] }}</td>
+                    <td style="vertical-align:top; text-align: center; border: 1px solid black; padding: 5px; text-align: center;">{{ $submission->user->mahasiswaProfile->major->txtNameMajor }}</td>
                     <td style="vertical-align:top; border: 1px solid black; padding: 5px; text-align: center; width: 100%;">
                         <table style="width:100%; border-collapse:collapse; border: 0 solid black; margin: 0 auto;">
-                            <tr style="text-align: left;">
-                                <td style="width: 100px;">Ketua</td>
-                                <td>: -</td>
-                            </tr>
-                            <tr style="text-align: left;">
-                                <td>Sekretaris</td>
-                                <td>: -</td>
-                            </tr>
-                            <tr style="text-align: left;">
-                                <td>Anggota</td>
-                                <td>: -</td>
-                            </tr>
-                            <tr style="text-align: left;">
-                                <td>Pembimbing 1</td>
-                                <td>: -</td>
-                            </tr>
-                            <tr style="text-align: left;">
-                                <td>Pembimbing 2</td>
-                                <td>: -</td>
-                            </tr>
+                            @if ($data['txtKetua'])
+                                <tr style="text-align: left;">
+                                    <td style="width: 100px;">Ketua</td>
+                                    <td>: {{ $data['txtKetua'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtSekretaris'])
+                                <tr style="text-align: left;">
+                                    <td style="width: 100px;">Sekretaris</td>
+                                    <td>: {{ $data['txtSekretaris'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtAnggota'])
+                                <tr style="text-align: left;">
+                                    <td>Anggota</td>
+                                    <td>: {{ $data['txtAnggota'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtPembimbing1'])
+                                <tr style="text-align: left;">
+                                    <td>Pembimbing 1</td>
+                                    <td>: {{ $data['txtPembimbing1'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtPembimbing2'])
+                                <tr style="text-align: left;">
+                                    <td>Pembimbing 2</td>
+                                    <td>: {{ $data['txtPembimbing2'] }}</td>
+                                </tr>
+                            @endif
                         </table>
                     </td>
                 </tr>
@@ -359,7 +369,7 @@
                 <div>KEPUTUSAN</div>
                 <div>DIREKTUR PASCASARJANA</div>
                 <div>UNIVERSITAS HALU OLEO</div>
-                <div>NOMOR : <span style="width: 1cm; display: inline-block"></span> /UN29.19/ KR /2023<div>
+                <div>NOMOR: {{ $submission->txtLetterNumber ?? 'Belum diisi oleh Akademik' }}</div>
                 <div>Tentang</div>
                 <div>PENETAPAN DOSEN PENGUJI PADA SEMINAR PROPOSAL MAHASISWA</div>
                 <div>PASCASARJANA UNIVERSITAS HALU OLEO</div>
@@ -527,7 +537,7 @@
                 <td colspan="3">
                     <table border="0" align="right" style="margin-top: 70px;">
                         <tr>
-                            <td>Kendari, 31 Januari 2023</td>
+                            <td>Kendari, {{ tanggal_indo(now()) }}</td>
                         </tr>
                         <tr>
                             <td style="padding-bottom: 70px">Direktur</td>
