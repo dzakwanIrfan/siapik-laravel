@@ -23,6 +23,7 @@ class LetterField extends Model
         'bitRequired',
         'intFieldOrder',
         'jsonFieldValidation',
+        'bitAkademik',
         'bitActive',
         'txtInsertedBy',
         'txtInserted',

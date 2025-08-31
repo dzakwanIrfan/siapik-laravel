@@ -64,7 +64,7 @@
     @endforelse
   </div>
 
-  <div class="modal fade" id="letterModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="letterModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header border-bottom">
@@ -97,13 +97,35 @@
 @push('scripts')
 <script>
 (function () {
-  const modal     = document.getElementById('letterModal');        // id modal kamu
-  const form      = document.getElementById('dynamicForm');        // <form id="dynamicForm" ... data-parsley-validate>
-  const wrap      = document.getElementById('dynamicFields');      // container isi form dinamis
-  const submitBtn = document.getElementById('btnDummySubmit');     // tombol submit di modal
+  const modal     = document.getElementById('letterModal');        
+  const form      = document.getElementById('dynamicForm');        
+  const wrap      = document.getElementById('dynamicFields');      
+  const submitBtn = document.getElementById('btnDummySubmit');     
 
-  // --- Helpers: inisialisasi plugin UI (tanpa custom CSS) ---
+  // NOTE: Tetap pakai nama initSelect2, tapi implementasinya pakai Choices.js jika tersedia.
   function initSelect2(scope) {
+    // ====== Pilih Choices.js sebagai default ======
+    if (typeof Choices !== 'undefined') {
+      scope.querySelectorAll('.default-select2, select[data-choices], .use-choices').forEach(function (el) {
+        if (el._choices) return; // hindari double init
+        try {
+          const isMultiple = !!el.multiple;
+          const placeholder = el.getAttribute('data-placeholder') || 'Pilih...';
+          el._choices = new Choices(el, {
+            shouldSort: false,
+            searchEnabled: true,
+            placeholder: true,
+            placeholderValue: placeholder,
+            removeItemButton: isMultiple, // tombol hapus untuk multi-select
+            itemSelectText: '',
+            position: 'auto'
+          });
+        } catch (e) { /* noop */ }
+      });
+      return;
+    }
+
+    // ====== Fallback ke Select2 (kalau memang ada) ======
     if (window.jQuery && jQuery.fn.select2) {
       jQuery(scope).find('.default-select2').each(function () {
         if (jQuery(this).data('select2')) return;
@@ -114,6 +136,7 @@
       });
     }
   }
+
   function initFlatpickr(scope) {
     if (window.flatpickr) {
       scope.querySelectorAll('.flatpickr-input').forEach(function (el) {
@@ -159,30 +182,37 @@
       successClass: 'is-valid',
       errorsWrapper: '<div class="invalid-feedback"></div>',
       errorTemplate: '<span></span>',
-      // taruh class invalid ke elemen yang kelihatan (select2/filepond)
+      // taruh class invalid ke elemen yang kelihatan (Choices.js / FilePond)
       classHandler: function (field) {
         const $el = field.$element;
-        // Select2
+
+        // Choices.js (prioritas utama sekarang)
+        const $choicesWrap = $el.closest('.choices');
+        if ($choicesWrap.length) return $choicesWrap;
+
+        // Select2 (fallback kalau ada di tempat lain)
         if ($el.hasClass('select2-hidden-accessible')) {
           return $el.next('.select2').find('.select2-selection');
         }
+
         // FilePond
         if ($el.hasClass('filepond') && $el.get(0)?._pond) {
           return jQuery($el.get(0)._pond.element);
         }
+
         // Default: input/textarea/select biasa
         return $el;
       },
       // letak pesan error
       errorsContainer: function (field) {
         const $el = field.$element;
-        return $el.closest('.form-group');
+        return $el.closest('.form-group').length ? $el.closest('.form-group') : $el.parent();
       }
     });
   }
 
   function initEnhancersAndParsley() {
-    initSelect2(wrap);
+    initSelect2(wrap);     // sekarang ini akan mem-boot Choices.js
     initFlatpickr(wrap);
     initFilePond(wrap);
     initParsley();
@@ -256,5 +286,3 @@
 })();
 </script>
 @endpush
-
-

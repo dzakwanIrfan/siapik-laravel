@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('txtCode')->unique();
             $table->string('txtDescription');
             $table->string('txtTemplatePath');
+            $table->tinyInteger('bitUjian')->default(0);
             $table->tinyInteger('bitActive');
             $table->string('txtInsertedBy');
             $table->datetime('txtInserted');

@@ -15,6 +15,7 @@ class LetterTypeSeed extends Seeder
     {
         $letter_types = [
             [
+                'bitUjian' => 0,
                 'txtNameLetterType' => 'Surat Izin Penelitian',
                 'txtCode' => 'SIP',
                 'txtDescription' => 'Pengajuan Surat Izin Penelitian bagi Mahasiswa Pascasarjana Universitas Halu Oleo',
@@ -26,6 +27,7 @@ class LetterTypeSeed extends Seeder
                 'txtUpdated' => now(),
             ],
             [
+                'bitUjian' => 0,
                 'txtNameLetterType' => 'Surat Keterangan Aktif Kuliah',
                 'txtCode' => 'SKAK',
                 'txtDescription' => 'Pengajuan Surat Keterangan Aktif Kuliah bagi Mahasiswa Universitas Halu Oleo',
@@ -37,6 +39,7 @@ class LetterTypeSeed extends Seeder
                 'txtUpdated' => now(),
             ],
             [
+                'bitUjian' => 0,
                 'txtNameLetterType' => 'Surat Keterangan Alumni',
                 'txtCode' => 'SKAL',
                 'txtDescription' => 'Pengajuan Surat Permohonan Keterangan Alumni Pascasarjana Universitas Halu Oleo',
@@ -48,6 +51,7 @@ class LetterTypeSeed extends Seeder
                 'txtUpdated' => now(),
             ],
             [
+                'bitUjian' => 0,
                 'txtNameLetterType' => 'Surat Keterangan Lulus',
                 'txtCode' => 'SKL',
                 'txtDescription' => 'Pengajuan Surat Keterangan Lulus bagi Mahasiswa Pascasarjana Universitas Halu Oleo',
@@ -59,6 +63,7 @@ class LetterTypeSeed extends Seeder
                 'txtUpdated' => now(),
             ],
             [
+                'bitUjian' => 0,
                 'txtNameLetterType' => 'Surat Pengantar TOEFL',
                 'txtCode' => 'SPT',
                 'txtDescription' => 'Pengajuan Surat Pengantar TOEFL Mahasiswa Pascasarjana Universitas Halu Oleo',
@@ -70,9 +75,46 @@ class LetterTypeSeed extends Seeder
                 'txtUpdated' => now(),
             ],
             [
+                'bitUjian' => 0,
                 'txtNameLetterType' => 'Surat Keterangan Tidak Menerima Beasiswa',
                 'txtCode' => 'SKTMB',
                 'txtDescription' => 'Pengajuan Surat Keterangan Tidak Sedang Menerima Beasiswa dari Sumber Lain',
+                'txtTemplatePath' => 'path/to/template_f',
+                'bitActive' => 1,
+                'txtInsertedBy' => 'Seeder',
+                'txtInserted' => now(),
+                'txtUpdatedBy' => 'Seeder',
+                'txtUpdated' => now(),
+            ],
+            [
+                'bitUjian' => 0,
+                'txtNameLetterType' => 'Surat Pengembalian ke Instansi',
+                'txtCode' => 'SPKI',
+                'txtDescription' => 'Pengajuan Surat Pengembalian ke Instansi bagi Mahasiswa Pascasarjana Universitas Halu Oleo yang telah menyesaiakan Studi',
+                'txtTemplatePath' => 'path/to/template_f',
+                'bitActive' => 1,
+                'txtInsertedBy' => 'Seeder',
+                'txtInserted' => now(),
+                'txtUpdatedBy' => 'Seeder',
+                'txtUpdated' => now(),
+            ],
+            [
+                'bitUjian' => 1,
+                'txtNameLetterType' => 'Usulan Ujian / Seminar Magister (S2)',
+                'txtCode' => 'UU2',
+                'txtDescription' => 'Pengajuan Surat Usulan Ujian / Seminar Magister (S2)',
+                'txtTemplatePath' => 'path/to/template_f',
+                'bitActive' => 1,
+                'txtInsertedBy' => 'Seeder',
+                'txtInserted' => now(),
+                'txtUpdatedBy' => 'Seeder',
+                'txtUpdated' => now(),
+            ],
+            [
+                'bitUjian' => 1,
+                'txtNameLetterType' => 'Usulan Ujian / Seminar Doktor (S3)',
+                'txtCode' => 'UU3',
+                'txtDescription' => 'Pengajuan Surat Usulan Ujian / Seminar Doktor (S3)',
                 'txtTemplatePath' => 'path/to/template_f',
                 'bitActive' => 1,
                 'txtInsertedBy' => 'Seeder',

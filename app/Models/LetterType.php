@@ -14,6 +14,7 @@ class LetterType extends Model
     protected $keyType = 'int';
 
         protected $fillable = [
+        'bitUjian',
         'txtNameLetterType',
         'txtCode',
         'txtDescription',
