@@ -190,7 +190,7 @@ class SubmissionController extends Controller
             SubmissionStatus::create([
                 'intSubmission_ID' => $submission->intSubmission_ID,
                 'txtStatus'        => 'Sedang ditinjau Kaprodi',
-                'txtInReview'      => 'Kaprodi',
+                'txtInReview'      => 'Persetujuan Kaprodi',
                 'bitActive'       => 1,
                 'txtInsertedBy'   => auth()->user()->txtFullName ?? 'System',
                 'dtmInserted'     => now(),

@@ -64,18 +64,34 @@
                     </a>
                 </li>
             @endhasrole
+            
+            @hasrole('kaprodi')
+                <li class="sidebar-item {{ request()->routeIs('kaprodi.submissions.index') ? 'active' : '' }}">
+                    <a href="{{ route('kaprodi.submissions.index') }}" class="sidebar-link">
+                        <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link">
+                        <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
+                    </a>
+                </li>
+            @endhasrole
 
-            <li class="sidebar-item {{ request()->routeIs('kaprodi.submissions.index') ? 'active' : '' }}">
-                <a href="{{ route('kaprodi.submissions.index') }}" class="sidebar-link">
-                    <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
-                </a>
-            </li>
-
-            <li class="sidebar-item">
-                <a href="" class="sidebar-link">
-                    <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
-                </a>
-            </li>
+            @hasrole('akademik')
+                <li class="sidebar-item {{ request()->routeIs('akademik.submissions.index') ? 'active' : '' }}">
+                    <a href="{{ route('akademik.submissions.index') }}" class="sidebar-link">
+                        <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link">
+                        <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
+                    </a>
+                </li>
+            @endhasrole
 
             @hasrole('akademik')
             <li class="sidebar-title">Admin</li>

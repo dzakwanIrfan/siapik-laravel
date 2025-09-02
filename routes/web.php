@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MajorController;
 use App\Http\Controllers\KaprodiController;
+use App\Http\Controllers\AkademikController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LetterTypeController;
 use App\Http\Controllers\SubmissionController;
@@ -51,6 +52,17 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
 
 Route::group(['middleware' => ['role:kaprodi']], function() {
     Route::prefix('kaprodi')->controller(KaprodiController::class)->name('kaprodi.')->group(function () {
+        Route::get('/submissions', 'index')->name('submissions.index');
+        Route::get('/submissions/datatable', 'indexDatatable')->name('submissions.index.datatable');
+        Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
+        Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
+        Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
+        Route::put('/submissions/{submission}/process', 'processSubmission')->name('submissions.process');
+    });
+});
+
+Route::group(['middleware' => ['role:akademik']], function() {
+    Route::prefix('akademik')->controller(AkademikController::class)->name('akademik.')->group(function () {
         Route::get('/submissions', 'index')->name('submissions.index');
         Route::get('/submissions/datatable', 'indexDatatable')->name('submissions.index.datatable');
         Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');

@@ -145,7 +145,7 @@
         colReorder: true,
         keys: true,
         rowReorder: true,
-        ajax: '{{ route('kaprodi.submissions.index.datatable') }}',
+        ajax: '{{ route('akademik.submissions.index.datatable') }}',
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'txtReceiptNumber', name: 'txtReceiptNumber' },
@@ -231,7 +231,7 @@
         
         // Fetch attachments
         $.ajax({
-            url: '{{ route("kaprodi.submissions.attachments", ":id") }}'.replace(':id', submissionId),
+            url: '{{ route("akademik.submissions.attachments", ":id") }}'.replace(':id', submissionId),
             method: 'GET',
             dataType: 'json',
             success: function(response) {
