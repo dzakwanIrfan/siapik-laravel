@@ -69,6 +69,9 @@ Route::group(['middleware' => ['role:akademik']], function() {
         Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
         Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
         Route::put('/submissions/{submission}/process', 'processSubmission')->name('submissions.process');
+
+        Route::get('/submissions/{submission}/edit', 'editSubmission')->name('submissions.edit');
+        Route::put('/submissions/{submission}/update', 'updateSubmission')->name('submissions.update');
     });
 });
 

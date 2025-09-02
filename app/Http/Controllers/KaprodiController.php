@@ -243,7 +243,7 @@ class KaprodiController extends Controller
                 'dtmUpdated' => now()
             ]);
 
-            $txtInReview = $newStatus === 'Disetujui Akademik' ? 'Menunggu dicetak' : 'Ditolak';
+            $txtInReview = $newStatus === 'Disetujui Kaprodi' ? 'Persetujuan Akademik' : 'Ditolak Kaprodi';
 
             SubmissionStatus::create([
                 'intSubmission_ID' => $submission->intSubmission_ID,
