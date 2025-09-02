@@ -106,15 +106,12 @@
                     <li class="submenu-item {{ request()->routeIs('concentrates.*') ? 'active' : '' }}">
                         <a href="{{ route('concentrates.index') }}">Konsentrasi</a>
                     </li>
-                    <li class="submenu-item"><a href="#">Level</a></li>
-                    <li class="submenu-item"><a href="#">Role</a></li>
                     <li class="submenu-item {{ request()->routeIs('letter-types.*') ? 'active' : '' }}">
                         <a href="{{ route('letter-types.index') }}">Jenis Surat</a>
                     </li>
                     <li class="submenu-item {{ request()->routeIs('letter-fields.*') ? 'active' : '' }}">
                         <a href="{{ route('letter-fields.index') }}">Field Surat</a>
                     </li>
-                    <li class="submenu-item"><a href="#">Requirement</a></li>
                 </ul>
             </li>
 

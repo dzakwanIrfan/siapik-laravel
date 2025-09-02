@@ -39,7 +39,7 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody></tbody> 
+                <tbody></tbody>
             </table>
         </div>
     </div>
@@ -54,7 +54,7 @@
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                
+
                 <div class="modal-body p-4">
                     <table id="submission-status-table" class="table table-striped table-bordered align-middle table-dark table-hover">
                         <thead>
@@ -70,7 +70,7 @@
                         <tbody><!-- server-side --></tbody>
                     </table>
                 </div>
-                
+
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 </div>
@@ -89,7 +89,7 @@
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                
+
                 <div class="modal-body p-4" id="attachmentContent">
                     <div class="text-center py-5" id="attachmentLoading">
                         <div class="spinner-border text-primary" role="status">
@@ -105,7 +105,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 </div>
@@ -166,24 +166,24 @@
     // Event delegation untuk tombol status modal
     $(document).on('click', '.show-status-modal', function(e) {
         e.preventDefault();
-        
+
         const submissionId = $(this).data('submissions-id');
         const typeName = $(this).data('type-name') || 'Submission';
-        
+
         if (!submissionId) {
             console.error('Submission ID not found');
             return;
         }
-        
+
         // Set judul modal
         $('#submissionModal .js-type-name').text(typeName);
-        
+
         // Siapkan URL ajax
         const urlTemplate = $('#submissionModal').data('url-template');
         const ajaxUrl = urlTemplate.replace('__ID__', submissionId);
-        
+
         console.log('Ajax URL:', ajaxUrl); // Debug
-        
+
         if (statusTable) {
             // Reload dengan submission yang baru
             statusTable.ajax.url(ajaxUrl).load();
@@ -205,7 +205,7 @@
                 destroy: true
             });
         }
-        
+
         // Show modal
         $('#submissionModal').modal('show');
     });
@@ -213,22 +213,22 @@
     // Event delegation untuk tombol attachment modal
     $(document).on('click', '.show-attachment-modal', function(e) {
         e.preventDefault();
-        
+
         const submissionId = $(this).data('submission-id');
-        
+
         if (!submissionId) {
             console.error('Submission ID not found');
             return;
         }
-        
+
         // Reset modal content
         $('#attachmentLoading').show();
         $('#attachmentList').hide();
         $('#attachmentError').hide();
-        
+
         // Show modal
         $('#attachmentModal').modal('show');
-        
+
         // Fetch attachments
         $.ajax({
             url: '{{ route("kaprodi.submissions.attachments", ":id") }}'.replace(':id', submissionId),
@@ -236,21 +236,21 @@
             dataType: 'json',
             success: function(response) {
                 $('#attachmentLoading').hide();
-                
+
                 if (response.success && response.data) {
                     const submission = response.data.submission;
                     const attachments = response.data.attachments;
-                    
+
                     // Set modal title and info
                     $('#attachmentModalLabel').text('Lampiran Dokumen - ' + submission.letter_type);
                     $('#attachmentSubmissionInfo').html(
                         '<strong>Pemohon:</strong> ' + submission.user_name + ' | ' +
                         '<strong>No. Pembuatan:</strong> ' + submission.receipt_number
                     );
-                    
+
                     if (attachments && attachments.length > 0) {
                         let attachmentHtml = '<div class="row">';
-                        
+
                         attachments.forEach(function(attachment, index) {
                             attachmentHtml += `
                                 <div class="col-md-6 mb-4">
@@ -258,14 +258,14 @@
                                         <div class="card-body">
                                             <h6 class="card-title text-truncate">${attachment.field_label}</h6>
                                             <p class="card-text text-muted small mb-3">${attachment.file_name}</p>
-                                            
+
                                             <div class="bg-light border rounded p-3 mb-3 text-center d-flex align-items-center justify-content-center" style="min-height: 200px;">`;
-                            
+
                             if (attachment.is_image) {
                                 attachmentHtml += `
-                                    <img src="${attachment.file_url}" 
-                                         alt="${attachment.field_label}" 
-                                         class="img-fluid rounded shadow-sm" 
+                                    <img src="${attachment.file_url}"
+                                         alt="${attachment.field_label}"
+                                         class="img-fluid rounded shadow-sm"
                                          style="max-height: 180px; object-fit: contain; cursor: pointer;"
                                          onclick="previewFile('${attachment.file_url}', '${attachment.field_label}', 'image')">`;
                             } else if (attachment.is_pdf) {
@@ -283,17 +283,17 @@
                                         <small class="text-muted">${attachment.file_name}</small>
                                     </div>`;
                             }
-                            
+
                             attachmentHtml += `
                                             </div>
-                                            
+
                                             <div class="d-flex gap-2">
-                                                <button type="button" class="btn btn-primary btn-sm flex-fill" 
+                                                <button type="button" class="btn btn-primary btn-sm flex-fill"
                                                         onclick="previewFile('${attachment.file_url}', '${attachment.field_label}', '${attachment.is_pdf ? 'pdf' : (attachment.is_image ? 'image' : 'other')}')">
                                                     <i class="fas fa-eye me-1"></i> Preview
                                                 </button>
-                                                <a href="${attachment.file_url}" 
-                                                   target="_blank" 
+                                                <a href="${attachment.file_url}"
+                                                   target="_blank"
                                                    class="btn btn-outline-primary btn-sm flex-fill"
                                                    download="${attachment.file_name}">
                                                     <i class="fas fa-download me-1"></i> Download
@@ -303,7 +303,7 @@
                                     </div>
                                 </div>`;
                         });
-                        
+
                         attachmentHtml += '</div>';
                         $('#attachmentList').html(attachmentHtml).show();
                     } else {
@@ -332,9 +332,9 @@
 function previewFile(fileUrl, fileName, fileType) {
     $('#filePreviewModalLabel').text(fileName);
     $('#downloadFileLink').attr('href', fileUrl);
-    
+
     let previewContent = '';
-    
+
     if (fileType === 'image') {
         previewContent = `<img src="${fileUrl}" class="img-fluid rounded shadow" alt="${fileName}" style="max-height: 80vh;">`;
     } else if (fileType === 'pdf') {
@@ -351,7 +351,7 @@ function previewFile(fileUrl, fileName, fileType) {
                 <p class="text-muted">Silakan download untuk melihat file</p>
             </div>`;
     }
-    
+
     $('#filePreviewContent').html(previewContent);
     $('#filePreviewModal').modal('show');
 }
