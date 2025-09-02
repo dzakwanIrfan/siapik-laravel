@@ -198,7 +198,7 @@ class AkademikController extends Controller
     {
         try {
             $submission = Submission::with(['letterType', 'user.mahasiswaProfile.major', 'values.letterField'])
-                ->whereIn('txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik'])
+                ->whereIn('txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik'])
                 ->findOrFail($submissionId);
 
             // Kumpulkan semua data dari submission values
@@ -228,7 +228,7 @@ class AkademikController extends Controller
     {
         try {
             $submission = Submission::with(['letterType', 'user.mahasiswaProfile.major', 'values.letterField'])
-                ->whereIn('txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik'])
+                ->whereIn('txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik'])
                 ->findOrFail($submissionId);
 
             // Kumpulkan semua data dari submission values
@@ -263,6 +263,7 @@ class AkademikController extends Controller
             DB::beginTransaction();
 
             $submission = Submission::findOrFail($submissionId);
+            $oldStatus = $submission->txtStatus;
 
             $newStatus = $request->action === 'approve' ? 'Disetujui Akademik' : 'Ditolak Akademik';
 
@@ -273,22 +274,24 @@ class AkademikController extends Controller
                 'dtmUpdated' => now()
             ]);
 
-            $submission_statuses->update([
-                'bitActive' => 0,
-                'txtUpdatedBy' => auth()->user()->txtFullName,
-                'dtmUpdated' => now()
-            ]);
-
-            $txtInReview = $newStatus === 'Disetujui Akademik' ? 'Menunggu dicetak' : 'Ditolak';
-
-            SubmissionStatus::create([
-                'intSubmission_ID' => $submission->intSubmission_ID,
-                'txtStatus' => $newStatus,
-                'txtInReview' => $txtInReview,
-                'txtInsertedBy' => auth()->user()->txtFullName,
-                'dtmInserted' => now(),
-                'bitActive' => 1
-            ]);
+            if ($oldStatus !== $newStatus) {
+                $submission_statuses->update([
+                    'bitActive' => 0,
+                    'txtUpdatedBy' => auth()->user()->txtFullName,
+                    'dtmUpdated' => now()
+                ]);
+    
+                $txtInReview = $newStatus === 'Disetujui Akademik' ? 'Menunggu dicetak' : 'Ditolak';
+    
+                SubmissionStatus::create([
+                    'intSubmission_ID' => $submission->intSubmission_ID,
+                    'txtStatus' => $newStatus,
+                    'txtInReview' => $txtInReview,
+                    'txtInsertedBy' => auth()->user()->txtFullName,
+                    'dtmInserted' => now(),
+                    'bitActive' => 1
+                ]);
+            }
 
             DB::commit();
 
@@ -296,7 +299,7 @@ class AkademikController extends Controller
                 ? 'Pengajuan surat berhasil disetujui!' 
                 : 'Pengajuan surat berhasil ditolak!';
 
-            return redirect()->route('akademik.submissions.index')->with('success', $message);
+            return redirect()->route('akademik.submissions.preview', $submission->intSubmission_ID)->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();

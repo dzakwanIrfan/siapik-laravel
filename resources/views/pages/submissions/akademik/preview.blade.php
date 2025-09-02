@@ -86,94 +86,92 @@
     </div>
 
     <!-- Form Persetujuan -->
-    @if ($submission->txtStatus === 'Disetujui Kaprodi')
-        <div class="row">
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0">Tindakan akademik</h5>
-                    </div>
-                    <div class="card-body py-4">
-                        <form action="{{ route('akademik.submissions.process', $submission->intSubmission_ID) }}" method="POST">
-                            @csrf
-                            @method('PUT')
-
-                            <div class="mb-4">
-                                <h6 class="fw-bold mb-3">Pilihan Tindakan:</h6>
-                                
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="action" id="approve" value="approve" required>
-                                    <label class="form-check-label text-success fw-bold" for="approve">
-                                        <i class="fas fa-check-circle me-2"></i>Setujui Pengajuan
-                                    </label>
-                                </div>
-                                
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="action" id="reject" value="reject" required>
-                                    <label class="form-check-label text-danger fw-bold" for="reject">
-                                        <i class="fas fa-times-circle me-2"></i>Tolak Pengajuan
-                                    </label>
-                                </div>
-                            </div>
-            
-                            <div class="mb-4 d-none" id="letterNumberContainer">
-                                <label for="txtLetterNumber" class="form-label fw-bold">Nomor Surat (Wajib):</label>
-                                <input name="txtLetterNumber" id="txtLetterNumber" class="form-control" placeholder="Masukkan nomor surat yang sesuai..."></input>
-                                <div class="form-text">Masukan nomor surat yang sesuai.</div>
-                            </div>
-
-                            <div class="mb-4">
-                                <label for="note" class="form-label fw-bold">Catatan (Opsional):</label>
-                                <textarea name="note" id="note" class="form-control" rows="4" 
-                                        placeholder="Berikan catatan jika diperlukan..."></textarea>
-                                <div class="form-text">Catatan ini akan dilihat oleh mahasiswa.</div>
-                            </div>
-            
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane me-2"></i>Proses Pengajuan
-                                </button>
-                                <a href="{{ route('akademik.submissions.index') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i>Kembali
-                                </a>
-                            </div>
-                        </form>
-                    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Tindakan akademik</h5>
                 </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0">Lampiran Dokumen</h5>
-                    </div>
-                    <div class="card-body py-2">
-                        @if($attachments->count() > 0)
-                            <div class="list-group list-group-flush">
-                                @foreach($attachments as $attachment)
-                                    @if($attachment->txtFieldValue && file_exists(storage_path('app/public/' . $attachment->txtFieldValue)))
-                                        <div class="list-group-item p-0">
-                                            <div class="d-flex justify-content-between align-items-center py-2 gap-5">
-                                                <div class="flex-fill">
-                                                    <small class="text-muted fw-bold">{{ $attachment->letterField->txtFieldLabel ?? $attachment->txtFieldLabel }}</small><br>
-                                                </div>
-                                                <a href="{{ asset('storage/' . $attachment->txtFieldValue) }}" 
-                                                target="_blank" 
-                                                class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endforeach
+                <div class="card-body py-4">
+                    <form action="{{ route('akademik.submissions.process', $submission->intSubmission_ID) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Pilihan Tindakan:</h6>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="action" id="approve" value="approve" required {{ $submission->txtStatus === 'Disetujui Akademik' ? 'checked' : '' }}>
+                                <label class="form-check-label text-success fw-bold" for="approve">
+                                    <i class="fas fa-check-circle me-2"></i>Setujui Pengajuan
+                                </label>
                             </div>
-                        @else
-                            <p class="text-muted text-center mb-0">Tidak ada lampiran</p>
-                        @endif
-                    </div>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="reject" value="reject" required {{ $submission->txtStatus === 'Ditolak Akademik' ? 'checked' : '' }}>
+                                <label class="form-check-label text-danger fw-bold" for="reject">
+                                    <i class="fas fa-times-circle me-2"></i>Tolak Pengajuan
+                                </label>
+                            </div>
+                        </div>
+        
+                        <div class="mb-4 d-none" id="letterNumberContainer">
+                            <label for="txtLetterNumber" class="form-label fw-bold">Nomor Surat (Wajib):</label>
+                            <input name="txtLetterNumber" id="txtLetterNumber" class="form-control" placeholder="Masukkan nomor surat yang sesuai..." value="{{ old('txtLetterNumber', $submission->txtLetterNumber) }}">
+                            <div class="form-text">Masukan nomor surat yang sesuai.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="note" class="form-label fw-bold">Catatan (Opsional):</label>
+                            <textarea name="note" id="note" class="form-control" rows="4" 
+                                    placeholder="Berikan catatan jika diperlukan..."></textarea>
+                            <div class="form-text">Catatan ini akan dilihat oleh mahasiswa.</div>
+                        </div>
+        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Proses Pengajuan
+                            </button>
+                            <a href="{{ route('akademik.submissions.index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali
+                            </a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-    @endif
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Lampiran Dokumen</h5>
+                </div>
+                <div class="card-body py-2">
+                    @if($attachments->count() > 0)
+                        <div class="list-group list-group-flush">
+                            @foreach($attachments as $attachment)
+                                @if($attachment->txtFieldValue && file_exists(storage_path('app/public/' . $attachment->txtFieldValue)))
+                                    <div class="list-group-item p-0">
+                                        <div class="d-flex justify-content-between align-items-center py-2 gap-5">
+                                            <div class="flex-fill">
+                                                <small class="text-muted fw-bold">{{ $attachment->letterField->txtFieldLabel ?? $attachment->txtFieldLabel }}</small><br>
+                                            </div>
+                                            <a href="{{ asset('storage/' . $attachment->txtFieldValue) }}" 
+                                            target="_blank" 
+                                            class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-muted text-center mb-0">Tidak ada lampiran</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
