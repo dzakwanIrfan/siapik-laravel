@@ -95,6 +95,11 @@ Route::group(['middleware' => ['role:akademik']], function () {
         Route::get('/{letter_type}/edit', 'edit')->name('edit');
         Route::put('/{letter_type}', 'update')->name('update');
         Route::delete('/{letter_type}', 'destroy')->name('destroy');
+        
+        // Route baru untuk template editing dengan iframe approach
+        Route::get('/{letter_type}/edit-template', 'editTemplate')->name('edit-template');
+        Route::post('/{letter_type}/preview-template', 'previewTemplateHtml')->name('preview-template');
+        Route::put('/{letter_type}/update-template', 'updateTemplate')->name('update-template');
     });
 
     Route::prefix('letter-fields')->controller(LetterFieldController::class)->name('letter-fields.')->group(function () {

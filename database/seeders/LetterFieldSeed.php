@@ -818,7 +818,7 @@ class LetterFieldSeed extends Seeder
                 'intLetterType_ID' => 9,
                 'txtFieldName' => 'txtPengujiEksternal',
                 'txtFieldLabel' => 'Penguji Eksternal',
-                'txtFieldType' => 'select',
+                'txtFieldType' => 'text',
                 'jsonFieldOptions' => null,
                 'bitRequired' => 1,
                 'intFieldOrder' => 14,
