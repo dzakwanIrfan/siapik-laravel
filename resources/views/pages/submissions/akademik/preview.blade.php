@@ -85,6 +85,30 @@
         </div>
     </div>
 
+    @if (!in_array($submission->txtStatus, ['Sedang ditinjau Kaprodi', 'Disetujui Kaprodi','Ditolak Kaprodi']))
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary">
+                    <h5 class="mb-0 text-white">Cetak atau Download Surat</h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" 
+                                class="btn btn-warning print-letter-btn"
+                                data-submission-id="{{ $submission->intSubmission_ID }}">
+                            <i class="fas fa-print me-2"></i>Print Surat
+                        </button>
+                        <button type="button" 
+                                class="btn btn-success download-letter-btn"
+                                data-submission-id="{{ $submission->intSubmission_ID }}">
+                            <i class="fas fa-download me-2"></i>Download PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Form Persetujuan -->
     <div class="row">
         <div class="col-lg-6">
@@ -173,6 +197,37 @@
         </div>
     </div>
 </div>
+
+{{-- Modal Konfirmasi Print/Download --}}
+<div class="modal fade" id="printDownloadModal" tabindex="-1" aria-labelledby="printDownloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="printDownloadModalLabel">Konfirmasi Aksi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Perhatian!</strong> 
+                    <span id="printDownloadMessage"></span>
+                </div>
+                <div class="mb-3">
+                    <strong>Pemohon:</strong> {{ $submission->user->txtFullName }}<br>
+                    <strong>Jenis Surat:</strong> {{ $submission->letterType->txtNameLetterType }}<br>
+                    <strong>No. Pembuatan:</strong> {{ $submission->txtReceiptNumber }}
+                </div>
+                <p class="mb-0 small text-muted">
+                    Setelah aksi ini, status akan berubah menjadi "Sudah dicetak" dengan proses "TTD Basah".
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="confirmPrintDownload">Konfirmasi</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -184,127 +239,109 @@ document.addEventListener('DOMContentLoaded', function () {
 	const letterNumberContainer = document.getElementById('letterNumberContainer');
 	const letterNumberInput = document.getElementById('txtLetterNumber');
 
-	// (Optional) inisialisasi modal kalau dipakai di tempat lain
-	const confirmModalEl = document.getElementById('confirmModal');
-	const confirmModal = confirmModalEl ? new bootstrap.Modal(confirmModalEl) : null;
+    // Handle print/download buttons
+    let currentAction = null;
+    let currentUrl = null;
 
-	function syncLetterNumberVisibility() {
-		const show = approveRadio.checked;
-		letterNumberContainer.classList.toggle('d-none', !show);
-		if (show) {
-			letterNumberInput.setAttribute('required', 'required');
-		} else {
-			letterNumberInput.removeAttribute('required');
-			letterNumberInput.value = '';
-		}
-	}
+    // Print button handler
+    document.querySelectorAll('.print-letter-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const submissionId = this.getAttribute('data-submission-id');
+            currentAction = 'print';
+            currentUrl = `{{ url('/akademik/submissions') }}/${submissionId}/print`;
+            
+            document.getElementById('printDownloadMessage').textContent = 
+                'Anda akan membuka halaman print surat dan mengubah status menjadi "Sudah dicetak".';
+            
+            const modal = new bootstrap.Modal(document.getElementById('printDownloadModal'));
+            modal.show();
+        });
+    });
 
-	// Trigger saat user memilih approve/reject
-	approveRadio.addEventListener('change', syncLetterNumberVisibility);
-	rejectRadio.addEventListener('change', syncLetterNumberVisibility);
+    // Download button handler
+    document.querySelectorAll('.download-letter-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const submissionId = this.getAttribute('data-submission-id');
+            currentAction = 'download';
+            currentUrl = `{{ url('/akademik/submissions') }}/${submissionId}/download`;
+            
+            document.getElementById('printDownloadMessage').textContent = 
+                'Anda akan mendownload surat dalam format PDF dan mengubah status menjadi "Sudah dicetak".';
+            
+            const modal = new bootstrap.Modal(document.getElementById('printDownloadModal'));
+            modal.show();
+        });
+    });
 
-	// Set awal (kalau ada old value / pre-checked)
-	syncLetterNumberVisibility();
-
-	// --- Handler submit yang sudah ada ---
-	form.addEventListener('submit', function(e) {
-		e.preventDefault();
-
-		const formData = new FormData(form);
-		const action = formData.get('action');
-		const note = formData.get('note') || '';
-
-		if (!action) {
-			alert('Silakan pilih tindakan (Setujui atau Tolak)');
-			return;
-		}
-
-		// Validasi manual jika approve + nomor surat wajib (karena form.submit() bypass native validation)
-		if (action === 'approve' && !letterNumberInput.value.trim()) {
-			alert('Nomor surat wajib diisi saat menyetujui pengajuan.');
-			letterNumberInput.focus();
-			return;
-		}
-
-		const actionText = action === 'approve' ? 'menyetujui' : 'menolak';
-		const actionClass = action === 'approve' ? 'text-success' : 'text-danger';
-
-		document.getElementById('confirmMessage').innerHTML = `
-			<div class="alert alert-warning">
-				<i class="fas fa-exclamation-triangle me-2"></i>
-				<strong>Perhatian!</strong> Anda akan <span class="${actionClass} fw-bold">${actionText}</span> pengajuan surat ini.
-			</div>
-			<div class="mb-2">
-				<strong>Pemohon:</strong> {{ $submission->user->txtFullName }}<br>
-				<strong>Jenis Surat:</strong> {{ $submission->letterType->txtNameLetterType }}<br>
-				<strong>No. Pembuatan:</strong> {{ $submission->txtReceiptNumber }}
-			</div>
-			${note ? `<div class="mb-2"><strong>Catatan:</strong><br><em>"${note.replace(/"/g, '&quot;')}"</em></div>` : ''}
-			<p class="mb-0 small text-muted">Tindakan ini tidak dapat dibatalkan setelah diproses.</p>
-		`;
-
-		if (confirmModal) confirmModal.show();
-	});
-
-	// Pastikan saat klik "Kirim" di modal, tetap cek nomor surat jika approve
-	const confirmSubmitBtn = document.getElementById('confirmSubmit');
-	if (confirmSubmitBtn) {
-		confirmSubmitBtn.addEventListener('click', function () {
-			const isApprove = approveRadio.checked;
-			if (isApprove && !letterNumberInput.value.trim()) {
-				alert('Nomor surat wajib diisi saat menyetujui pengajuan.');
-				letterNumberInput.focus();
-				return;
-			}
-			if (confirmModal) confirmModal.hide();
-			form.submit(); // kirim final
-		});
-	}
-});
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Form confirmation logic
-    const form = document.querySelector('form');
-
-
-    
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(form);
-        const action = formData.get('action');
-        const note = formData.get('note');
-        
-        if (!action) {
-            alert('Silakan pilih tindakan (Setujui atau Tolak)');
-            return;
+    // Confirm print/download action
+    document.getElementById('confirmPrintDownload').addEventListener('click', function() {
+        if (currentUrl) {
+            if (currentAction === 'print') {
+                window.open(currentUrl, '_blank');
+            } else if (currentAction === 'download') {
+                window.location.href = currentUrl;
+            }
+            
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('printDownloadModal'));
+            modal.hide();
+            
+            // Reload page after short delay to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         }
-        
-        const actionText = action === 'approve' ? 'menyetujui' : 'menolak';
-        const actionClass = action === 'approve' ? 'text-success' : 'text-danger';
-        
-        document.getElementById('confirmMessage').innerHTML = `
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>Perhatian!</strong> Anda akan <span class="${actionClass} fw-bold">${actionText}</span> pengajuan surat ini.
-            </div>
-            <div class="mb-2">
-                <strong>Pemohon:</strong> {{ $submission->user->txtFullName }}<br>
-                <strong>Jenis Surat:</strong> {{ $submission->letterType->txtNameLetterType }}<br>
-                <strong>No. Pembuatan:</strong> {{ $submission->txtReceiptNumber }}
-            </div>
-            ${note ? `<div class="mb-2"><strong>Catatan:</strong><br><em>"${note}"</em></div>` : ''}
-            <p class="mb-0 small text-muted">Tindakan ini tidak dapat dibatalkan setelah diproses.</p>
-        `;
-        
-        confirmModal.show();
     });
-    
-    document.getElementById('confirmSubmit').addEventListener('click', function() {
-        confirmModal.hide();
-        form.submit();
-    });
+
+	// Existing form logic (if form exists)
+    if (form && approveRadio && rejectRadio) {
+        function syncLetterNumberVisibility() {
+            const show = approveRadio.checked;
+            letterNumberContainer.classList.toggle('d-none', !show);
+            if (show) {
+                letterNumberInput.setAttribute('required', 'required');
+            } else {
+                letterNumberInput.removeAttribute('required');
+                letterNumberInput.value = '';
+            }
+        }
+
+        // Trigger saat user memilih approve/reject
+        approveRadio.addEventListener('change', syncLetterNumberVisibility);
+        rejectRadio.addEventListener('change', syncLetterNumberVisibility);
+
+        // Set awal (kalau ada old value / pre-checked)
+        syncLetterNumberVisibility();
+
+        // --- Handler submit yang sudah ada ---
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const action = formData.get('action');
+            const note = formData.get('note') || '';
+
+            if (!action) {
+                alert('Silakan pilih tindakan (Setujui atau Tolak)');
+                return;
+            }
+
+            // Validasi manual jika approve + nomor surat wajib
+            if (action === 'approve' && !letterNumberInput.value.trim()) {
+                alert('Nomor surat wajib diisi saat menyetujui pengajuan.');
+                letterNumberInput.focus();
+                return;
+            }
+
+            const actionText = action === 'approve' ? 'menyetujui' : 'menolak';
+            
+            if (confirm(`Anda yakin akan ${actionText} pengajuan surat ini?`)) {
+                form.submit();
+            }
+        });
+    }
 });
 </script>
 @endpush
