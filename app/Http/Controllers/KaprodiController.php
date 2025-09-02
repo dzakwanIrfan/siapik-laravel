@@ -243,10 +243,12 @@ class KaprodiController extends Controller
                 'dtmUpdated' => now()
             ]);
 
+            $txtInReview = $newStatus === 'Disetujui Kaprodi' ? 'Persetujuan Akademik' : 'Ditolak Kaprodi';
+
             SubmissionStatus::create([
                 'intSubmission_ID' => $submission->intSubmission_ID,
                 'txtStatus' => $newStatus,
-                'txtInReview' => 'Akademik',
+                'txtInReview' => $txtInReview,
                 'txtInsertedBy' => auth()->user()->txtFullName,
                 'dtmInserted' => now(),
                 'bitActive' => 1

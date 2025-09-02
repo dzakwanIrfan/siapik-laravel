@@ -145,7 +145,7 @@
         colReorder: true,
         keys: true,
         rowReorder: true,
-        ajax: '{{ route('kaprodi.submissions.index.datatable') }}',
+        ajax: '{{ route('akademik.submissions.index.datatable') }}',
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'txtReceiptNumber', name: 'txtReceiptNumber' },
@@ -231,7 +231,7 @@
         
         // Fetch attachments
         $.ajax({
-            url: '{{ route("kaprodi.submissions.attachments", ":id") }}'.replace(':id', submissionId),
+            url: '{{ route("akademik.submissions.attachments", ":id") }}'.replace(':id', submissionId),
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -355,5 +355,331 @@ function previewFile(fileUrl, fileName, fileType) {
     $('#filePreviewContent').html(previewContent);
     $('#filePreviewModal').modal('show');
 }
+</script>
+<script>
+    window.initSelect2 = function(scope) {
+    if (typeof Choices !== 'undefined') {
+        scope.querySelectorAll('.default-select2, select[data-choices], .use-choices').forEach(function (el) {
+        if (el._choices) return; // hindari double init
+        try {
+            const isMultiple = !!el.multiple;
+            const placeholder = el.getAttribute('data-placeholder') || 'Pilih...';
+            el._choices = new Choices(el, {
+            shouldSort: false,
+            searchEnabled: true,
+            placeholder: true,
+            placeholderValue: placeholder,
+            removeItemButton: isMultiple, // tombol hapus untuk multi-select
+            itemSelectText: '',
+            position: 'auto'
+            });
+        } catch (e) { /* noop */ }
+        });
+        return;
+    }
+
+    // ====== Fallback ke Select2 (kalau memang ada) ======
+    if (window.jQuery && jQuery.fn.select2) {
+        jQuery(scope).find('.default-select2').each(function () {
+        if (jQuery(this).data('select2')) return;
+        jQuery(this).select2({
+            width: '100%',
+            dropdownParent: jQuery('#editSubmissionModal') // untuk modal edit
+        });
+        });
+    }
+    };
+
+    window.initFlatpickr = function(scope) {
+    if (window.flatpickr) {
+        scope.querySelectorAll('.flatpickr-input').forEach(function (el) {
+        if (!el._fp) {
+            flatpickr(el, {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd/m/Y',
+            allowInput: true
+            });
+        }
+        });
+    }
+    };
+
+    window.initFilePond = function(scope) {
+    if (window.FilePond) {
+        try {
+        if (window.FilePondPluginImagePreview) FilePond.registerPlugin(FilePondPluginImagePreview);
+        if (window.FilePondPluginFileValidateType) FilePond.registerPlugin(FilePondPluginFileValidateType);
+        } catch(e){}
+        scope.querySelectorAll('input[type="file"].filepond').forEach(function (el) {
+        if (!el._pond) {
+            const pond = FilePond.create(el, {
+            allowMultiple: false,
+            credits: false,
+            storeAsFile: true
+            });
+            el._pond = pond;
+        }
+        });
+    }
+    };
+
+    // ========== EDIT SUBMISSION MODAL ==========
+    $(document).ready(function() {
+        // Modal Edit Submission - buat secara dinamis
+        const editModalHtml = `
+        <div class="modal fade" id="editSubmissionModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                <div>
+                    <h5 class="modal-title mb-0">Edit Data Submission</h5>
+                    <small class="text-muted">Jenis: <span id="editModalLetterName" class="fw-medium"></span></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body p-4">
+                <form id="editDynamicForm" method="POST" enctype="multipart/form-data" data-parsley-validate>
+                    <div id="editDynamicFields"><!-- akan diisi via AJAX --></div>
+                </form>
+                </div>
+                
+                <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="btnEditSubmit">Update Data</button>
+                </div>
+            </div>
+            </div>
+        </div>`;
+        
+        // Append modal ke body jika belum ada
+        if (!document.getElementById('editSubmissionModal')) {
+            $('body').append(editModalHtml);
+        }
+    });
+
+    // Parsley init untuk form edit
+    function initEditParsley() {
+        if (!(window.jQuery && jQuery.fn.parsley)) return;
+        const $editForm = jQuery('#editDynamicForm');
+        try { $editForm.parsley().destroy(); } catch (e) {}
+
+        $editForm.parsley({
+            trigger: 'change',
+            errorClass: 'is-invalid',
+            successClass: 'is-valid',
+            errorsWrapper: '<div class="invalid-feedback"></div>',
+            errorTemplate: '<span></span>',
+            classHandler: function (field) {
+                const $el = field.$element;
+
+                // Choices.js
+                const $choicesWrap = $el.closest('.choices');
+                if ($choicesWrap.length) return $choicesWrap;
+
+                // Select2 (fallback)
+                if ($el.hasClass('select2-hidden-accessible')) {
+                    return $el.next('.select2').find('.select2-selection');
+                }
+
+                // FilePond
+                if ($el.hasClass('filepond') && $el.get(0)?._pond) {
+                    return jQuery($el.get(0)._pond.element);
+                }
+
+                return $el;
+            },
+            errorsContainer: function (field) {
+                const $el = field.$element;
+                return $el.closest('.form-group').length ? $el.closest('.form-group') : $el.parent();
+            }
+        });
+    }
+
+    // Event delegation untuk tombol edit
+    $(document).on('click', '.btn-open-letter', function(e) {
+        e.preventDefault();
+        
+        const submissionId = $(this).data('submission-id');
+        const editForm = document.getElementById('editDynamicForm');
+        const editWrap = document.getElementById('editDynamicFields');
+        const editSubmitBtn = document.getElementById('btnEditSubmit');
+        
+        if (!submissionId) {
+            console.error('Submission ID not found');
+            return;
+        }
+        
+        editWrap.innerHTML = '<div class="text-center py-5"><div class="spinner-border" role="status"></div><div class="mt-2">Memuat formulir...</div></div>';
+        
+        // Set form action URL
+        editForm.action = `{{ url('/akademik/submissions') }}/${submissionId}/update`;
+        
+        // Fetch form content
+        fetch(`{{ url('/akademik/submissions') }}/${submissionId}/edit`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            editWrap.innerHTML = html;
+            
+            // Init enhancers untuk form edit menggunakan fungsi global
+            try {
+                window.initSelect2(editWrap);
+                window.initFlatpickr(editWrap);
+                // Tidak perlu initFilePond karena tidak ada field file
+                initEditParsley();
+            } catch (error) {
+                console.error('Error initializing form enhancers:', error);
+            }
+            
+            // Show modal
+            $('#editSubmissionModal').modal('show');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            editWrap.innerHTML = '<div class="alert alert-danger">Gagal memuat formulir edit.</div>';
+        });
+    });
+
+    // Submit handler untuk edit form
+    $(document).on('click', '#btnEditSubmit', function() {
+        const btn = this;
+        const editForm = document.getElementById('editDynamicForm');
+        const Toast = (typeof Swal !== 'undefined')
+            ? Swal.mixin({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (t) => { 
+                    t.onmouseenter = Swal.stopTimer; 
+                    t.onmouseleave = Swal.resumeTimer; 
+                }
+            })
+            : null;
+
+        let valid = true;
+        if (window.jQuery && jQuery.fn.parsley) {
+            valid = jQuery(editForm).parsley().validate();
+        } else {
+            valid = editForm.checkValidity();
+            if (!valid) editForm.reportValidity();
+        }
+
+        if (valid) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+            
+            const formData = new FormData(editForm);
+            
+            fetch(editForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    $('#editSubmissionModal').modal('hide');
+                    if (Toast) {
+                        Toast.fire({ 
+                            icon: "success", 
+                            title: data.message || "Data berhasil diperbarui" 
+                        });
+                    }
+                    // Reload DataTable
+                    if (typeof table !== 'undefined') {
+                        table.ajax.reload(null, false); // reload tanpa reset paging
+                    }
+                } else {
+                    if (Toast) {
+                        Toast.fire({ 
+                            icon: "error", 
+                            title: data.message || "Gagal memperbarui data" 
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (Toast) {
+                    Toast.fire({ 
+                        icon: "error", 
+                        title: "Terjadi kesalahan sistem" 
+                    });
+                }
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = 'Update Data';
+            });
+        } else {
+            if (Toast) {
+                Toast.fire({ 
+                    icon: "error", 
+                    title: "Data tidak valid/lengkap" 
+                });
+            }
+        }
+    });
+
+    // Reset validasi saat modal edit dibuka
+    $(document).on('shown.bs.modal', '#editSubmissionModal', function () {
+        if (window.jQuery && jQuery.fn.parsley) {
+            jQuery('#editDynamicForm').parsley().reset();
+        }
+    });
+
+    // Cleanup Choices.js saat modal ditutup untuk menghindari memory leak
+    $(document).on('hidden.bs.modal', '#editSubmissionModal', function () {
+        const editWrap = document.getElementById('editDynamicFields');
+        if (editWrap) {
+            // Destroy Choices.js instances
+            editWrap.querySelectorAll('select').forEach(function(select) {
+                if (select._choices) {
+                    try {
+                        select._choices.destroy();
+                        select._choices = null;
+                    } catch(e) {
+                        console.warn('Error destroying Choices.js:', e);
+                    }
+                }
+            });
+            
+            // Destroy FilePond instances
+            editWrap.querySelectorAll('.filepond').forEach(function(input) {
+                if (input._pond) {
+                    try {
+                        input._pond.destroy();
+                        input._pond = null;
+                    } catch(e) {
+                        console.warn('Error destroying FilePond:', e);
+                    }
+                }
+            });
+            
+            // Destroy Flatpickr instances
+            editWrap.querySelectorAll('.flatpickr-input').forEach(function(input) {
+                if (input._fp) {
+                    try {
+                        input._fp.destroy();
+                        input._fp = null;
+                    } catch(e) {
+                        console.warn('Error destroying Flatpickr:', e);
+                    }
+                }
+            });
+        }
+    });
 </script>
 @endpush

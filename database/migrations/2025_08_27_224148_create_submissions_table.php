@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->string('txtLetterNumber')->unique()->nullable();
 
             // status sederhana
-            $table->enum('txtStatus', ['Sedang ditinjau Kaprodi', 'Disetujui Kaprodi', 'Ditolak Kaprodi'])->default('Sedang ditinjau Kaprodi');
+            $table->enum('txtStatus', ['Sedang ditinjau Kaprodi', 'Disetujui Kaprodi', 'Ditolak Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak'])->default('Sedang ditinjau Kaprodi');
 
             $table->tinyInteger('bitActive')->default(1);
             $table->string('txtInsertedBy')->nullable();
