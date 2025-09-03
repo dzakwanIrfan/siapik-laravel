@@ -66,14 +66,13 @@
             @endhasrole
 
             @hasrole('kaprodi')
-                @hasrole('kaprodi')
                 <li class="sidebar-item has-sub {{
                     request()->routeIs('kaprodi.submissions.index') &&
                     request()->route('type') == 'surat' ? 'active' : ''
                 }}">
-                        <a href="#" class="sidebar-link">
-                            <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
-                        </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
+                    </a>
                     <ul class="submenu {{
                         request()->routeIs('kaprodi.submissions.index') &&
                         request()->route('type') == 'surat' ? 'active' : ''
@@ -96,15 +95,15 @@
                             <a href="{{ route('kaprodi.submissions.index', ['type' => 'surat', 'status' => 'selesai']) }}">Selesai/Ditolak</a>
                         </li>
                     </ul>
-                    </li>
+                </li>
 
-                    <li class="sidebar-item has-sub {{
+                <li class="sidebar-item has-sub {{
                     request()->routeIs('kaprodi.submissions.index') &&
                     request()->route('type') == 'ujian' ? 'active' : ''
                 }}">
-                        <a href="#" class="sidebar-link">
-                            <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
-                        </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
+                    </a>
                     <ul class="submenu {{
                         request()->routeIs('kaprodi.submissions.index') &&
                         request()->route('type') == 'ujian' ? 'active' : ''
@@ -160,7 +159,7 @@
                             <a href="{{ route('akademik.submissions.index', ['type' => 'surat', 'status' => 'selesai']) }}">Selesai/Ditolak</a>
                         </li>
                     </ul>
-                    </li>
+                </li>
 
                 <li class="sidebar-item has-sub {{
                     request()->routeIs('akademik.submissions.index') &&
@@ -191,21 +190,6 @@
                             <a href="{{ route('akademik.submissions.index', ['type' => 'ujian', 'status' => 'selesai']) }}">Selesai/Ditolak</a>
                         </li>
                     </ul>
-                </li>
-            @endhasrole
-            @endhasrole
-
-            @hasrole('akademik')
-                <li class="sidebar-item {{ request()->routeIs('akademik.submissions.index') ? 'active' : '' }}">
-                    <a href="{{ route('akademik.submissions.index') }}" class="sidebar-link">
-                        <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
-                    </a>
-                </li>
-
-                <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
-                        <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
-                    </a>
                 </li>
             @endhasrole
 
