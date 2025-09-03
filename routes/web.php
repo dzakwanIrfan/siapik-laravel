@@ -52,8 +52,13 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
 
 Route::group(['middleware' => ['role:kaprodi']], function() {
     Route::prefix('kaprodi')->controller(KaprodiController::class)->name('kaprodi.')->group(function () {
-        Route::get('/submissions', 'index')->name('submissions.index');
-        Route::get('/submissions/datatable', 'indexDatatable')->name('submissions.index.datatable');
+        Route::get('/submissions/{type}/{status}', 'index')->name('submissions.index')
+            ->where('type', 'surat|ujian')
+            ->where('status', 'proses|selesai');
+        Route::get('/submissions/{type}/{status}/datatable', 'indexDatatable')->name('submissions.index.datatable')
+            ->where('type', 'surat|ujian')
+            ->where('status', 'proses|selesai');
+            
         Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
         Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
         Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
@@ -63,8 +68,14 @@ Route::group(['middleware' => ['role:kaprodi']], function() {
 
 Route::group(['middleware' => ['role:akademik']], function() {
     Route::prefix('akademik')->controller(AkademikController::class)->name('akademik.')->group(function () {
-        Route::get('/submissions', 'index')->name('submissions.index');
-        Route::get('/submissions/datatable', 'indexDatatable')->name('submissions.index.datatable');
+        // Route baru dengan parameter type dan status
+        Route::get('/submissions/{type}/{status}', 'index')->name('submissions.index')
+            ->where('type', 'surat|ujian')
+            ->where('status', 'proses|selesai');
+        Route::get('/submissions/{type}/{status}/datatable', 'indexDatatable')->name('submissions.index.datatable')
+            ->where('type', 'surat|ujian')
+            ->where('status', 'proses|selesai');
+            
         Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
         Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
         Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');

@@ -11,22 +11,68 @@ use Illuminate\Support\Facades\View;
 
 class KaprodiController extends Controller
 {
-    public function index()
+    public function index($type, $status)
     {
-        return view('pages.submissions.kaprodi.index');
+        // Validasi parameter
+        if (!in_array($type, ['surat', 'ujian']) || !in_array($status, ['proses', 'selesai'])) {
+            abort(404);
+        }
+
+        // Tentukan status berdasarkan parameter
+        $statusConditions = $this->getStatusConditions($type, $status);
+        
+        // Hitung jumlah submission berdasarkan kondisi
+        $majorId = optional(auth()->user()->dosenProfile)->intMajor_ID;
+        
+        $count = Submission::where('submissions.bitActive', 1) // Tambahkan alias tabel
+            ->whereIn('submissions.txtStatus', $statusConditions)
+            ->when($majorId, function($q) use ($majorId) {
+                $q->join('users', 'submissions.intUser_ID', '=', 'users.intUser_ID')
+                  ->join('mahasiswa_profiles', 'users.intUser_ID', '=', 'mahasiswa_profiles.intUser_ID')
+                  ->where('mahasiswa_profiles.intMajor_ID', $majorId);
+            })
+            ->when($type === 'ujian', function($q) {
+                $q->join('letter_types as lt2', 'submissions.intLetterType_ID', '=', 'lt2.intLetterType_ID')
+                  ->where('lt2.bitUjian', 1);
+            })
+            ->when($type === 'surat', function($q) {
+                $q->join('letter_types as lt3', 'submissions.intLetterType_ID', '=', 'lt3.intLetterType_ID')
+                  ->where('lt3.bitUjian', 0);
+            })
+            ->count();
+
+        // Data untuk view
+        $pageData = [
+            'type' => $type,
+            'status' => $status,
+            'count' => $count,
+            'pageTitle' => $this->getPageTitle($type, $status),
+            'pageDescription' => $this->getPageDescription($type, $status),
+            'alertMessage' => $this->getAlertMessage($type, $status, $count)
+        ];
+
+        return view('pages.submissions.kaprodi.index', $pageData);
     }
 
-    public function indexDatatable()
+    public function indexDatatable($type, $status)
     {
+        // Validasi parameter
+        if (!in_array($type, ['surat', 'ujian']) || !in_array($status, ['proses', 'selesai'])) {
+            return response()->json(['error' => 'Invalid parameters'], 400);
+        }
+
         $majorId = optional(auth()->user()->dosenProfile)->intMajor_ID;
+        $statusConditions = $this->getStatusConditions($type, $status);
 
         $query = Submission::query()
             ->join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
             ->join('users', 'submissions.intUser_ID', '=', 'users.intUser_ID')
             ->join('mahasiswa_profiles', 'users.intUser_ID', '=', 'mahasiswa_profiles.intUser_ID')
             ->when($majorId, fn ($q) => $q->where('mahasiswa_profiles.intMajor_ID', $majorId))
-            ->where('submissions.bitActive', 1)
-            ->where('submissions.txtStatus', 'Sedang ditinjau Kaprodi')
+            ->where('submissions.bitActive', 1) // Tambahkan alias tabel
+            ->whereIn('submissions.txtStatus', $statusConditions)
+            ->when($type === 'ujian', fn($q) => $q->where('letter_types.bitUjian', 1))
+            ->when($type === 'surat', fn($q) => $q->where('letter_types.bitUjian', 0))
             ->select([
                 'submissions.*',
                 'letter_types.txtNameLetterType as letter_type',
@@ -37,58 +83,11 @@ class KaprodiController extends Controller
             ->addIndexColumn()
             ->editColumn('letter_type', fn($row) => $row->letter_type ?? '-')
             ->editColumn('dtmInserted', fn($row) => $row->dtmInserted ?? '-')
-            ->addColumn('action', function ($r) {
-                $buttons = '<div class="d-flex gap-1" role="group">';
-                
-                // Tombol Cek Lampiran
-                $buttons .= '<button type="button" class="btn btn-info btn-sm rounded-pill icon show-attachment-modal" 
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Cek bukti lampiran" 
-                                data-submission-id="'.$r->intSubmission_ID.'">
-                                <i class="fas fa-eye"></i>
-                            </button>';
-                
-                // Tombol Proses - hanya untuk status "Sedang ditinjau Kaprodi"
-                if (($r->txtStatus ?? null) === 'Sedang ditinjau Kaprodi') {
-                    $buttons .= '<a href="'.route('kaprodi.submissions.preview', $r->intSubmission_ID).'" 
-                                    class="btn btn-primary btn-sm rounded-pill icon" 
-                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Proses Surat" target="_blank">
-                                    <i class="fas fa-cog"></i>
-                                </a>';
-                }
-                
-                $buttons .= '</div>';
-                
-                return $buttons;
+            ->addColumn('action', function ($r) use ($status) {
+                return $this->getActionButtons($r, $status);
             })
             ->addColumn('status', function ($r) {
-                if (($r->txtStatus ?? null) === 'Sedang ditinjau Kaprodi') {
-                    return '<button 
-                                class="btn btn-sm btn-primary rounded-pill show-status-modal"
-                                data-bs-toggle="modal"
-                                data-bs-target="#submissionModal"
-                                data-submissions-id="'.$r->intSubmission_ID.'"
-                                data-type-name="'.$r->letter_type.'"
-                            >Sedang ditinjau Kaprodi</button>';
-                }
-                if (($r->txtStatus ?? null) === 'Disetujui Kaprodi') {
-                    return '<button 
-                                class="btn btn-sm btn-info rounded-pill show-status-modal"
-                                data-bs-toggle="modal"
-                                data-bs-target="#submissionModal"
-                                data-submissions-id="'.$r->intSubmission_ID.'"
-                                data-type-name="'.$r->letter_type.'"
-                            >Disetujui Kaprodi</button>';
-                }
-                if (($r->txtStatus ?? null) === 'Ditolak Kaprodi') {
-                    return '<button 
-                                class="btn btn-sm btn-danger rounded-pill show-status-modal"
-                                data-bs-toggle="modal"
-                                data-bs-target="#submissionModal"
-                                data-submissions-id="'.$r->intSubmission_ID.'"
-                                data-type-name="'.$r->letter_type.'"
-                            >Ditolak Kaprodi</button>';
-                }
-                return e($r->txtStatus ?? '-');
+                return $this->getStatusButton($r);
             })
             ->addColumn('user_full_name', fn($row) => $row->user_full_name ?? '-')
             ->filterColumn('letter_type', function($query, $keyword) {
@@ -102,6 +101,105 @@ class KaprodiController extends Controller
             })
             ->rawColumns(['action', 'status'])
             ->make(true);
+    }
+
+    private function getStatusConditions($type, $status)
+    {
+        if ($status === 'proses') {
+            // Kaprodi hanya bisa melihat submission dengan status "Sedang ditinjau Kaprodi"
+            return ['Sedang ditinjau Kaprodi'];
+        } else { // selesai
+            // Kaprodi bisa melihat submission yang sudah disetujui atau ditolak oleh kaprodi
+            return ['Disetujui Kaprodi', 'Ditolak Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak'];
+        }
+    }
+
+    private function getPageTitle($type, $status)
+    {
+        $typeText = $type === 'surat' ? 'Surat' : 'Ujian';
+        $statusText = $status === 'proses' ? 'Dalam Proses' : 'Selesai/Ditolak';
+        return "Permintaan {$typeText} - {$statusText}";
+    }
+
+    private function getPageDescription($type, $status)
+    {
+        $typeText = $type === 'surat' ? 'surat' : 'ujian';
+        $statusText = $status === 'proses' ? 'yang sedang menunggu persetujuan kaprodi' : 'yang sudah diproses kaprodi';
+        return "Sistem Informasi Pembuatan {$typeText} {$statusText}";
+    }
+
+    private function getAlertMessage($type, $status, $count)
+    {
+        if ($status === 'proses') {
+            $typeText = $type === 'surat' ? 'surat' : 'ujian';
+            return "{$count} permintaan {$typeText} menunggu persetujuan Anda!";
+        } else {
+            $typeText = $type === 'surat' ? 'surat' : 'ujian';
+            return "{$count} permintaan {$typeText} sudah diproses.";
+        }
+    }
+
+    private function getActionButtons($r, $status)
+    {
+        $buttons = '<div class="d-flex gap-1" role="group">';
+        
+        // Tombol Cek Lampiran
+        $buttons .= '<button type="button" class="btn btn-info btn-sm rounded-pill icon show-attachment-modal" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Cek bukti lampiran" 
+                        data-submission-id="'.$r->intSubmission_ID.'">
+                        <i class="fas fa-eye"></i>
+                    </button>';
+
+        // Tombol Proses - hanya untuk status proses dan jika statusnya "Sedang ditinjau Kaprodi"
+        if ($status === 'proses' && ($r->txtStatus ?? null) === 'Sedang ditinjau Kaprodi') {
+            $buttons .= '<a href="'.route('kaprodi.submissions.preview', $r->intSubmission_ID).'" 
+                            class="btn btn-primary btn-sm rounded-pill icon" 
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Proses Surat" target="_blank">
+                            <i class="fas fa-cog"></i>
+                        </a>';
+        }
+        
+        $buttons .= '</div>';
+        
+        return $buttons;
+    }
+
+    private function getStatusButton($r)
+    {
+        switch ($r->txtStatus ?? null) {
+            case 'Sedang ditinjau Kaprodi':
+                return '<button class="btn btn-sm btn-primary rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Sedang ditinjau Kaprodi</button>';
+            case 'Disetujui Kaprodi':
+                return '<button class="btn btn-sm btn-success rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Disetujui Kaprodi</button>';
+            case 'Ditolak Kaprodi':
+                return '<button class="btn btn-sm btn-danger rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Ditolak Kaprodi</button>';
+            case 'Disetujui Akademik':
+                return '<button class="btn btn-sm btn-info rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Disetujui Akademik</button>';
+            case 'Ditolak Akademik':
+                return '<button class="btn btn-sm btn-warning rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Ditolak Akademik</button>';
+            case 'Sudah dicetak':
+                return '<button class="btn btn-sm btn-secondary rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Sudah dicetak</button>';
+            default:
+                return e($r->txtStatus ?? '-');
+        }
     }
 
     public function getAttachments($submissionId)
@@ -162,8 +260,9 @@ class KaprodiController extends Controller
     public function previewSubmission($submissionId)
     {
         try {
+            // Kaprodi hanya bisa melihat submission dengan status "Sedang ditinjau Kaprodi"
             $submission = Submission::with(['letterType', 'user.mahasiswaProfile.major', 'values.letterField'])
-                ->where('txtStatus', 'Sedang ditinjau Kaprodi')
+                ->where('submissions.txtStatus', 'Sedang ditinjau Kaprodi') // Tambahkan alias tabel
                 ->findOrFail($submissionId);
 
             // Kumpulkan semua data dari submission values
@@ -184,7 +283,7 @@ class KaprodiController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            return redirect()->route('kaprodi.submissions.index')
+            return redirect()->back()
                 ->with('error', 'Gagal memuat preview surat: ' . $e->getMessage());
         }
     }
@@ -193,7 +292,7 @@ class KaprodiController extends Controller
     {
         try {
             $submission = Submission::with(['letterType', 'user.mahasiswaProfile.major', 'values.letterField'])
-                ->where('txtStatus', 'Sedang ditinjau Kaprodi')
+                ->where('submissions.txtStatus', 'Sedang ditinjau Kaprodi') // Tambahkan alias tabel
                 ->findOrFail($submissionId);
 
             // Kumpulkan semua data dari submission values
@@ -260,7 +359,7 @@ class KaprodiController extends Controller
                 ? 'Pengajuan surat berhasil disetujui!' 
                 : 'Pengajuan surat berhasil ditolak!';
 
-            return redirect()->route('kaprodi.submissions.index')->with('success', $message);
+            return redirect()->back()->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -271,7 +370,6 @@ class KaprodiController extends Controller
     private function renderLetterTemplate($templatePath, $data, $submission)
     {
         try {
-            // Cek apakah template exists
             if (!View::exists($templatePath)) {
                 throw new \Exception("Template tidak ditemukan: {$templatePath}");
             }
@@ -279,7 +377,6 @@ class KaprodiController extends Controller
             return view($templatePath, compact('data', 'submission'))->render();
             
         } catch (\Exception $e) {
-            // Fallback ke template default
             return view('templates.default_letter', compact('data', 'submission'))->render();
         }
     }

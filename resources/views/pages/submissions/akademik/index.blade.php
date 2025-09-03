@@ -8,23 +8,33 @@
   <nav aria-label="breadcrumb" class="breadcrumb-header float-end float-lg-end">
       <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="">Home</a></li>
-          <li class="breadcrumb-item active" aria-current="page">Permintaan Surat Mahasiswa</li>
+          <li class="breadcrumb-item active" aria-current="page">{{ $pageTitle }}</li>
       </ol>
   </nav>
   <!-- END breadcrumb -->
 
   <!-- BEGIN page-header -->
   <div>
-    <h3>Permintaan Surat Mahasiswa</h3>
-    <p class="text-subtitle text-muted">Sistem Informasi Pembuatan Surat</p>
+    <h3>{{ $pageTitle }}</h3>
+    <p class="text-subtitle text-muted">{{ $pageDescription }}</p>
   </div>
   <!-- END page-header -->
 @endsection
 
 @section('content')
+    @if($status === 'proses')
+        <div class="alert alert-primary color-primary">
+            <i class="bi bi-exclamation-triangle"></i>&nbsp;&nbsp;{{ $alertMessage }}
+        </div>
+    @else
+        <div class="alert alert-success color-success">
+            <i class="bi bi-check-circle"></i>&nbsp;&nbsp;{{ $alertMessage }}
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header">
-            <h4 class="card-title">Data Permintaan Surat Mahasiswa</h4>
+            <h4 class="card-title">Data {{ $pageTitle }}</h4>
         </div>
         <div class="card-body">
             <table class="table table-striped table-bordered align-middle table-dark table-hover" id="datatables">
@@ -33,7 +43,7 @@
                         <th>No</th>
                         <th>Nomor Pembuatan</th>
                         <th>Pemohon</th>
-                        <th>Nama Surat</th>
+                        <th>Nama {{ ucfirst($type) }}</th>
                         <th>Status</th>
                         <th>Tanggal Pembuatan</th>
                         <th>Action</th>
@@ -50,7 +60,7 @@
             <div class="modal-content">
                 <div class="modal-header border-bottom">
                     <div>
-                        <h5 class="modal-title mb-0">Riwayat Status Pengajuan Surat</h5>
+                        <h5 class="modal-title mb-0">Riwayat Status Pengajuan {{ ucfirst($type) }}</h5>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -145,7 +155,7 @@
         colReorder: true,
         keys: true,
         rowReorder: true,
-        ajax: '{{ route('akademik.submissions.index.datatable') }}',
+        ajax: '{{ route('akademik.submissions.index.datatable', ['type' => $type, 'status' => $status]) }}',
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'txtReceiptNumber', name: 'txtReceiptNumber' },
@@ -356,6 +366,8 @@ function previewFile(fileUrl, fileName, fileType) {
     $('#filePreviewModal').modal('show');
 }
 </script>
+
+@if($status === 'proses')
 <script>
     window.initSelect2 = function(scope) {
     if (typeof Choices !== 'undefined') {
@@ -411,7 +423,7 @@ function previewFile(fileUrl, fileName, fileType) {
         if (window.FilePondPluginImagePreview) FilePond.registerPlugin(FilePondPluginImagePreview);
         if (window.FilePondPluginFileValidateType) FilePond.registerPlugin(FilePondPluginFileValidateType);
         } catch(e){}
-        scope.querySelectorAll('input[type="file"].filepond').forEach(function (el) {
+                scope.querySelectorAll('input[type="file"].filepond').forEach(function (el) {
         if (!el._pond) {
             const pond = FilePond.create(el, {
             allowMultiple: false,
@@ -682,4 +694,5 @@ function previewFile(fileUrl, fileName, fileType) {
         }
     });
 </script>
+@endif
 @endpush

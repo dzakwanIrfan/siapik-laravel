@@ -13,14 +13,51 @@ use Illuminate\Support\Facades\View;
 
 class AkademikController extends Controller
 {
-    public function index()
+    public function index($type, $status)
     {
-        return view('pages.submissions.akademik.index');
+        // Validasi parameter
+        if (!in_array($type, ['surat', 'ujian']) || !in_array($status, ['proses', 'selesai'])) {
+            abort(404);
+        }
+
+        // Tentukan status berdasarkan parameter
+        $statusConditions = $this->getStatusConditions($type, $status);
+        
+        // Hitung jumlah submission berdasarkan kondisi
+        $count = Submission::where('submissions.bitActive', 1)
+            ->whereIn('submissions.txtStatus', $statusConditions)
+            ->when($type === 'ujian', function($q) {
+                $q->join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
+                  ->where('letter_types.bitUjian', 1);
+            })
+            ->when($type === 'surat', function($q) {
+                $q->join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
+                  ->where('letter_types.bitUjian', 0);
+            })
+            ->count();
+
+        // Data untuk view
+        $pageData = [
+            'type' => $type,
+            'status' => $status,
+            'count' => $count,
+            'pageTitle' => $this->getPageTitle($type, $status),
+            'pageDescription' => $this->getPageDescription($type, $status),
+            'alertMessage' => $this->getAlertMessage($type, $status, $count)
+        ];
+
+        return view('pages.submissions.akademik.index', $pageData);
     }
 
-    public function indexDatatable()
+    public function indexDatatable($type, $status)
     {
+        // Validasi parameter
+        if (!in_array($type, ['surat', 'ujian']) || !in_array($status, ['proses', 'selesai'])) {
+            return response()->json(['error' => 'Invalid parameters'], 400);
+        }
+
         $majorId = optional(auth()->user()->dosenProfile)->intMajor_ID;
+        $statusConditions = $this->getStatusConditions($type, $status);
 
         $query = Submission::query()
             ->join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
@@ -28,7 +65,9 @@ class AkademikController extends Controller
             ->join('mahasiswa_profiles', 'users.intUser_ID', '=', 'mahasiswa_profiles.intUser_ID')
             ->when($majorId, fn ($q) => $q->where('mahasiswa_profiles.intMajor_ID', $majorId))
             ->where('submissions.bitActive', 1)
-            ->whereIn('submissions.txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Sudah dicetak']) // tambah status baru
+            ->whereIn('submissions.txtStatus', $statusConditions)
+            ->when($type === 'ujian', fn($q) => $q->where('letter_types.bitUjian', 1))
+            ->when($type === 'surat', fn($q) => $q->where('letter_types.bitUjian', 0))
             ->select([
                 'submissions.*',
                 'letter_types.txtNameLetterType as letter_type',
@@ -39,67 +78,11 @@ class AkademikController extends Controller
             ->addIndexColumn()
             ->editColumn('letter_type', fn($row) => $row->letter_type ?? '-')
             ->editColumn('dtmInserted', fn($row) => $row->dtmInserted ?? '-')
-            ->addColumn('action', function ($r) {
-                $buttons = '<div class="d-flex gap-1" role="group">';
-                
-                // Tombol Cek Lampiran
-                $buttons .= '<button type="button" class="btn btn-info btn-sm rounded-pill icon show-attachment-modal" 
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Cek bukti lampiran" 
-                                data-submission-id="'.$r->intSubmission_ID.'">
-                                <i class="fas fa-eye"></i>
-                            </button>';
-
-                $buttons .= '<button type="button" class="btn btn-secondary btn-sm rounded-pill icon btn-open-letter" 
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Inputan Mahasiswa" 
-                                data-submission-id="'.$r->intSubmission_ID.'">
-                                <i class="fas fa-edit"></i>
-                            </button>';
-
-                // Tombol berdasar status
-                if (in_array($r->txtStatus, ['Disetujui Akademik', 'Sudah dicetak', 'Disetujui Kaprodi'])) {
-                    $buttons .= '<a href="'.route('akademik.submissions.preview', $r->intSubmission_ID).'" 
-                                    class="btn btn-primary btn-sm rounded-pill icon" 
-                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Proses Surat" target="_blank">
-                                    <i class="fas fa-cog"></i>
-                                </a>';
-                }
-                
-                $buttons .= '</div>';
-                
-                return $buttons;
+            ->addColumn('action', function ($r) use ($status) {
+                return $this->getActionButtons($r, $status);
             })
             ->addColumn('status', function ($r) {
-                // Tambah handling untuk status baru
-                switch ($r->txtStatus ?? null) {
-                    case 'Sedang ditinjau Kaprodi':
-                        return '<button class="btn btn-sm btn-primary rounded-pill show-status-modal"
-                                    data-bs-toggle="modal" data-bs-target="#submissionModal"
-                                    data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
-                                    Sedang ditinjau Kaprodi</button>';
-                    case 'Disetujui Kaprodi':
-                        return '<button class="btn btn-sm btn-info rounded-pill show-status-modal"
-                                    data-bs-toggle="modal" data-bs-target="#submissionModal"
-                                    data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
-                                    Disetujui Kaprodi</button>';
-                    case 'Disetujui Akademik':
-                        return '<button class="btn btn-sm btn-success rounded-pill show-status-modal"
-                                    data-bs-toggle="modal" data-bs-target="#submissionModal"
-                                    data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
-                                    Disetujui Akademik</button>';
-                    case 'Sudah dicetak':
-                        return '<button class="btn btn-sm btn-warning rounded-pill show-status-modal"
-                                    data-bs-toggle="modal" data-bs-target="#submissionModal"
-                                    data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
-                                    Sudah dicetak</button>';
-                    case 'Ditolak Kaprodi':
-                    case 'Ditolak Akademik':
-                        return '<button class="btn btn-sm btn-danger rounded-pill show-status-modal"
-                                    data-bs-toggle="modal" data-bs-target="#submissionModal"
-                                    data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
-                                    '.$r->txtStatus.'</button>';
-                    default:
-                        return e($r->txtStatus ?? '-');
-                }
+                return $this->getStatusButton($r);
             })
             ->addColumn('user_full_name', fn($row) => $row->user_full_name ?? '-')
             ->filterColumn('letter_type', function($query, $keyword) {
@@ -113,6 +96,108 @@ class AkademikController extends Controller
             })
             ->rawColumns(['action', 'status'])
             ->make(true);
+    }
+
+    private function getStatusConditions($type, $status)
+    {
+        if ($status === 'proses') {
+            return ['Disetujui Kaprodi', 'Disetujui Akademik', 'Sudah dicetak'];
+        } else { // selesai
+            return ['Ditolak Kaprodi', 'Ditolak Akademik'];
+        }
+    }
+
+    private function getPageTitle($type, $status)
+    {
+        $typeText = $type === 'surat' ? 'Surat' : 'Ujian';
+        $statusText = $status === 'proses' ? 'Dalam Proses' : 'Selesai/Ditolak';
+        return "Permintaan {$typeText} - {$statusText}";
+    }
+
+    private function getPageDescription($type, $status)
+    {
+        $typeText = $type === 'surat' ? 'surat' : 'ujian';
+        $statusText = $status === 'proses' ? 'yang sedang dalam proses' : 'yang sudah selesai atau ditolak';
+        return "Sistem Informasi Pembuatan {$typeText} {$statusText}";
+    }
+
+    private function getAlertMessage($type, $status, $count)
+    {
+        if ($status === 'proses') {
+            $typeText = $type === 'surat' ? 'surat' : 'ujian';
+            return "{$count} permintaan {$typeText} belum selesai diproses!";
+        } else {
+            $typeText = $type === 'surat' ? 'surat' : 'ujian';
+            return "{$count} permintaan {$typeText} sudah selesai diproses atau ditolak.";
+        }
+    }
+
+    private function getActionButtons($r, $status)
+    {
+        $buttons = '<div class="d-flex gap-1" role="group">';
+        
+        // Tombol Cek Lampiran
+        $buttons .= '<button type="button" class="btn btn-info btn-sm rounded-pill icon show-attachment-modal" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Cek bukti lampiran" 
+                        data-submission-id="'.$r->intSubmission_ID.'">
+                        <i class="fas fa-eye"></i>
+                    </button>';
+
+        // Tombol Edit hanya untuk status proses
+        if ($status === 'proses') {
+            $buttons .= '<button type="button" class="btn btn-secondary btn-sm rounded-pill icon btn-open-letter" 
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Inputan Mahasiswa" 
+                            data-submission-id="'.$r->intSubmission_ID.'">
+                            <i class="fas fa-edit"></i>
+                        </button>';
+        }
+
+        // Tombol berdasar status
+        if (in_array($r->txtStatus, ['Disetujui Akademik', 'Sudah dicetak', 'Disetujui Kaprodi'])) {
+            $buttons .= '<a href="'.route('akademik.submissions.preview', $r->intSubmission_ID).'" 
+                            class="btn btn-primary btn-sm rounded-pill icon" 
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Proses Surat" target="_blank">
+                            <i class="fas fa-cog"></i>
+                        </a>';
+        }
+        
+        $buttons .= '</div>';
+        
+        return $buttons;
+    }
+
+    private function getStatusButton($r)
+    {
+        switch ($r->txtStatus ?? null) {
+            case 'Sedang ditinjau Kaprodi':
+                return '<button class="btn btn-sm btn-primary rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Sedang ditinjau Kaprodi</button>';
+            case 'Disetujui Kaprodi':
+                return '<button class="btn btn-sm btn-info rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Disetujui Kaprodi</button>';
+            case 'Disetujui Akademik':
+                return '<button class="btn btn-sm btn-success rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Disetujui Akademik</button>';
+            case 'Sudah dicetak':
+                return '<button class="btn btn-sm btn-warning rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Sudah dicetak</button>';
+            case 'Ditolak Kaprodi':
+            case 'Ditolak Akademik':
+                return '<button class="btn btn-sm btn-danger rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            '.$r->txtStatus.'</button>';
+            default:
+                return e($r->txtStatus ?? '-');
+        }
     }
 
     public function getAttachments($submissionId)
@@ -195,7 +280,7 @@ class AkademikController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            return redirect()->route('akademik.submissions.index')
+            return redirect()->back()
                 ->with('error', 'Gagal memuat preview surat: ' . $e->getMessage());
         }
     }
