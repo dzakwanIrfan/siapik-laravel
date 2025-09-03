@@ -119,7 +119,7 @@ class SubmissionController extends Controller
         ]);
 
         $letterType = LetterType::with(['letterFields' => function ($q) {
-            $q->where('bitActive', 1)->orderBy('intFieldOrder');
+            $q->where('bitActive', 1)->where('bitAkademik', 0)->orderBy('intFieldOrder');
         }])->findOrFail($request->letter_type_id);
 
         // Bangun rules validasi berdasar definisi field
@@ -204,6 +204,7 @@ class SubmissionController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
+            dd($e);
             return back()->with('error', 'Gagal menyimpan pengajuan.')->withInput();
         }
     }

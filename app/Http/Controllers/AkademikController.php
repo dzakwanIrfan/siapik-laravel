@@ -49,14 +49,11 @@ class AkademikController extends Controller
                                 <i class="fas fa-eye"></i>
                             </button>';
 
-                // Tombol Edit - hanya untuk status belum dicetak
-                if (in_array($r->txtStatus, ['Disetujui Kaprodi', 'Disetujui Akademik'])) {
-                    $buttons .= '<button type="button" class="btn btn-secondary btn-sm rounded-pill icon btn-open-letter" 
-                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Inputan Mahasiswa" 
-                                    data-submission-id="'.$r->intSubmission_ID.'">
-                                    <i class="fas fa-edit"></i>
-                                </button>';
-                }
+                $buttons .= '<button type="button" class="btn btn-secondary btn-sm rounded-pill icon btn-open-letter" 
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Inputan Mahasiswa" 
+                                data-submission-id="'.$r->intSubmission_ID.'">
+                                <i class="fas fa-edit"></i>
+                            </button>';
 
                 // Tombol berdasar status
                 if (in_array($r->txtStatus, ['Disetujui Akademik', 'Sudah dicetak', 'Disetujui Kaprodi'])) {
@@ -315,7 +312,7 @@ class AkademikController extends Controller
             $currentValues = [];
             foreach ($submission->values as $value) {
                 $fieldName = $value->letterField->txtFieldName ?? $value->txtFieldName;
-                $fieldType = $value->letterField->txtFieldType ?? $value->txtFieldType;
+                $fieldType = $value->letterField->txtFieldType ?? null;
                 
                 // Hanya ambil nilai untuk field non-file
                 if ($fieldType !== 'file') {
@@ -323,7 +320,7 @@ class AkademikController extends Controller
                 }
             }
 
-            // Siapkan opsi select per field (sama seperti di SubmissionController)
+            // Siapkan opsi select per field
             $fieldOptions = [];
             foreach ($submission->letterType->letterFields as $f) {
                 if ($f->txtFieldType === 'select') {
@@ -333,6 +330,7 @@ class AkademikController extends Controller
                     if (($cfg['source'] ?? 'static') === 'static') {
                         $opts = $cfg['options'] ?? [];
                     } else {
+                        // Untuk dynamic options, bisa disesuaikan sesuai kebutuhan
                         $opts = $this->buildDynamicOptions($cfg);
                     }
 
@@ -348,8 +346,65 @@ class AkademikController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response('<div class="alert alert-danger">Gagal memuat formulir edit.</div>');
+            \Log::error('Error in editSubmission: ' . $e->getMessage(), [
+                'submission_id' => $submissionId,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response('<div class="alert alert-danger">Gagal memuat formulir edit: ' . $e->getMessage() . '</div>', 500);
         }
+    }
+
+    private function buildDynamicOptions(array $cfg): array
+    {
+        $model = $cfg['model'] ?? null;
+        if (!$model) return [];
+
+        // Asumsikan model di App\Models\
+        $class = "\\App\\Models\\{$model}";
+        if (!class_exists($class)) return [];
+
+        $query = $class::query();
+
+        // with: ["user", ...]
+        $with = $cfg['with'] ?? [];
+        if (is_array($with) && $with) {
+            $query->with($with);
+        }
+
+        // Optional filter: { "where": { "bitActive": 1, "intMajor_ID": "@auth.dosenProfile.intMajor_ID" } }
+        $where = $cfg['where'] ?? [];
+        foreach ((array) $where as $col => $val) {
+            $query->where($col, $this->resolveDynamicToken($val));
+        }
+
+        $rows  = $query->get();
+        $label = $cfg['label'] ?? 'name';
+        $value = $cfg['value'] ?? 'id';
+
+        $out = [];
+        foreach ($rows as $row) {
+            $val = data_get($row, $value);
+            $lab = data_get($row, $label);
+            if ($val !== null && $lab !== null && $lab !== '') {
+                // format sama seperti "options" static: [value => label]
+                $out[(string) $val] = (string) $lab;
+            }
+        }
+
+        // urutkan label supaya rapi
+        asort($out, SORT_NATURAL | SORT_FLAG_CASE);
+        return $out;
+    }
+
+    private function resolveDynamicToken($val)
+    {
+        // support token seperti "@auth.dosenProfile.intMajor_ID"
+        if (is_string($val) && str_starts_with($val, '@auth.')) {
+            $path = substr($val, 6); // hapus "@auth."
+            return data_get(auth()->user(), $path);
+        }
+        return $val;
     }
 
     public function updateSubmission(Request $request, $submissionId)

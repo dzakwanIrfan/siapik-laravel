@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 
 if (! function_exists('tahun_akademik')) {
@@ -100,5 +101,20 @@ if (! function_exists('tanggal_indo')) {
         }
 
         return ltrim($dt->day, '0') . ' ' . $namaBulan . ' ' . $dt->year;
+    }
+}
+
+if (!function_exists('indo_hari_tanggal')) {
+    function indo_hari_tanggal($date, string $fallback = '-'): string
+    {
+        if (empty($date)) return $fallback;
+
+        try {
+            return Carbon::parse($date)
+                ->locale('id')                     // pakai locale Indonesia
+                ->translatedFormat('l, d F Y');    // contoh: Kamis, 04 September 2025
+        } catch (\Throwable $e) {
+            return $fallback;
+        }
     }
 }

@@ -238,7 +238,7 @@
                 <tr>
                     <td style="width:150px; padding:0;">Hari/Tanggal</td>
                     <td style="padding:0 5px;">:</td>
-                    <td style="padding:0;">{{ indo_hari_tanggal($data['txtHariTanggal']) ?? 'Belum diisi oleh Akademik' }}</td>
+                    <td style="padding:0;">{{ $data['txtHariTanggal'] ?? 'Belum diisi oleh Akademik' }}</td>
                 </tr>
                 <tr>
                     <td style="padding:0;">Jam</td>
@@ -294,7 +294,7 @@
                 <tr>
                     <td style="vertical-align:top;">Tanggal</td>
                     <td style="vertical-align:top;">:</td>
-                    <td> {{ tanggal_indo(now()) }} </td>
+                    <td>{{ tanggal_indo(now()) }}</td>
                 </tr>
                 <tr>
                     <td style="vertical-align:top;">Tentang</td>
@@ -355,6 +355,48 @@
                                     <td>: {{ $data['txtPembimbing2'] }}</td>
                                 </tr>
                             @endif
+                            @if ($data['txtPenguji1'])
+                                <tr style="text-align: left;">
+                                    <td>Penguji 1</td>
+                                    <td>: {{ $data['txtPenguji1'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtPenguji2'])
+                                <tr style="text-align: left;">
+                                    <td>Penguji 2</td>
+                                    <td>: {{ $data['txtPenguji2'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtPenguji3'])
+                                <tr style="text-align: left;">
+                                    <td>Penguji 3</td>
+                                    <td>: {{ $data['txtPenguji3'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtPenguji4'])
+                                <tr style="text-align: left;">
+                                    <td>Penguji 4</td>
+                                    <td>: {{ $data['txtPenguji4'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtPenguji5'])
+                                <tr style="text-align: left;">
+                                    <td>Penguji 5</td>
+                                    <td>: {{ $data['txtPenguji5'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtPengujiKehormatan'])
+                                <tr style="text-align: left;">
+                                    <td>Penguji Kehormatan</td>
+                                    <td>: {{ $data['txtPengujiKehormatan'] }}</td>
+                                </tr>
+                            @endif
+                            @if ($data['txtPengujiEksternal'])
+                                <tr style="text-align: left;">
+                                    <td>Penguji Eksternal</td>
+                                    <td>: {{ $data['txtPengujiEksternal'] }}</td>
+                                </tr>
+                            @endif
                         </table>
                     </td>
                 </tr>
@@ -371,7 +413,7 @@
                 <div>UNIVERSITAS HALU OLEO</div>
                 <div>NOMOR: {{ $submission->txtLetterNumber ?? 'Belum diisi oleh Akademik' }}</div>
                 <div>Tentang</div>
-                <div>PENETAPAN DOSEN PENGUJI PADA {{ $data['txtJenisUjian'] }} MAHASISWA</div>
+                <div>PENETAPAN DOSEN PENGUJI PADA {{ strtoupper($data['txtJenisUjian']) }} MAHASISWA</div>
                 <div>PASCASARJANA UNIVERSITAS HALU OLEO</div>
                 <div>DIREKTUR PASCASARJANA</div>
             </td>
