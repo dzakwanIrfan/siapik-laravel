@@ -89,30 +89,90 @@
     </div>
 </div>
 
-<div class="modal fade" id="view-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+<!-- Modal Template Editor Full Height -->
+<div class="modal fade" id="template-editor-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content d-flex flex-column">
             <div class="modal-header">
-                <h5 class="modal-title" id="viewModalLabel">Detail Jenis Surat</h5>
+                <h5 class="modal-title" id="templateEditorModalLabel">Edit Template Surat</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div id="detail-content">
-                    <p class="text-center">Memuat data...</p>
+            <div class="modal-body flex-fill p-3">
+                <div class="h-100 d-flex flex-column">
+                    <div class="mb-2">
+                        <label class="form-label fw-bold mb-1">Template Editor</label>
+                    </div>
+                    <div class="flex-fill">
+                        <div id="template-editor" class="h-100 border"></div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-success" id="btn-preview">Update Preview</button>
+                <button type="button" class="btn btn-primary" id="btn-save-template">Simpan Template</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Hidden Form untuk Preview di tab baru -->
+<form id="preview-form" method="POST" target="_blank" style="display: none;">
+    @csrf
+    <input type="hidden" name="content" id="preview-content">
+</form>
+
+<!-- Modal Template Editor Full Height -->
+<div class="modal fade" id="template-editor-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content d-flex flex-column">
+            <div class="modal-header">
+                <h5 class="modal-title" id="templateEditorModalLabel">Edit Template Surat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body flex-fill p-3">
+                <div class="h-100 d-flex flex-column">
+                    <div class="mb-2">
+                        <label class="form-label fw-bold mb-1">Template Editor</label>
+                    </div>
+                    <div class="flex-fill">
+                        <div id="template-editor" class="h-100 border"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-success" id="btn-preview">Update Preview</button>
+                <button type="button" class="btn btn-primary" id="btn-save-template">Simpan Template</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Form untuk Preview di tab baru -->
+<form id="preview-form" method="POST" target="_blank" style="display: none;">
+    @csrf
+    <input type="hidden" name="content" id="preview-content">
+</form>
 @endsection
 
 @push('scripts')
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="{{ asset('codemirror/codemirror.min.css') }}">
+<link rel="stylesheet" href="{{ asset('codemirror/monokai.min.css') }}">
+
+<!-- CodeMirror JS -->
+<script src="{{ asset('codemirror/codemirror.min.js') }}"></script>
+<script src="{{ asset('codemirror/xml.min.js') }}"></script>
+<script src="{{ asset('codemirror/htmlmixed.min.js') }}"></script>
+<script src="{{ asset('codemirror/css.min.js') }}"></script>
+
 <script>
 $(document).ready(function() {
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } });
+
+    let editor;
+    let currentLetterTypeId;
 
     var table = $('#letter-types-table').DataTable({
         processing: true,
@@ -147,24 +207,6 @@ $(document).ready(function() {
             $('#txtTemplatePath').val(data.txtTemplatePath);
             $('#bitActive').val(data.bitActive);
             $('#form-modal').modal('show');
-        });
-    });
-
-    $('body').on('click', '.view-btn', function() {
-        var id = $(this).data('id');
-        $.get("{{ url('letter-types') }}/" + id + '/edit', function(data) {
-            var status = data.bitActive == 1 ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Tidak Aktif</span>';
-            var detailsHtml = `
-                <table class="table table-bordered">
-                    <tr><th width="30%">Nama Jenis Surat</th><td>${data.txtNameLetterType}</td></tr>
-                    <tr><th>Kode Surat</th><td>${data.txtCode}</td></tr>
-                    <tr><th>Deskripsi</th><td>${data.txtDescription}</td></tr>
-                    <tr><th>Path Template</th><td>${data.txtTemplatePath}</td></tr>
-                    <tr><th>Status</th><td>${status}</td></tr>
-                </table>
-            `;
-            $('#detail-content').html(detailsHtml);
-            $('#view-modal').modal('show');
         });
     });
 
@@ -216,6 +258,19 @@ $(document).ready(function() {
                 });
             }
         });
+    });
+
+    // Event handlers untuk resize editor
+    $('#template-editor-modal').on('shown.bs.modal', function () {
+        setTimeout(function() {
+            resizeEditor();
+        }, 300);
+    });
+
+    $(window).on('resize', function() {
+        if ($('#template-editor-modal').hasClass('show')) {
+            resizeEditor();
+        }
     });
 });
 </script>

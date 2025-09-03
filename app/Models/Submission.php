@@ -20,6 +20,7 @@ class Submission extends Model
         'intLetterType_ID',
         'intUser_ID',
         'txtReceiptNumber',
+        'txtLetterNumber',
         'txtStatus',
         'txtKaprodiNote',
         'txtAkademikNote',

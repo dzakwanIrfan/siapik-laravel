@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MajorController;
 use App\Http\Controllers\KaprodiController;
+use App\Http\Controllers\AkademikController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LetterTypeController;
 use App\Http\Controllers\SubmissionController;
@@ -55,12 +56,40 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
 
 Route::group(['middleware' => ['role:kaprodi']], function() {
     Route::prefix('kaprodi')->controller(KaprodiController::class)->name('kaprodi.')->group(function () {
-        Route::get('/submissions', 'index')->name('submissions.index');
-        Route::get('/submissions/datatable', 'indexDatatable')->name('submissions.index.datatable');
+        Route::get('/submissions/{type}/{status}', 'index')->name('submissions.index')
+            ->where('type', 'surat|ujian')
+            ->where('status', 'proses|selesai');
+        Route::get('/submissions/{type}/{status}/datatable', 'indexDatatable')->name('submissions.index.datatable')
+            ->where('type', 'surat|ujian')
+            ->where('status', 'proses|selesai');
+
         Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
         Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
         Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
         Route::put('/submissions/{submission}/process', 'processSubmission')->name('submissions.process');
+    });
+});
+
+Route::group(['middleware' => ['role:akademik']], function() {
+    Route::prefix('akademik')->controller(AkademikController::class)->name('akademik.')->group(function () {
+        // Route baru dengan parameter type dan status
+        Route::get('/submissions/{type}/{status}', 'index')->name('submissions.index')
+            ->where('type', 'surat|ujian')
+            ->where('status', 'proses|selesai');
+        Route::get('/submissions/{type}/{status}/datatable', 'indexDatatable')->name('submissions.index.datatable')
+            ->where('type', 'surat|ujian')
+            ->where('status', 'proses|selesai');
+
+        Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
+        Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
+        Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
+        Route::put('/submissions/{submission}/process', 'processSubmission')->name('submissions.process');
+
+        Route::get('/submissions/{submission}/edit', 'editSubmission')->name('submissions.edit');
+        Route::put('/submissions/{submission}/update', 'updateSubmission')->name('submissions.update');
+
+        Route::get('/submissions/{submission}/print', 'printLetter')->name('submissions.print');
+        Route::get('/submissions/{submission}/download', 'downloadLetter')->name('submissions.download');
     });
 });
 
@@ -99,6 +128,11 @@ Route::group(['middleware' => ['role:akademik']], function () {
         Route::get('/{letter_type}/edit', 'edit')->name('edit');
         Route::put('/{letter_type}', 'update')->name('update');
         Route::delete('/{letter_type}', 'destroy')->name('destroy');
+
+        // Route baru untuk template editing dengan iframe approach
+        Route::get('/{letter_type}/edit-template', 'editTemplate')->name('edit-template');
+        Route::post('/{letter_type}/preview-template', 'previewTemplateHtml')->name('preview-template');
+        Route::put('/{letter_type}/update-template', 'updateTemplate')->name('update-template');
     });
 
     Route::prefix('letter-fields')->controller(LetterFieldController::class)->name('letter-fields.')->group(function () {
