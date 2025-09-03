@@ -22,23 +22,27 @@
 @endsection
 
 @section('content')
-<div class="container mt-5">
-    <h3>Manajemen Kolom Isian Surat</h3>
-    <button class="btn btn-primary mb-3" id="btn-add">Tambah Kolom</button>
-    <table class="table table-bordered" id="letter-fields-table" style="width:100%">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Jenis Surat</th>
-                <th>Nama Kolom</th>
-                <th>Label</th>
-                <th>Tipe</th>
-                <th>Urutan</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title">Data Kolom Isian</h4>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-primary mb-3" id="btn-add">Tambah Kolom</button>
+        <table class="table table-striped table-bordered align-middle table-dark table-hover" id="letter-fields-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Jenis Surat</th>
+                    <th>Nama Kolom</th>
+                    <th>Label</th>
+                    <th>Tipe</th>
+                    <th>Urutan</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
 </div>
 
 <!-- Modal Form -->
@@ -113,6 +117,25 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="view-modal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewModalLabel">Detail Kolom Isian</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detail-content">
+                    <p class="text-center">Memuat data...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -157,6 +180,31 @@ $(document).ready(function() {
             $('#intFieldOrder').val(data.intFieldOrder);
             $('#bitActive').val(data.bitActive);
             $('#form-modal').modal('show');
+        });
+    });
+
+    // Tombol View
+    $('body').on('click', '.view-btn', function() {
+        var id = $(this).data('id');
+        // Gunakan endpoint 'edit' yang sama untuk mengambil data
+        $.get("{{ url('letter-fields') }}/" + id + '/edit', function(data) {
+
+            var status = data.bitActive == 1 ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Tidak Aktif</span>';
+            var required = data.bitRequired == 1 ? '<span class="badge bg-info">Ya</span>' : '<span class="badge bg-secondary">Tidak</span>';
+
+            var detailsHtml = `
+                <table class="table table-bordered">
+                    <tr><th width="30%">Jenis Surat</th><td>${data.letter_type ? data.letter_type.txtNameLetterType : '-'}</td></tr>
+                    <tr><th>Nama Kolom</th><td>${data.txtFieldName}</td></tr>
+                    <tr><th>Label Kolom</th><td>${data.txtFieldLabel}</td></tr>
+                    <tr><th>Tipe Kolom</th><td>${data.txtFieldType}</td></tr>
+                    <tr><th>Urutan</th><td>${data.intFieldOrder}</td></tr>
+                    <tr><th>Wajib Diisi</th><td>${required}</td></tr>
+                    <tr><th>Status</th><td>${status}</td></tr>
+                </table>
+            `;
+            $('#detail-content').html(detailsHtml);
+            $('#view-modal').modal('show');
         });
     });
 

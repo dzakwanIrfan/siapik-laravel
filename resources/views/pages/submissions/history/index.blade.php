@@ -38,7 +38,7 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody></tbody> 
+                <tbody></tbody>
             </table>
         </div>
     </div>
@@ -52,7 +52,7 @@
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                
+
                 <div class="modal-body p-4">
                     <table id="submission-status-table" class="table table-striped table-bordered align-middle table-dark table-hover">
                         <thead>
@@ -68,9 +68,29 @@
                         <tbody><!-- server-side --></tbody>
                     </table>
                 </div>
-                
+
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- chat modal -->
+    <div class="modal fade" id="chat-modal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chatModalLabel">Diskusi Pengajuan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chat-content-container">
+                        <p class="text-center">Memuat percakapan...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div id="chat-form-container" style="width: 100%;"></div>
                 </div>
             </div>
         </div>
@@ -79,52 +99,45 @@
 
 @push('scripts')
 <script>
-    // Inisialisasi DataTable server-side
+$(document).ready(function() {
+
     const table = $('#datatables').DataTable({
         serverSide: true,
         processing: true,
-        responsive: true,
-        colReorder: true,
-        keys: true,
-        rowReorder: true,
         ajax: '{{ route('submissions.index.datatable') }}',
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'txtReceiptNumber', name: 'txtReceiptNumber' },
             { data: 'letter_type', name: 'letter_type' },
             { data: 'status', name: 'status', orderable: false, searchable: false },
-            { data: 'dtmInserted', name: 'dtmInserted', defaultContent: 'Not updated yet' },
+            { data: 'dtmInserted', name: 'dtmInserted', defaultContent: '-' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         order: [[1, 'asc']]
     });
-</script>
 
-<script>
-    $(document).ready(function() {
     let statusTable = null;
 
-    // Event delegation untuk tombol yang dibuat dinamis oleh DataTables
-    $(document).on('click', '.show-status-modal', function(e) {
+    $('#datatables tbody').on('click', '.show-status-modal', function(e) {
         e.preventDefault();
-        
+
         const submissionId = $(this).data('submissions-id');
         const typeName = $(this).data('type-name') || 'Submission';
-        
+
         if (!submissionId) {
             console.error('Submission ID not found');
             return;
         }
-        
+
         // Set judul modal
         $('#submissionModal .js-type-name').text(typeName);
-        
+
         // Siapkan URL ajax
         const urlTemplate = $('#submissionModal').data('url-template');
         const ajaxUrl = urlTemplate.replace('__ID__', submissionId);
-        
+
         console.log('Ajax URL:', ajaxUrl); // Debug
-        
+
         if (statusTable) {
             // Reload dengan submission yang baru
             statusTable.ajax.url(ajaxUrl).load();
@@ -146,9 +159,74 @@
                 destroy: true
             });
         }
-        
+
         // Show modal
         $('#submissionModal').modal('show');
+    });
+
+    $('#datatables tbody').on('click', '.chat-btn', function() {
+        var submissionId = $(this).data('id');
+        var chatUrl = "{{ route('submissions.chat.index', ['submission' => '__ID__']) }}".replace('__ID__', submissionId);
+
+        $('#chat-modal').attr('data-chat-url', chatUrl);
+        $('#chat-content-container').html('<p class="text-center">Memuat percakapan...</p>');
+        $('#chat-form-container').html('');
+        $('#chat-modal').modal('show');
+
+        $.get(chatUrl, function(response) {
+            // GANTI .find() MENJADI .filter() DI DUA BARIS INI
+            var contentHtml = $(response).filter('.chat-content-wrapper').html();
+            var formHtml = $(response).filter('.chat-form-wrapper').html();
+
+            // Suntikkan HTML ke dalam modal
+            $('#chat-content-container').html(contentHtml);
+            $('#chat-form-container').html(formHtml);
+
+            var chatContent = document.querySelector('#chat-content-container .chat-content');
+            chatContent.scrollTop = chatContent.scrollHeight;
+        });
+    });
+
+    $('#chat-modal').on('click', '#btn-send-chat', function(e) {
+        e.preventDefault();
+
+        var form = $(this).closest('form');
+        var url = form.attr('action');
+        var chatContentUrl = $('#chat-modal').attr('data-chat-url');
+        var submitButton = $(this); // Simpan referensi tombol
+        var originalButtonText = submitButton.html(); // Simpan teks asli tombol
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: form.serialize(),
+
+            // Sebelum permintaan dikirim
+            beforeSend: function() {
+                // Aktifkan status loading secara manual
+                submitButton.prop('disabled', true);
+                submitButton.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+            },
+
+            success: function(data) {
+                $('#chat-content-container').load(chatContentUrl + ' .chat-content-wrapper > *', function() {
+                    var chatContent = document.querySelector('#chat-content-container .chat-content');
+                    chatContent.scrollTop = chatContent.scrollHeight;
+                });
+                form.trigger("reset");
+            },
+
+            error: function() {
+                alert('Gagal mengirim pesan.');
+            },
+
+            // Setelah permintaan selesai (baik sukses maupun error)
+            complete: function() {
+                // Nonaktifkan status loading dan kembalikan tombol ke semula
+                submitButton.prop('disabled', false);
+                submitButton.html(originalButtonText);
+            }
+        });
     });
 });
 </script>

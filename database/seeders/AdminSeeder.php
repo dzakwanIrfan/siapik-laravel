@@ -71,7 +71,7 @@ class AdminSeeder extends Seeder
                     'txtNIP'              => $faker->unique()->numerify('198##########'),
                     'txtNIDN'             => $faker->unique()->numerify('00########'),
                     'intMajor_ID'         => 2, // Sesuaikan ID Prodi
-                    'txtFieldOfKnowledge' => 'Ilmu Komputer',
+                    'txtFieldOfKnowledge' => 'Guru Besar',
                     'bitActive'           => 1,
                 ]
             );
@@ -99,7 +99,7 @@ class AdminSeeder extends Seeder
                     'txtNIP'              => $faker->unique()->numerify('198##########'),
                     'txtNIDN'             => $faker->unique()->numerify('00########'),
                     'intMajor_ID'         => 2, // Sesuaikan ID Prodi
-                    'txtFieldOfKnowledge' => 'Ilmu Komputer',
+                    'txtFieldOfKnowledge' => 'Guru Besar',
                     'bitActive'           => 1,
                 ]
             );
@@ -163,7 +163,7 @@ class AdminSeeder extends Seeder
                 'txtNIP'              => '198511202010121001',
                 'txtNIDN'             => '0020118501',
                 'intMajor_ID'         => 2,
-                'txtFieldOfKnowledge' => 'Sistem Informasi',
+                'txtFieldOfKnowledge' => 'Guru Besar',
                 'bitActive'           => 1,
             ]
         );
@@ -186,7 +186,7 @@ class AdminSeeder extends Seeder
                 'txtNIP'              => '198001152010121002',
                 'txtNIDN'             => '0020118001',
                 'intMajor_ID'         => 1,
-                'txtFieldOfKnowledge' => 'Teknologi Informasi',
+                'txtFieldOfKnowledge' => 'Guru Besar',
                 'bitActive'           => 1,
             ]
         );

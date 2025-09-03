@@ -21,9 +21,10 @@ class LetterTypeController extends Controller
         $letterTypes = LetterType::query();
         return DataTables::of($letterTypes)
             ->addColumn('action', function ($letterType) {
-                $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $letterType->intLetterType_ID . '">Edit</a>';
-                $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $letterType->intLetterType_ID . '">Hapus</a>';
-                return '<div class="d-flex gap-2">' . $editBtn . $deleteBtn . '</div>';
+                $viewBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm view-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-eye"></i></a>';
+                $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-edit"></i></a>';
+                $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-trash-alt"></i></a>';
+                return '<div class="d-flex gap-2">' . $viewBtn . $editBtn . $deleteBtn . '</div>';
             })
             ->editColumn('bitActive', function ($letterType) {
                 return $letterType->bitActive ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Tidak Aktif</span>';

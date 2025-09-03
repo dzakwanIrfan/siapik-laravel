@@ -22,20 +22,25 @@
 @endsection
 
 @section('content')
-<div class="container mt-5">
-    <h3>Manajemen Jenis Surat</h3>
-    <table class="table table-bordered" id="letter-types-table" style="width:100%">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nama Jenis Surat</th>
-                <th>Kode</th>
-                <th>Deskripsi</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title">Data Jenis Surat</h4>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-primary mb-3" id="btn-add">Tambah Jenis Surat</button>
+        <table class="table table-striped table-bordered align-middle table-dark table-hover" id="letter-types-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Jenis Surat</th>
+                    <th>Kode</th>
+                    <th>Deskripsi</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
 </div>
 
 <!-- Modal Form -->
@@ -83,6 +88,25 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="view-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewModalLabel">Detail Jenis Surat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detail-content">
+                    <p class="text-center">Memuat data...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -123,6 +147,24 @@ $(document).ready(function() {
             $('#txtTemplatePath').val(data.txtTemplatePath);
             $('#bitActive').val(data.bitActive);
             $('#form-modal').modal('show');
+        });
+    });
+
+    $('body').on('click', '.view-btn', function() {
+        var id = $(this).data('id');
+        $.get("{{ url('letter-types') }}/" + id + '/edit', function(data) {
+            var status = data.bitActive == 1 ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Tidak Aktif</span>';
+            var detailsHtml = `
+                <table class="table table-bordered">
+                    <tr><th width="30%">Nama Jenis Surat</th><td>${data.txtNameLetterType}</td></tr>
+                    <tr><th>Kode Surat</th><td>${data.txtCode}</td></tr>
+                    <tr><th>Deskripsi</th><td>${data.txtDescription}</td></tr>
+                    <tr><th>Path Template</th><td>${data.txtTemplatePath}</td></tr>
+                    <tr><th>Status</th><td>${status}</td></tr>
+                </table>
+            `;
+            $('#detail-content').html(detailsHtml);
+            $('#view-modal').modal('show');
         });
     });
 

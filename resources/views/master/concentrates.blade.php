@@ -22,19 +22,23 @@
 @endsection
 
 @section('content')
-<div class="container mt-5">
-    <h3>Manajemen Peminatan</h3>
-    <button class="btn btn-primary mb-3" id="btn-add-concentrate">Tambah Peminatan</button>
-    <table class="table table-bordered" id="concentrates-table" style="width:100%">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nama Prodi</th>
-                <th>Nama Peminatan</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title">Data Peminatan</h4>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-primary mb-3" id="btn-add-concentrate">Tambah Peminatan</button>
+        <table class="table table-striped table-bordered align-middle table-dark table-hover" id="concentrates-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Prodi</th>
+                    <th>Nama Peminatan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
 </div>
 
 <!-- Modal Form -->
@@ -67,6 +71,25 @@
                     <button type="button" class="btn btn-primary" id="btn-save">Simpan</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="concentrate-view-modal" tabindex="-1" aria-labelledby="concentrateViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="concentrateViewModalLabel">Detail Peminatan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="concentrate-detail-content">
+                    <p class="text-center">Memuat data...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
@@ -109,6 +132,20 @@ $(document).ready(function() {
             $('#intMajor_ID').val(data.intMajor_ID);
             $('#txtNameConcentrate').val(data.txtNameConcentrate);
             $('#concentrate-modal').modal('show');
+        });
+    });
+
+    $('body').on('click', '.view-btn', function() {
+        var id = $(this).data('id');
+        $.get("{{ url('concentrates') }}/" + id + '/edit', function(data) {
+            var detailsHtml = `
+                <table class="table table-bordered">
+                    <tr><th width="30%">Nama Prodi</th><td>${data.major ? data.major.txtNameMajor : '-'}</td></tr>
+                    <tr><th>Nama Peminatan</th><td>${data.txtNameConcentrate}</td></tr>
+                </table>
+            `;
+            $('#concentrate-detail-content').html(detailsHtml);
+            $('#concentrate-view-modal').modal('show');
         });
     });
 

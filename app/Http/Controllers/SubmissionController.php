@@ -11,6 +11,7 @@ use App\Models\SubmissionValue;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\SubmissionStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -224,9 +225,9 @@ class SubmissionController extends Controller
 
         $pdf = Pdf::loadView('pages.submissions.receipt.receipt_pdf', compact('submission'));
         $pdf->setPaper('A4', 'portrait');
-        
+
         $filename = 'Receipt_' . $submission->letterType->txtCode . '_' . date('Y-m-d') . '.pdf';
-        
+
         return $pdf->download($filename);
     }
 
@@ -349,6 +350,7 @@ class SubmissionController extends Controller
                 ->addColumn('dtmCreated', fn($row) => $row->dtmCreated ?? '-')
                 ->addColumn('action', function ($r) {
                     return '<div class="btn-group" role="group">
+                                <button type="button" class="btn btn-primary btn-action chat-btn" data-id="' . $r->intSubmission_ID . '"><i class="fas fa-comments"></i></button>
                                 <button type="button" class="btn btn-info btn-action btn-view"><i class="fas fa-eye"></i></button>
                                 <button type="button" class="btn btn-warning btn-action btn-edit"><i class="fas fa-edit"></i></button>
                                 <button type="button" class="btn btn-danger btn-action btn-delete"><i class="fas fa-trash-alt"></i></button>
@@ -357,7 +359,7 @@ class SubmissionController extends Controller
                 ->addColumn('status', function ($r) {
                     switch ($r->txtStatus) {
                         case 'Sedang ditinjau Kaprodi':
-                            return '<button 
+                            return '<button
                                         class="btn btn-sm btn-primary rounded-pill show-status-modal"
                                         data-bs-toggle="modal"
                                         data-bs-target="#submissionModal"
@@ -395,5 +397,32 @@ class SubmissionController extends Controller
             })
             ->rawColumns(['bitActive'])
             ->make(true);
+    }
+
+    public function chatIndex(Submission $submission)
+    {
+        $submission->load('user');
+        $chats = $submission->chats()->with('user.roles')->orderBy('created_at', 'asc')->get();
+
+        // Log data ke file tanpa menghentikan eksekusi
+        Log::info($chats);
+
+        return view('pages.submissions.chat.content', compact('submission', 'chats'));
+    }
+
+    public function chatStore(Request $request, Submission $submission)
+    {
+        $request->validate([
+            'txtMessage' => 'required|string|max:2000' // max:2000 adalah contoh, bisa disesuaikan
+        ]);
+
+
+        // Ini secara otomatis akan mengisi `intSubmission_ID`
+        $submission->chats()->create([
+            'intUser_ID' => auth()->id(), // Ambil ID user yang sedang login
+            'txtMessage' => $request->txtMessage
+        ]);
+
+        return response()->json(['success' => 'Pesan terkirim!']);
     }
 }

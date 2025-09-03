@@ -28,7 +28,7 @@ Route::middleware(['auth'])->group(function () {
 Route::name('submissions.')->middleware(['web','auth'])->group(function () {
     Route::get('/submissions', [SubmissionController::class, 'index'])->name('create');
 
-    // form dinamis 
+    // form dinamis
     Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('type.form');
 
     // store pengajuan
@@ -36,10 +36,10 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
 
     // receipt
     Route::get('/submissions/{submission}/receipt', [SubmissionController::class, 'receipt'])->name('receipt');
-    
+
     // download receipt as PDF
     Route::get('/submissions/{submission}/receipt/download', [SubmissionController::class, 'downloadReceipt'])->name('receipt.download');
-    
+
     // print receipt
     Route::get('/submissions/{submission}/receipt/print', [SubmissionController::class, 'printReceipt'])->name('receipt.print');
 
@@ -47,6 +47,10 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
     Route::get('/my-submissions/datatable', [SubmissionController::class, 'mySubmissionsDatatable'])->name('index.datatable');
 
     Route::get('/submissions/{submission}/statuses/data', [SubmissionController::class, 'submissionStatusesDatatable'])->name('statuses.data');
+
+    //chat routes
+    Route::get('/submissions/{submission}/chat', [SubmissionController::class, 'chatIndex'])->name('chat.index');
+    Route::post('/submissions/{submission}/chat', [SubmissionController::class, 'chatStore'])->name('chat.store');
 });
 
 Route::group(['middleware' => ['role:kaprodi']], function() {

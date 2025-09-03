@@ -23,9 +23,10 @@ class ConcentrateController extends Controller
         $concentrates = Concentrate::with('major');
         return DataTables::of($concentrates)
             ->addColumn('action', function ($concentrate) {
-                $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $concentrate->intConcentrate_ID . '">Edit</a>';
-                $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $concentrate->intConcentrate_ID . '">Hapus</a>';
-                return $editBtn . ' ' . $deleteBtn;
+                $viewBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm view-btn" data-id="' . $concentrate->intConcentrate_ID . '"><i class="fas fa-eye"></i></a>';
+                $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $concentrate->intConcentrate_ID . '"><i class="fas fa-edit"></i></a>';
+                $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $concentrate->intConcentrate_ID . '"><i class="fas fa-trash-alt"></i></a>';
+                return '<div class="d-flex gap-2">' . $viewBtn . $editBtn . $deleteBtn . '</div>';
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -49,6 +50,7 @@ class ConcentrateController extends Controller
 
     public function edit(Concentrate $concentrate)
     {
+        $concentrate->load('major');
         return response()->json($concentrate);
     }
 

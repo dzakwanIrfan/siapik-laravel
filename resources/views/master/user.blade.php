@@ -16,28 +16,38 @@
   <!-- BEGIN page-header -->
   <div>
     <h3>Manajemen Users</h3>
-    <p class="text-subtitle text-muted">Welcome back 👋</p>
+    <p class="text-subtitle text-muted">Sistem Manajemen Users</p>
   </div>
   <!-- END page-header -->
 @endsection
 
 @section('content')
-<div class="container mt-5">
-    <button class="btn btn-primary mb-3" id="btn-add-user">Tambah User</button>
-    <table class="table table-bordered" id="users-table" style="width:100%">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nama Lengkap</th>
-                <th>Email</th>
-                {{-- <th>NIM</th> --}}
-                <th>Role</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+{{-- DIUBAH: Bungkus semua konten dalam <div class="card"> --}}
+<div class="card">
+    <div class="card-header">
+        {{-- PINDAH: Judul dipindah ke card-header --}}
+        <h4 class="card-title">Manajemen Users</h4>
+    </div>
+    <div class="card-body">
+        {{-- PINDAH: Tombol Tambah User dipindah ke sini --}}
+        <button class="btn btn-primary mb-3" id="btn-add-user">Tambah User</button>
+
+        {{-- DIUBAH: Tambahkan class CSS ke tabel agar sesuai dengan template --}}
+        <table class="table table-striped table-bordered align-middle table-dark table-hover" id="users-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Lengkap</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
 </div>
 
+{{-- MODAL Form User --}}
 <div class="modal fade" id="user-modal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -47,6 +57,7 @@
             </div>
             <div class="modal-body">
                 <form id="user-form" data-parsley-validate>
+                    {{-- Semua field form Anda tetap di sini, tidak ada yang diubah --}}
                     <input type="hidden" id="user_id" name="user_id">
                     <div class="mb-3">
                         <label for="txtFullName" class="form-label">Nama Lengkap</label>
@@ -58,10 +69,6 @@
                             <input type="email" class="form-control" id="txtEmail" name="txtEmail" required data-parsley-type="email">
                         </div>
                     </div>
-
-                    {{-- ====================================================== --}}
-                    {{-- BAGIAN YANG DITAMBAHKAN UNTUK MEMENUHI SKEMA DATABASE --}}
-                    {{-- ====================================================== --}}
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="txtBirthPlace" class="form-label">Tempat Lahir</label>
@@ -77,15 +84,7 @@
                             <label for="txtPhone" class="form-label">Telepon</label>
                             <input type="text" class="form-control" id="txtPhone" name="txtPhone">
                         </div>
-                        {{-- <div class="col-md-6 mb-3">
-                            <label for="txtYear" class="form-label">Tahun Angkatan</label>
-                            <input type="text" class="form-control" id="txtYear" name="txtYear">
-                        </div> --}}
                     </div>
-                    {{-- ====================================================== --}}
-                    {{-- AKHIR DARI BAGIAN YANG DITAMBAHKAN --}}
-                    {{-- ====================================================== --}}
-
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="txtGender" class="form-label">Jenis Kelamin</label>
@@ -104,12 +103,10 @@
                             </select>
                         </div>
                     </div>
-                    {{-- ====================================================== --}}
-                    {{-- FORM TAMBAHAN UNTUK PROFIL MAHASISWA (SEMBUNYI DEFAULT) --}}
-                    {{-- ====================================================== --}}
                     <div id="mahasiswa-fields" style="display: none;">
                         <hr>
                         <h5>Profil Mahasiswa</h5>
+                        {{-- ... field mahasiswa ... --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="txtNIM" class="form-label">NIM</label>
@@ -138,12 +135,10 @@
                             </div>
                         </div>
                     </div>
-                    {{-- ====================================================== --}}
-                    {{-- FORM TAMBAHAN UNTUK PROFIL DOSEN (SEMBUNYI DEFAULT) --}}
-                    {{-- ====================================================== --}}
                     <div id="dosen-fields" style="display: none;">
                         <hr>
                         <h5>Profil Dosen</h5>
+                        {{-- ... field dosen ... --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="txtNIP" class="form-label">NIP</label>
@@ -170,7 +165,6 @@
                             </div>
                         </div>
                     </div>
-                    {{-- ====================================================== --}}
                     <div class="mb-3">
                         <label for="txtPassword" class="form-label">Password</label>
                         <input type="password" class="form-control" id="txtPassword" name="txtPassword">
@@ -181,6 +175,25 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 <button type="button" class="btn btn-primary" id="btn-save">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="user-view-modal" tabindex="-1" aria-labelledby="userViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userViewModalLabel">Detail User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="user-detail-content">
+                    <p class="text-center">Memuat data...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -313,6 +326,60 @@ $(document).ready(function() {
             }
             toggleRoleFields();
             $('#user-modal').modal('show');
+        });
+    });
+
+    // Tombol View: Ambil data & buka modal detail
+    $('body').on('click', '.view-btn', function() {
+        var id = $(this).data('id');
+        // Kita bisa gunakan endpoint 'edit' yang sama untuk mengambil data
+        $.get("{{ url('users') }}/" + id + '/edit', function(data) {
+
+            // Membangun HTML untuk ditampilkan di modal
+            var detailsHtml = `
+                <table class="table table-bordered">
+                    <tr><th width="30%">Nama Lengkap</th><td>${data.txtFullName}</td></tr>
+                    <tr><th>Email</th><td>${data.txtEmail}</td></tr>
+                    <tr><th>Role</th><td>${data.roles.length > 0 ? data.roles[0].name : '-'}</td></tr>
+                    <tr><th>Tempat, Tanggal Lahir</th><td>${data.txtBirthPlace}, ${new Date(data.dtmBirthDate).toLocaleDateString('id-ID')}</td></tr>
+                    <tr><th>Telepon</th><td>${data.txtPhone || '-'}</td></tr>
+                </table>
+            `;
+
+            // Tambahkan detail profil mahasiswa jika ada
+            if (data.mahasiswa_profile) {
+                // Di sini Anda perlu memuat nama Prodi dan Peminatan melalui relasi di controller
+                // Untuk sementara kita tampilkan ID-nya
+                detailsHtml += `
+                    <h5 class="mt-4">Profil Mahasiswa</h5>
+                    <table class="table table-bordered">
+                        <tr><th width="30%">NIM</th><td>${data.mahasiswa_profile.txtNIM}</td></tr>
+                        <tr><th>Tahun Angkatan</th><td>${data.mahasiswa_profile.txtYear || '-'}</td></tr>
+                        <tr><th>Prodi</th><td>${data.mahasiswa_profile.major.txtNameMajor}</td></tr>
+                        <tr><th>Peminatan</th><td>${data.mahasiswa_profile.concentrate && data.mahasiswa_profile.concentrate.txtNameConcentrate ? data.mahasiswa_profile.concentrate.txtNameConcentrate : '-'}</td></tr>
+                    </table>
+                `;
+            }
+
+            // Tambahkan detail profil dosen jika ada
+            if (data.dosen_profile) {
+                // Anda perlu memuat nama Prodi melalui relasi di controller
+                detailsHtml += `
+                    <h5 class="mt-4">Profil Dosen</h5>
+                    <table class="table table-bordered">
+                        <tr><th width="30%">NIP</th><td>${data.dosen_profile.txtNIP}</td></tr>
+                        <tr><th>NIDN</th><td>${data.dosen_profile.txtNIDN}</td></tr>
+                        <tr><th>Bidang Keilmuan</th><td>${data.dosen_profile.txtFieldOfKnowledge || '-'}</td></tr>
+                        <tr><th>Homebase Prodi</th><td>${data.dosen_profile.major.txtNameMajor || '-'}</td></tr>
+                    </table>
+                `;
+            }
+
+            // Masukkan HTML ke dalam modal view
+            $('#user-detail-content').html(detailsHtml);
+
+            // Tampilkan modal view
+            $('#user-view-modal').modal('show');
         });
     });
 
