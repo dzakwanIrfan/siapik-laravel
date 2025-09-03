@@ -66,30 +66,130 @@
             @endhasrole
             
             @hasrole('kaprodi')
-                <li class="sidebar-item {{ request()->routeIs('kaprodi.submissions.index') ? 'active' : '' }}">
-                    <a href="{{ route('kaprodi.submissions.index') }}" class="sidebar-link">
+                <li class="sidebar-item has-sub {{ 
+                    request()->routeIs('kaprodi.submissions.index') && 
+                    request()->route('type') == 'surat' ? 'active' : '' 
+                }}">
+                    <a href="#" class="sidebar-link">
                         <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
                     </a>
+                    <ul class="submenu {{ 
+                        request()->routeIs('kaprodi.submissions.index') && 
+                        request()->route('type') == 'surat' ? 'active' : '' 
+                    }}">
+                        <li class="submenu-item {{ 
+                            request()->routeIs('kaprodi.submissions.index') && 
+                            request()->route('type') == 'surat' && 
+                            request()->route('status') == 'proses' ? 'active' : '' 
+                        }} d-flex justify-content-between align-items-center">
+                            <a href="{{ route('kaprodi.submissions.index', ['type' => 'surat', 'status' => 'proses']) }}">Dalam Proses</a>
+                            @if ($pendingSuratKaprodi > 0)
+                                <span class="badge bg-danger">{{ $pendingSuratKaprodi }}</span>
+                            @endif
+                        </li>
+                        <li class="submenu-item {{ 
+                            request()->routeIs('kaprodi.submissions.index') && 
+                            request()->route('type') == 'surat' && 
+                            request()->route('status') == 'selesai' ? 'active' : '' 
+                        }}">
+                            <a href="{{ route('kaprodi.submissions.index', ['type' => 'surat', 'status' => 'selesai']) }}">Selesai/Ditolak</a>
+                        </li>
+                    </ul>
                 </li>
                 
-                <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
+                <li class="sidebar-item has-sub {{ 
+                    request()->routeIs('kaprodi.submissions.index') && 
+                    request()->route('type') == 'ujian' ? 'active' : '' 
+                }}">
+                    <a href="#" class="sidebar-link">
                         <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
                     </a>
+                    <ul class="submenu {{ 
+                        request()->routeIs('kaprodi.submissions.index') && 
+                        request()->route('type') == 'ujian' ? 'active' : '' 
+                    }}">
+                        <li class="submenu-item {{ 
+                            request()->routeIs('kaprodi.submissions.index') && 
+                            request()->route('type') == 'ujian' && 
+                            request()->route('status') == 'proses' ? 'active' : '' 
+                        }} d-flex justify-content-between align-items-center">
+                            <a href="{{ route('kaprodi.submissions.index', ['type' => 'ujian', 'status' => 'proses']) }}">Dalam Proses</a>
+                            @if ($pendingUjianKaprodi > 0)
+                                <span class="badge bg-danger">{{ $pendingUjianKaprodi }}</span>
+                            @endif
+                        </li>
+                        <li class="submenu-item {{ 
+                            request()->routeIs('kaprodi.submissions.index') && 
+                            request()->route('type') == 'ujian' && 
+                            request()->route('status') == 'selesai' ? 'active' : '' 
+                        }}">
+                            <a href="{{ route('kaprodi.submissions.index', ['type' => 'ujian', 'status' => 'selesai']) }}">Selesai/Ditolak</a>
+                        </li>
+                    </ul>
                 </li>
             @endhasrole
 
             @hasrole('akademik')
-                <li class="sidebar-item {{ request()->routeIs('akademik.submissions.index') ? 'active' : '' }}">
-                    <a href="{{ route('akademik.submissions.index') }}" class="sidebar-link">
+                <li class="sidebar-item has-sub {{ 
+                    request()->routeIs('akademik.submissions.index') && 
+                    request()->route('type') == 'surat' ? 'active' : '' 
+                }}">
+                    <a href="#" class="sidebar-link">
                         <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
                     </a>
+                    <ul class="submenu {{ 
+                        request()->routeIs('akademik.submissions.index') && 
+                        request()->route('type') == 'surat' ? 'active' : '' 
+                    }}">
+                        <li class="submenu-item {{ 
+                            request()->routeIs('akademik.submissions.index') && 
+                            request()->route('type') == 'surat' && 
+                            request()->route('status') == 'proses' ? 'active' : '' 
+                        }} d-flex justify-content-between align-items-center">
+                            <a href="{{ route('akademik.submissions.index', ['type' => 'surat', 'status' => 'proses']) }}">Dalam Proses</a>
+                            @if ($pendingSuratAkademik > 0)
+                                <span class="badge bg-danger">{{ $pendingSuratAkademik }}</span>
+                            @endif
+                        </li>
+                        <li class="submenu-item {{ 
+                            request()->routeIs('akademik.submissions.index') && 
+                            request()->route('type') == 'surat' && 
+                            request()->route('status') == 'selesai' ? 'active' : '' 
+                        }}">
+                            <a href="{{ route('akademik.submissions.index', ['type' => 'surat', 'status' => 'selesai']) }}">Selesai/Ditolak</a>
+                        </li>
+                    </ul>
                 </li>
                 
-                <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
+                <li class="sidebar-item has-sub {{ 
+                    request()->routeIs('akademik.submissions.index') && 
+                    request()->route('type') == 'ujian' ? 'active' : '' 
+                }}">
+                    <a href="#" class="sidebar-link">
                         <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
                     </a>
+                    <ul class="submenu {{ 
+                        request()->routeIs('akademik.submissions.index') && 
+                        request()->route('type') == 'ujian' ? 'active' : '' 
+                    }}">
+                        <li class="submenu-item {{ 
+                            request()->routeIs('akademik.submissions.index') && 
+                            request()->route('type') == 'ujian' && 
+                            request()->route('status') == 'proses' ? 'active' : '' 
+                        }} d-flex justify-content-between align-items-center">
+                            <a href="{{ route('akademik.submissions.index', ['type' => 'ujian', 'status' => 'proses']) }}">Dalam Proses</a>
+                            @if ($pendingUjianAkademik > 0)
+                                <span class="badge bg-danger">{{ $pendingUjianAkademik }}</span>
+                            @endif
+                        </li>
+                        <li class="submenu-item {{ 
+                            request()->routeIs('akademik.submissions.index') && 
+                            request()->route('type') == 'ujian' && 
+                            request()->route('status') == 'selesai' ? 'active' : '' 
+                        }}">
+                            <a href="{{ route('akademik.submissions.index', ['type' => 'ujian', 'status' => 'selesai']) }}">Selesai/Ditolak</a>
+                        </li>
+                    </ul>
                 </li>
             @endhasrole
 
@@ -133,7 +233,6 @@
                     <li class="submenu-item"><a href="#">Requirement</a></li>
                 </ul>
             </li>
-
 
             <li class="sidebar-item">
                 <a href="" class="sidebar-link">
