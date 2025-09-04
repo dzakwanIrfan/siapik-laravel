@@ -2,9 +2,11 @@
 
 use Illuminate\Foundation\Application;
 use Spatie\Permission\Middleware\RoleMiddleware;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Spatie\Permission\Middleware\PermissionMiddleware;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,5 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (AuthorizationException|SpatieUnauthorized $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+            return response()->view('errors.403', [], 403);
+        });
+        $exceptions->render(function (NotFoundHttpException $e, $request) {
+            return response()->view('errors.404', [], 404);
+        });
     })->create();
