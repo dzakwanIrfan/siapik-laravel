@@ -63,4 +63,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(DosenProfile::class, 'intUser_ID', 'intUser_ID');
     }
+
+    public function submissionChats()
+    {
+        return $this->hasMany(SubmissionChat::class, 'intUser_ID', 'intUser_ID');
+    }
 }

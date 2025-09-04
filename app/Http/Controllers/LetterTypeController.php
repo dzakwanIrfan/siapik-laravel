@@ -22,10 +22,12 @@ class LetterTypeController extends Controller
         $letterTypes = LetterType::query();
         return DataTables::of($letterTypes)
             ->addColumn('action', function ($letterType) {
-                $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $letterType->intLetterType_ID . '">Edit</a>';
+                $viewBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm view-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-eye"></i></a>';
+                $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-edit"></i></a>';
                 $editTemplateBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm edit-template-btn" data-id="' . $letterType->intLetterType_ID . '">Edit Template</a>';
-                $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $letterType->intLetterType_ID . '">Hapus</a>';
-                return '<div class="d-flex gap-2">' . $editBtn . $editTemplateBtn . $deleteBtn . '</div>';
+                $editTemplateBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm edit-template-btn" data-id="' . $letterType->intLetterType_ID . '">Edit Template</a>';
+                $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-trash-alt"></i></a>';
+                return '<div class="d-flex gap-2">' . $viewBtn . $editBtn . $editTemplateBtn . $editTemplateBtn . $deleteBtn . '</div>';
             })
             ->editColumn('bitActive', function ($letterType) {
                 return $letterType->bitActive ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Tidak Aktif</span>';
@@ -96,13 +98,13 @@ class LetterTypeController extends Controller
     {
         try {
             $templatePath = $this->getTemplateFilePath($letter_type->txtTemplatePath);
-            
+
             if (!File::exists($templatePath)) {
                 return response()->json(['error' => 'Template file tidak ditemukan.'], 404);
             }
 
             $content = File::get($templatePath);
-            
+
             return response()->json([
                 'success' => true,
                 'content' => $content,
@@ -119,14 +121,14 @@ class LetterTypeController extends Controller
     {
         try {
             $content = $request->get('content');
-            
+
             if ($content) {
                 // Jika ada content dari editor, gunakan itu untuk preview
                 return response($content)->header('Content-Type', 'text/html');
             } else {
                 // Jika tidak ada content, ambil dari file
                 $templatePath = $this->getTemplateFilePath($letter_type->txtTemplatePath);
-                
+
                 if (!File::exists($templatePath)) {
                     return response('<html><body><h1>Template file tidak ditemukan</h1></body></html>')
                             ->header('Content-Type', 'text/html');
@@ -153,7 +155,7 @@ class LetterTypeController extends Controller
 
         try {
             $templatePath = $this->getTemplateFilePath($letter_type->txtTemplatePath);
-            
+
             if (!File::exists($templatePath)) {
                 return response()->json(['error' => 'Template file tidak ditemukan.'], 404);
             }
@@ -178,14 +180,14 @@ class LetterTypeController extends Controller
 
     private function getTemplateFilePath($templatePath)
     {
-        // Konversi dari template path (misal: templates.surat_izin_penelitian) 
+        // Konversi dari template path (misal: templates.surat_izin_penelitian)
         // ke file path sebenarnya (misal: resources/letters_html/surat_izin_penelitian.html)
-        
+
         if (str_contains($templatePath, 'templates.')) {
             $fileName = str_replace('templates.', '', $templatePath);
             return resource_path('views/templates/' . $fileName . '.blade.php');
         }
-        
+
         // Jika sudah format file path langsung
         return resource_path($templatePath);
     }
