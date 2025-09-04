@@ -1,10 +1,12 @@
-@props(['field', 'options' => [], 'value' => null])
+@props(['field', 'options' => [], 'value' => null, 'currentValues' => []])
 
 @php
   $name   = $field->txtFieldName;
   $label  = $field->txtFieldLabel;
   $type   = $field->txtFieldType;
   $req    = (int)$field->bitRequired === 1;
+  //untuk edit form 
+  $value = old("fields.$name", $currentValues[$name] ?? null);
   $extra  = $field->jsonFieldValidation ?? [];
   if (is_string($extra)) $extra = @json_decode($extra, true) ?: [];
 

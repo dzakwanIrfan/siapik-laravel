@@ -7,7 +7,7 @@
   <!-- BEGIN breadcrumb -->
   <nav aria-label="breadcrumb" class="breadcrumb-header float-end float-lg-end">
       <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('akademik.submissions.index') }}">Permintaan Surat</a></li>
+          <li class="breadcrumb-item"><a href="{{ route('akademik.submissions.index', ['type' => $type, 'status' => $status]) }}">Permintaan Surat</a></li>
           <li class="breadcrumb-item active" aria-current="page">Preview Surat</li>
       </ol>
   </nav>
@@ -76,8 +76,8 @@
             </div>
             <div class="card-body p-3">
                 <div id="letter-preview" class="letter-container border rounded shadow-sm" style="background: white;">
-                    <iframe id="letterFrame" 
-                            src="{{ route('akademik.submissions.preview.html', $submission->intSubmission_ID) }}" 
+                    <iframe id="letterFrame"
+                            src="{{ route('akademik.submissions.preview.html', $submission->intSubmission_ID) }}"
                             style="width: 100%; height: 800px; border: none;">
                     </iframe>
                 </div>
@@ -93,12 +93,12 @@
                 </div>
                 <div class="card-body p-3">
                     <div class="d-flex gap-2 justify-content-center">
-                        <button type="button" 
+                        <button type="button"
                                 class="btn btn-warning print-letter-btn"
                                 data-submission-id="{{ $submission->intSubmission_ID }}">
                             <i class="fas fa-print me-2"></i>Print Surat
                         </button>
-                        <button type="button" 
+                        <button type="button"
                                 class="btn btn-success download-letter-btn"
                                 data-submission-id="{{ $submission->intSubmission_ID }}">
                             <i class="fas fa-download me-2"></i>Download PDF
@@ -123,14 +123,14 @@
 
                         <div class="mb-4">
                             <h6 class="fw-bold mb-3">Pilihan Tindakan:</h6>
-                            
+
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="action" id="approve" value="approve" required {{ $submission->txtStatus === 'Disetujui Akademik' ? 'checked' : '' }}>
                                 <label class="form-check-label text-success fw-bold" for="approve">
                                     <i class="fas fa-check-circle me-2"></i>Setujui Pengajuan
                                 </label>
                             </div>
-                            
+
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="action" id="reject" value="reject" required {{ $submission->txtStatus === 'Ditolak Akademik' ? 'checked' : '' }}>
                                 <label class="form-check-label text-danger fw-bold" for="reject">
@@ -138,7 +138,7 @@
                                 </label>
                             </div>
                         </div>
-        
+
                         <div class="mb-4 d-none" id="letterNumberContainer">
                             <label for="txtLetterNumber" class="form-label fw-bold">Nomor Surat (Wajib):</label>
                             <input name="txtLetterNumber" id="txtLetterNumber" class="form-control" placeholder="Masukkan nomor surat yang sesuai..." value="{{ old('txtLetterNumber', $submission->txtLetterNumber) }}">
@@ -146,17 +146,17 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="note" class="form-label fw-bold">Catatan (Opsional):</label>
-                            <textarea name="note" id="note" class="form-control" rows="4" 
-                                    placeholder="Berikan catatan jika diperlukan..."></textarea>
-                            <div class="form-text">Catatan ini akan dilihat oleh mahasiswa.</div>
+                            <label for="txtCatatan" class="form-label fw-bold">Catatan:</label>
+                            <textarea name="txtCatatan" id="txtCatatan" class="form-control" rows="4"
+                                    placeholder="Wajib diisi jika menolak..."></textarea>
+                            <div class="form-text">Catatan ini akan disimpan di riwayat chat.</div>
                         </div>
-        
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-paper-plane me-2"></i>Proses Pengajuan
                             </button>
-                            <a href="{{ route('akademik.submissions.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('akademik.submissions.index', ['type' => $type, 'status' => $status]) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>Kembali
                             </a>
                         </div>
@@ -179,8 +179,8 @@
                                             <div class="flex-fill">
                                                 <small class="text-muted fw-bold">{{ $attachment->letterField->txtFieldLabel ?? $attachment->txtFieldLabel }}</small><br>
                                             </div>
-                                            <a href="{{ asset('storage/' . $attachment->txtFieldValue) }}" 
-                                            target="_blank" 
+                                            <a href="{{ asset('storage/' . $attachment->txtFieldValue) }}"
+                                            target="_blank"
                                             class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye"></i>
                                             </a>
@@ -209,7 +209,7 @@
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Perhatian!</strong> 
+                    <strong>Perhatian!</strong>
                     <span id="printDownloadMessage"></span>
                 </div>
                 <div class="mb-3">
@@ -250,10 +250,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const submissionId = this.getAttribute('data-submission-id');
             currentAction = 'print';
             currentUrl = `{{ url('/akademik/submissions') }}/${submissionId}/print`;
-            
-            document.getElementById('printDownloadMessage').textContent = 
+
+            document.getElementById('printDownloadMessage').textContent =
                 'Anda akan membuka halaman print surat dan mengubah status menjadi "Sudah dicetak".';
-            
+
             const modal = new bootstrap.Modal(document.getElementById('printDownloadModal'));
             modal.show();
         });
@@ -266,10 +266,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const submissionId = this.getAttribute('data-submission-id');
             currentAction = 'download';
             currentUrl = `{{ url('/akademik/submissions') }}/${submissionId}/download`;
-            
-            document.getElementById('printDownloadMessage').textContent = 
+
+            document.getElementById('printDownloadMessage').textContent =
                 'Anda akan mendownload surat dalam format PDF dan mengubah status menjadi "Sudah dicetak".';
-            
+
             const modal = new bootstrap.Modal(document.getElementById('printDownloadModal'));
             modal.show();
         });
@@ -283,11 +283,11 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (currentAction === 'download') {
                 window.location.href = currentUrl;
             }
-            
+
             // Hide modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('printDownloadModal'));
             modal.hide();
-            
+
             // Reload page after short delay to show updated status
             setTimeout(() => {
                 window.location.reload();
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const formData = new FormData(form);
             const action = formData.get('action');
-            const note = formData.get('note') || '';
+            const note = formData.get('txtCatatan') || '';
 
             if (!action) {
                 alert('Silakan pilih tindakan (Setujui atau Tolak)');
@@ -335,8 +335,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            if (action === 'reject' && !note.trim()) {
+                alert('Catatan wajib diisi saat menolak pengajuan.');
+                document.getElementById('txtCatatan').focus(); // Fokus ke textarea
+                return; // Hentikan proses, jangan tampilkan konfirmasi
+            }
+
             const actionText = action === 'approve' ? 'menyetujui' : 'menolak';
-            
+
             if (confirm(`Anda yakin akan ${actionText} pengajuan surat ini?`)) {
                 form.submit();
             }

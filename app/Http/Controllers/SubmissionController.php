@@ -341,46 +341,44 @@ class SubmissionController extends Controller
     public function mySubmissionsDatatable()
     {
         $query = Submission::join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
-                ->where('submissions.bitActive', 1)
-                ->where('intUser_ID', auth()->id())
-                ->select('submissions.*', 'letter_types.txtNameLetterType');
+            ->where('submissions.bitActive', 1)
+            ->where('intUser_ID', auth()->id())
+            ->select('submissions.*', 'letter_types.txtNameLetterType');
 
         return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('letter_type', fn($row) => $row->letterType->txtNameLetterType ?? '-')
-                ->addColumn('dtmCreated', fn($row) => $row->dtmCreated ?? '-')
-                ->addColumn('action', function ($r) {
-                    return '<div class="btn-group" role="group">
-                                <button type="button" class="btn btn-primary btn-action chat-btn" data-id="' . $r->intSubmission_ID . '"><i class="fas fa-comments"></i></button>
-                                <button type="button" class="btn btn-info btn-action btn-view"><i class="fas fa-eye"></i></button>
-                                <button type="button" class="btn btn-warning btn-action btn-edit"><i class="fas fa-edit"></i></button>
-                                <button type="button" class="btn btn-danger btn-action btn-delete"><i class="fas fa-trash-alt"></i></button>
-                            </div>';
-                })
-                ->addColumn('status', function ($r) {
-                    switch ($r->txtStatus) {
-                        case 'Sedang ditinjau Kaprodi':
-                            return '<button
-                                        class="btn btn-sm btn-primary rounded-pill show-status-modal"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#submissionModal"
-                                        data-submissions-id="' . $r->intSubmission_ID . '"
-                                        data-type-name="' . $r->letterType->txtNameLetterType . '"
-                                    >Sedang ditinjau Kaprodi</button>';
-                        default:
-                            return e($r->txtStatus ?? '-');
-                    }
-                })
-                ->filterColumn('letter_type', function($query, $keyword) {
-                    $query->whereHas('letterType', function($q) use ($keyword) {
-                        $q->where('txtNameLetterType', 'like', "%{$keyword}%");
-                    });
-                })
-                ->filterColumn('dtmCreated', function($query, $keyword) {
-                    $query->where('dtmCreated', 'like', "%{$keyword}%");
-                })
-                ->rawColumns(['action', 'status'])
-                ->make(true);
+            ->addIndexColumn()
+            ->addColumn('letter_type', fn($row) => $row->letterType->txtNameLetterType ?? '-')
+            ->addColumn('dtmInserted', fn($row) => $row->dtmInserted ?? '-')
+            ->addColumn('action', function ($r) {
+                $btnGroup = '<div class="btn-group" role="group">';
+
+                // Tombol Chat
+                $btnGroup .= '<button type="button" class="btn btn-primary btn-action chat-btn" data-id="' . $r->intSubmission_ID . '"><i class="fas fa-comments"></i></button>';
+
+                // Tombol Tanda Terima
+                $btnGroup .= '<a href="'.route('submissions.receipt', $r->intSubmission_ID).'" class="btn btn-success btn-action" title="Lihat Tanda Terima" target="_blank"><i class="fas fa-receipt"></i></a>';
+
+                // Tombol Revisi (EDIT) hanya muncul jika status ditolak
+                if (in_array($r->txtStatus, ['Ditolak Kaprodi', 'Ditolak Akademik'])) {
+                    $btnGroup .= '<button type="button" class="btn btn-warning btn-action revise-btn" data-id="' . $r->intSubmission_ID . '" title="Revisi Pengajuan"><i class="fas fa-edit"></i></button>';
+                }
+
+                $btnGroup .= '</div>';
+                return $btnGroup;
+            })
+            ->addColumn('status', function ($r) {
+                return $this->getStatusButton($r);
+            })
+            ->filterColumn('letter_type', function($query, $keyword) {
+                $query->whereHas('letterType', function($q) use ($keyword) {
+                    $q->where('txtNameLetterType', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('dtmInserted', function($query, $keyword) { // Perbarui ke dtmInserted
+                $query->where('dtmInserted', 'like', "%{$keyword}%");
+            })
+            ->rawColumns(['action', 'status'])
+            ->make(true);
     }
 
     public function submissionStatusesDatatable(Submission $submission)
@@ -418,12 +416,220 @@ class SubmissionController extends Controller
         ]);
 
 
-        // Ini secara otomatis akan mengisi `intSubmission_ID`
         $submission->chats()->create([
             'intUser_ID' => auth()->id(), // Ambil ID user yang sedang login
             'txtMessage' => $request->txtMessage
         ]);
 
         return response()->json(['success' => 'Pesan terkirim!']);
+    }
+
+    public function editFormModal(Submission $submission)
+    {
+        if ($submission->intUser_ID !== auth()->id()) {
+            abort(403);
+        }
+        if (!in_array($submission->txtStatus, ['Ditolak Kaprodi', 'Ditolak Akademik'])) {
+            abort(403, 'Pengajuan ini tidak dapat direvisi.');
+        }
+
+        $letterType = $submission->letterType()->with(['letterFields' => function ($q) {
+            $q->where('bitActive', 1)->where('bitAkademik', 0)->orderBy('intFieldOrder');
+        }])->first();
+
+        // Ambil nilai-nilai yang sudah ada
+        $currentValues = $submission->values->pluck('txtFieldValue', 'txtFieldName')->all();
+
+        $fieldOptions = [];
+        foreach ($letterType->letterFields as $f) {
+            if ($f->txtFieldType === 'select') {
+                $opts = [];
+                $cfg  = $this->decodeJson($f->jsonFieldOptions);
+                if (($cfg['source'] ?? 'static') === 'static') {
+                    $opts = $cfg['options'] ?? [];
+                } else {
+                    $opts = $this->buildDynamicOptions($cfg);
+                }
+                $fieldOptions[$f->txtFieldName] = $opts;
+            }
+        }
+
+        // Return view partial yang berisi komponen dinamis
+        return view('pages.submissions.history.components._revise_form_modal_content', [
+            'submission'    => $submission,
+            'letterType'    => $letterType,
+            'currentValues' => $currentValues,
+            'fieldOptions'  => $fieldOptions,
+        ]);
+    }
+
+
+    public function update(Request $request, Submission $submission)
+    {
+        // Pastikan hanya pemilik yang bisa mengedit
+        if ($submission->intUser_ID !== auth()->id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Pastikan hanya status ditolak yang bisa diedit
+        if (!in_array($submission->txtStatus, ['Ditolak Kaprodi', 'Ditolak Akademik'])) {
+            return response()->json(['error' => 'Pengajuan ini tidak dapat direvisi.'], 400);
+        }
+
+        $letterType = $submission->letterType()->with(['letterFields' => function ($q) {
+            $q->where('bitActive', 1)->where('bitAkademik', 0)->orderBy('intFieldOrder');
+        }])->first();
+
+        // Bangun rules validasi berdasar definisi field
+        [$rules, $selectInMap] = $this->buildValidationRules($letterType->letterFields);
+
+        // Tambahkan validasi khusus untuk file: jika ada file baru, wajib divalidasi
+        foreach ($letterType->letterFields as $field) {
+            if ($field->txtFieldType === 'file' && $request->hasFile("fields.{$field->txtFieldName}")) {
+                $rules["fields.{$field->txtFieldName}"] = str_replace('nullable', 'required', $rules["fields.{$field->txtFieldName}"]);
+            }
+        }
+
+        $validated = $request->validate($rules);
+
+        DB::beginTransaction();
+        try {
+            // Hapus nilai submission_values lama untuk field-field yang direvisi
+            $submission->values()->whereIn('intLetterField_ID', $letterType->letterFields->pluck('intLetterField_ID'))->delete();
+
+            // Simpan tiap nilai field yang baru
+            $fieldInputs = $request->input('fields', []);
+            foreach ($letterType->letterFields as $field) {
+                $name   = $field->txtFieldName;
+                $label  = $field->txtFieldLabel;
+                $type   = $field->txtFieldType;
+                $value  = null;
+                $meta   = null;
+
+                if ($type === 'file') {
+                    if ($request->hasFile("fields.$name")) {
+                        $file = $request->file("fields.$name");
+
+                        // Hapus file lama jika ada (opsional, tergantung kebijakan Anda)
+                        $oldFileValue = $submission->values()->where('txtFieldName', $name)->first();
+                        if ($oldFileValue && Storage::disk('public')->exists($oldFileValue->txtFieldValue)) {
+                            Storage::disk('public')->delete($oldFileValue->txtFieldValue);
+                        }
+
+                        $dir  = "submissions/{$submission->intSubmission_ID}";
+                        $path = $file->store($dir, ['disk' => 'public']);
+
+                        $value = $path;
+                        $meta  = [
+                            'original_name' => $file->getClientOriginalName(),
+                            'mime'          => $file->getClientMimeType(),
+                            'size'          => $file->getSize(),
+                            'disk'          => 'public',
+                            'url'           => Storage::disk('public')->url($path),
+                        ];
+                    } else {
+                        // Jika tidak ada file baru di-upload, dan sebelumnya ada file, pertahankan nilai lama
+                        $oldFileValue = $submission->values()->where('txtFieldName', $name)->first();
+                        if ($oldFileValue) {
+                            $value = $oldFileValue->txtFieldValue;
+                            $meta = $oldFileValue->jsonFieldMeta;
+                        }
+                    }
+                } else {
+                    $value = Arr::get($fieldInputs, $name);
+                }
+
+                SubmissionValue::create([
+                    'intSubmission_ID'  => $submission->intSubmission_ID,
+                    'intLetterField_ID' => $field->intLetterField_ID,
+                    'txtFieldName'      => $name,
+                    'txtFieldLabel'     => $label,
+                    'txtFieldType'      => $type,
+                    'txtFieldValue'     => is_array($value) ? json_encode($value) : $value,
+                    'jsonFieldMeta'     => $meta,
+                    'bitActive'         => 1,
+                    'txtInsertedBy'     => auth()->user()->txtFullName ?? 'System',
+                    'dtmInserted'       => now(),
+                    'txtUpdatedBy'      => auth()->user()->txtFullName ?? 'System',
+                    'dtmUpdated'        => now(),
+                ]);
+            }
+
+            // Update status kembali ke 'Sedang ditinjau Kaprodi' dan buat entri status baru
+            $submission->update([
+                'txtStatus'     => 'Sedang ditinjau Kaprodi',
+                'txtUpdatedBy'  => auth()->user()->txtFullName ?? 'System',
+                'dtmUpdated'    => now(),
+            ]);
+
+            // Nonaktifkan status lama yang aktif
+            SubmissionStatus::where('intSubmission_ID', $submission->intSubmission_ID)
+                            ->where('bitActive', 1)
+                            ->update(['bitActive' => 0]);
+
+            // Buat status baru
+            SubmissionStatus::create([
+                'intSubmission_ID' => $submission->intSubmission_ID,
+                'txtStatus'        => 'Sedang ditinjau Kaprodi',
+                'txtInReview'      => 'Persetujuan Kaprodi',
+                'txtNotes'         => 'Revisi diajukan ulang oleh pemohon.',
+                'bitActive'        => 1,
+                'txtInsertedBy'    => auth()->user()->txtFullName ?? 'System',
+                'dtmInserted'      => now(),
+            ]);
+
+            DB::commit();
+
+            return response()->json(['success' => 'Revisi berhasil disimpan dan pengajuan dikirim ulang.']);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error("Error revising submission: " . $e->getMessage(), ['submission_id' => $submission->intSubmission_ID, 'exception' => $e]);
+            return response()->json(['error' => 'Gagal menyimpan revisi. ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function getStatusButton($r)
+    {
+        // Sedikit perbaikan: gunakan relasi langsung untuk keamanan
+        $letterTypeName = optional($r->letterType)->txtNameLetterType ?? 'Surat';
+
+        switch ($r->txtStatus ?? null) {
+            case 'Sedang ditinjau Kaprodi':
+                return '<button class="btn btn-sm btn-primary rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
+                            Sedang ditinjau Kaprodi</button>';
+            case 'Disetujui Kaprodi':
+                return '<button class="btn btn-sm btn-success rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
+                            Disetujui Kaprodi</button>';
+            case 'Ditolak Kaprodi':
+                return '<button class="btn btn-sm btn-danger rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
+                            Ditolak Kaprodi</button>';
+            case 'Disetujui Akademik':
+                return '<button class="btn btn-sm btn-info rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
+                            Disetujui Akademik</button>';
+            case 'Ditolak Akademik':
+                return '<button class="btn btn-sm btn-warning rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
+                            Ditolak Akademik</button>';
+            case 'Sudah dicetak':
+                return '<button class="btn btn-sm btn-secondary rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
+                            Sudah dicetak</button>';
+            default:
+                return e($r->txtStatus ?? '-');
+        }
     }
 }

@@ -143,18 +143,37 @@
             </div>
         </div>
     </div>
+
+    {{-- modal chat --}}
+    <div class="modal fade" id="chat-modal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chatModalLabel">Diskusi Pengajuan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{-- Konten chat akan dimuat di sini oleh AJAX --}}
+                    <div id="chat-content-container">
+                        <p class="text-center">Memuat percakapan...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    {{-- Form untuk mengirim pesan akan dimuat di sini --}}
+                    <div id="chat-form-container" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
-    // Inisialisasi DataTable server-side
+$(document).ready(function() {
+    // inisiasi tabel
     const table = $('#datatables').DataTable({
         serverSide: true,
         processing: true,
-        responsive: true,
-        colReorder: true,
-        keys: true,
-        rowReorder: true,
         ajax: '{{ route('kaprodi.submissions.index.datatable', ['type' => $type, 'status' => $status]) }}',
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
@@ -162,19 +181,17 @@
             { data: 'user_full_name', name: 'user_full_name' },
             { data: 'letter_type', name: 'letter_type' },
             { data: 'status', name: 'status', orderable: false, searchable: false },
-            { data: 'dtmInserted', name: 'dtmInserted', defaultContent: 'Not updated yet' },
+            { data: 'dtmInserted', name: 'dtmInserted', defaultContent: '-' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         order: [[1, 'asc']]
     });
-</script>
 
-<script>
-    $(document).ready(function() {
+    // Logika Modal Status
     let statusTable = null;
 
     // Event delegation untuk tombol status modal
-    $(document).on('click', '.show-status-modal', function(e) {
+    $('#datatables tbody').on('click', '.show-status-modal', function(e) {
         e.preventDefault();
 
         const submissionId = $(this).data('submissions-id');
@@ -221,7 +238,7 @@
     });
 
     // Event delegation untuk tombol attachment modal
-    $(document).on('click', '.show-attachment-modal', function(e) {
+    $('#datatables tbody').on('click', '.show-attachment-modal', function(e) {
         e.preventDefault();
 
         const submissionId = $(this).data('submission-id');
@@ -336,9 +353,76 @@
             }
         });
     });
+
+    // chat modal
+    $('#datatables tbody').on('click', '.chat-btn', function() {
+        var submissionId = $(this).data('id');
+        var chatUrl = "{{ route('submissions.chat.index', ['submission' => '__ID__']) }}".replace('__ID__', submissionId);
+
+        $('#chat-modal').attr('data-chat-url', chatUrl);
+        $('#chat-content-container').html('<p class="text-center">Memuat percakapan...</p>');
+        $('#chat-form-container').html('');
+        $('#chat-modal').modal('show');
+
+        // Ambil konten chat dari server
+        $.get(chatUrl, function(response) {
+            var contentHtml = $(response).filter('.chat-content-wrapper').html();
+            var formHtml = $(response).filter('.chat-form-wrapper').html();
+
+            // Suntikkan HTML ke dalam modal
+            $('#chat-content-container').html(contentHtml);
+            $('#chat-form-container').html(formHtml);
+
+            var chatContent = document.querySelector('#chat-content-container .chat-content');
+            chatContent.scrollTop = chatContent.scrollHeight;
+        });
+    });
+
+    // form modal
+    $('#chat-modal').on('click', '#btn-send-chat', function(e) {
+        e.preventDefault();
+
+        var form = $(this).closest('form');
+        var url = form.attr('action');
+        var chatContentUrl = $('#chat-modal').attr('data-chat-url');
+        var submitButton = $(this); // Simpan referensi tombol
+        var originalButtonText = submitButton.html(); // Simpan teks asli tombol
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: form.serialize(),
+
+            // Sebelum permintaan dikirim
+            beforeSend: function() {
+                // Aktifkan status loading secara manual
+                submitButton.prop('disabled', true);
+                submitButton.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+            },
+
+            success: function(data) {
+                $('#chat-content-container').load(chatContentUrl + ' .chat-content-wrapper > *', function() {
+                    var chatContent = document.querySelector('#chat-content-container .chat-content');
+                    chatContent.scrollTop = chatContent.scrollHeight;
+                });
+                form.trigger("reset");
+            },
+
+            error: function() {
+                alert('Gagal mengirim pesan.');
+            },
+
+            // Setelah permintaan selesai (baik sukses maupun error)
+            complete: function() {
+                // Nonaktifkan status loading dan kembalikan tombol ke semula
+                submitButton.prop('disabled', false);
+                submitButton.html(originalButtonText);
+            }
+        });
+    });
 });
 
-// Function untuk preview file
+// Function untuk preview file (tetap di luar document ready)
 function previewFile(fileUrl, fileName, fileType) {
     $('#filePreviewModalLabel').text(fileName);
     $('#downloadFileLink').attr('href', fileUrl);

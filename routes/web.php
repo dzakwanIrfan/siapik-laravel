@@ -52,6 +52,10 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
     //chat routes
     Route::get('/submissions/{submission}/chat', [SubmissionController::class, 'chatIndex'])->name('chat.index');
     Route::post('/submissions/{submission}/chat', [SubmissionController::class, 'chatStore'])->name('chat.store');
+
+    // edit submission rute
+    Route::get('/submissions/{submission}/edit-modal', [SubmissionController::class, 'editFormModal'])->name('submissions.editModal');
+    Route::put('/submissions/{submission}', [SubmissionController::class, 'update'])->name('update');
 });
 
 Route::group(['middleware' => ['role:kaprodi']], function() {

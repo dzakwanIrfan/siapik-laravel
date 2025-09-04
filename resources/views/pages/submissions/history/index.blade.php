@@ -95,6 +95,47 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal untuk preview file -->
+    <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-labelledby="filePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filePreviewModalLabel">Preview File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="filePreviewContent" class="text-center p-4 bg-light" style="min-height: 600px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="downloadFileLink" class="btn btn-primary" target="_blank">
+                        <i class="fas fa-download me-2"></i>Download
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="reviseModal" tabindex="-1" aria-labelledby="reviseModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <div>
+                        <h5 class="modal-title mb-0" id="reviseModalLabel">Revisi Pengajuan Surat</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    {{-- Konten form akan dimuat di sini via AJAX --}}
+                    <div id="reviseFormContent">
+                        <p class="text-center text-muted">Memuat form revisi...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -225,6 +266,47 @@ $(document).ready(function() {
                 // Nonaktifkan status loading dan kembalikan tombol ke semula
                 submitButton.prop('disabled', false);
                 submitButton.html(originalButtonText);
+            }
+        });
+    });
+
+    $('#datatables tbody').on('click', '.revise-btn', function(e) {
+        e.preventDefault();
+        const submissionId = $(this).data('id');
+        const reviseModal = new bootstrap.Modal(document.getElementById('reviseModal'));
+
+        $('#reviseFormContent').html('<p class="text-center text-muted">Memuat form revisi...</p>');
+
+        // Ambil konten form dari rute baru
+        $.get(`{{ url('/submissions') }}/${submissionId}/edit-modal`, function(response) {
+            $('#reviseFormContent').html(response);
+            reviseModal.show();
+        });
+    });
+
+    $('#reviseModal').on('submit', '#reviseSubmissionForm', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = form.find('#btn-save-revision');
+
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Menyimpan...');
+
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST', // Selalu POST, karena kita pakai @method('PUT') di dalam form
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#reviseModal').modal('hide');
+                table.ajax.reload();
+                Swal.fire('Sukses!', response.success, 'success');
+            },
+            error: function(xhr) {
+                // ... (logika error handling Anda)
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html('Simpan Revisi');
             }
         });
     });

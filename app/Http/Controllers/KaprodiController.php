@@ -20,10 +20,10 @@ class KaprodiController extends Controller
 
         // Tentukan status berdasarkan parameter
         $statusConditions = $this->getStatusConditions($type, $status);
-        
+
         // Hitung jumlah submission berdasarkan kondisi
         $majorId = optional(auth()->user()->dosenProfile)->intMajor_ID;
-        
+
         $count = Submission::where('submissions.bitActive', 1) // Tambahkan alias tabel
             ->whereIn('submissions.txtStatus', $statusConditions)
             ->when($majorId, function($q) use ($majorId) {
@@ -142,25 +142,32 @@ class KaprodiController extends Controller
     private function getActionButtons($r, $status)
     {
         $buttons = '<div class="d-flex gap-1" role="group">';
-        
+
+        // Tombol Chat
+        $buttons .= '<button type="button" class="btn btn-primary btn-sm rounded-pill icon chat-btn"
+                    data-bs-toggle="tooltip" data-bs-placement="top" title="Diskusi Surat"
+                    data-id="'.$r->intSubmission_ID.'">
+                    <i class="fas fa-comments"></i>
+                </button>';
+
         // Tombol Cek Lampiran
-        $buttons .= '<button type="button" class="btn btn-info btn-sm rounded-pill icon show-attachment-modal" 
-                        data-bs-toggle="tooltip" data-bs-placement="top" title="Cek bukti lampiran" 
+        $buttons .= '<button type="button" class="btn btn-info btn-sm rounded-pill icon show-attachment-modal"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Cek bukti lampiran"
                         data-submission-id="'.$r->intSubmission_ID.'">
                         <i class="fas fa-eye"></i>
                     </button>';
 
         // Tombol Proses - hanya untuk status proses dan jika statusnya "Sedang ditinjau Kaprodi"
         if ($status === 'proses' && ($r->txtStatus ?? null) === 'Sedang ditinjau Kaprodi') {
-            $buttons .= '<a href="'.route('kaprodi.submissions.preview', $r->intSubmission_ID).'" 
-                            class="btn btn-primary btn-sm rounded-pill icon" 
+            $buttons .= '<a href="'.route('kaprodi.submissions.preview', $r->intSubmission_ID).'"
+                            class="btn btn-primary btn-sm rounded-pill icon"
                             data-bs-toggle="tooltip" data-bs-placement="top" title="Proses Surat" target="_blank">
                             <i class="fas fa-cog"></i>
                         </a>';
         }
-        
+
         $buttons .= '</div>';
-        
+
         return $buttons;
     }
 
@@ -223,7 +230,7 @@ class KaprodiController extends Controller
                     $fileName = basename($filePath);
                     $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
                     $fileUrl = asset('storage/' . $filePath);
-                    
+
                     $attachmentData[] = [
                         'field_label' => $attachment->letterField->txtFieldLabel ?? $attachment->txtFieldLabel,
                         'field_name' => $attachment->letterField->txtFieldName ?? $attachment->txtFieldName,
@@ -261,7 +268,7 @@ class KaprodiController extends Controller
     {
         try {
             // Kaprodi hanya bisa melihat submission dengan status "Sedang ditinjau Kaprodi"
-            $submission = Submission::with(['letterType', 'user.mahasiswaProfile.major', 'values.letterField'])
+            $submission = Submission::with(['letterType', 'statuses', 'user.mahasiswaProfile.major', 'values.letterField'])
                 ->where('submissions.txtStatus', 'Sedang ditinjau Kaprodi') // Tambahkan alias tabel
                 ->findOrFail($submissionId);
 
@@ -276,12 +283,20 @@ class KaprodiController extends Controller
                                 $q->where('txtFieldType', 'file');
                             })->with('letterField')->get();
 
+            // Tentukan type berdasarkan bitUjian
+            $type = $submission->letterType->bitUjian == 1 ? 'ujian' : 'surat';
+
+            // Tentukan status berdasarkan txtStatus submission
+            $status = in_array($submission->txtStatus, ['Disetujui Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak']) ? 'proses' : 'selesai';
+
             return view('pages.submissions.kaprodi.preview', [
                 'submission' => $submission,
                 'data' => $submissionData,
-                'attachments' => $attachments
+                'attachments' => $attachments,
+                'type' => $type,
+                'status' => $status
             ]);
-            
+
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Gagal memuat preview surat: ' . $e->getMessage());
@@ -303,13 +318,13 @@ class KaprodiController extends Controller
             }
 
             $templatePath = $submission->letterType->txtTemplatePath ?? 'templates.default_letter';
-            
+
             if (View::exists($templatePath)) {
                 return view($templatePath, ['data' => $submissionData, 'submission' => $submission]);
             } else {
                 return view('templates.default_letter', ['data' => $submissionData, 'submission' => $submission]);
             }
-            
+
         } catch (\Exception $e) {
             return response('<div style="padding: 20px; text-align: center; color: red; font-family: Arial;">Error: ' . $e->getMessage() . '</div>');
         }
@@ -319,6 +334,7 @@ class KaprodiController extends Controller
     {
         $request->validate([
             'action' => 'required|in:approve,reject',
+            'txtCatatan' => 'required_if:action,reject|nullable|string|max:1000',
         ]);
 
         try {
@@ -326,9 +342,9 @@ class KaprodiController extends Controller
             DB::beginTransaction();
 
             $submission = Submission::findOrFail($submissionId);
-            
+
             $newStatus = $request->action === 'approve' ? 'Disetujui Kaprodi' : 'Ditolak Kaprodi';
-            
+
             $submission->update([
                 'txtStatus' => $newStatus,
                 'dtmKaprodiProcessed' => now(),
@@ -353,13 +369,21 @@ class KaprodiController extends Controller
                 'bitActive' => 1
             ]);
 
+            if ($request->action === 'reject' && $request->filled('txtCatatan')) {
+                $submission->chats()->create([
+                    'intUser_ID' => auth()->id(),
+                    'txtMessage' => 'Catatan Penolakan: ' . $request->txtCatatan,
+                ]);
+            }
+
             DB::commit();
 
-            $message = $request->action === 'approve' 
-                ? 'Pengajuan surat berhasil disetujui!' 
+            $message = $request->action === 'approve'
+                ? 'Pengajuan surat berhasil disetujui!'
                 : 'Pengajuan surat berhasil ditolak!';
 
-            return redirect()->back()->with('success', $message);
+            return redirect()->route('kaprodi.submissions.index', ['type' => 'surat', 'status' => 'selesai'])
+                         ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -375,7 +399,7 @@ class KaprodiController extends Controller
             }
 
             return view($templatePath, compact('data', 'submission'))->render();
-            
+
         } catch (\Exception $e) {
             return view('templates.default_letter', compact('data', 'submission'))->render();
         }
