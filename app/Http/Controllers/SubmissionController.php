@@ -483,10 +483,19 @@ class SubmissionController extends Controller
         // Bangun rules validasi berdasar definisi field
         [$rules, $selectInMap] = $this->buildValidationRules($letterType->letterFields);
 
-        // Tambahkan validasi khusus untuk file: jika ada file baru, wajib divalidasi
+        // Untuk mode revisi, file tidak wajib jika sudah ada file sebelumnya
         foreach ($letterType->letterFields as $field) {
-            if ($field->txtFieldType === 'file' && $request->hasFile("fields.{$field->txtFieldName}")) {
-                $rules["fields.{$field->txtFieldName}"] = str_replace('nullable', 'required', $rules["fields.{$field->txtFieldName}"]);
+            if ($field->txtFieldType === 'file') {
+                $fieldName = $field->txtFieldName;
+                $hasExistingFile = $submission->values()
+                    ->where('txtFieldName', $fieldName)
+                    ->whereNotNull('txtFieldValue')
+                    ->exists();
+                
+                if ($hasExistingFile) {
+                    // Jika ada file existing, buat file menjadi optional
+                    $rules["fields.{$fieldName}"] = str_replace('required', 'nullable', $rules["fields.{$fieldName}"]);
+                }
             }
         }
 
@@ -494,9 +503,6 @@ class SubmissionController extends Controller
 
         DB::beginTransaction();
         try {
-            // Hapus nilai submission_values lama untuk field-field yang direvisi
-            $submission->values()->whereIn('intLetterField_ID', $letterType->letterFields->pluck('intLetterField_ID'))->delete();
-
             // Simpan tiap nilai field yang baru
             $fieldInputs = $request->input('fields', []);
             foreach ($letterType->letterFields as $field) {
@@ -506,14 +512,20 @@ class SubmissionController extends Controller
                 $value  = null;
                 $meta   = null;
 
+                // Hapus value lama untuk field ini
+                $submission->values()->where('txtFieldName', $name)->delete();
+
                 if ($type === 'file') {
                     if ($request->hasFile("fields.$name")) {
+                        // Ada file baru diupload, ganti dengan yang baru
                         $file = $request->file("fields.$name");
 
-                        // Hapus file lama jika ada (opsional, tergantung kebijakan Anda)
-                        $oldFileValue = $submission->values()->where('txtFieldName', $name)->first();
-                        if ($oldFileValue && Storage::disk('public')->exists($oldFileValue->txtFieldValue)) {
-                            Storage::disk('public')->delete($oldFileValue->txtFieldValue);
+                        // Hapus file lama jika ada
+                        $oldValues = $submission->values()->where('txtFieldName', $name)->get();
+                        foreach ($oldValues as $oldValue) {
+                            if ($oldValue->txtFieldValue && Storage::disk('public')->exists($oldValue->txtFieldValue)) {
+                                Storage::disk('public')->delete($oldValue->txtFieldValue);
+                            }
                         }
 
                         $dir  = "submissions/{$submission->intSubmission_ID}";
@@ -528,7 +540,7 @@ class SubmissionController extends Controller
                             'url'           => Storage::disk('public')->url($path),
                         ];
                     } else {
-                        // Jika tidak ada file baru di-upload, dan sebelumnya ada file, pertahankan nilai lama
+                        // Tidak ada file baru, pertahankan file lama
                         $oldFileValue = $submission->values()->where('txtFieldName', $name)->first();
                         if ($oldFileValue) {
                             $value = $oldFileValue->txtFieldValue;
@@ -536,26 +548,30 @@ class SubmissionController extends Controller
                         }
                     }
                 } else {
+                    // Field non-file (text/textarea/number/date/select)
                     $value = Arr::get($fieldInputs, $name);
                 }
 
-                SubmissionValue::create([
-                    'intSubmission_ID'  => $submission->intSubmission_ID,
-                    'intLetterField_ID' => $field->intLetterField_ID,
-                    'txtFieldName'      => $name,
-                    'txtFieldLabel'     => $label,
-                    'txtFieldType'      => $type,
-                    'txtFieldValue'     => is_array($value) ? json_encode($value) : $value,
-                    'jsonFieldMeta'     => $meta,
-                    'bitActive'         => 1,
-                    'txtInsertedBy'     => auth()->user()->txtFullName ?? 'System',
-                    'dtmInserted'       => now(),
-                    'txtUpdatedBy'      => auth()->user()->txtFullName ?? 'System',
-                    'dtmUpdated'        => now(),
-                ]);
+                // Buat entry SubmissionValue jika ada value
+                if ($value !== null) {
+                    SubmissionValue::create([
+                        'intSubmission_ID'  => $submission->intSubmission_ID,
+                        'intLetterField_ID' => $field->intLetterField_ID,
+                        'txtFieldName'      => $name,
+                        'txtFieldLabel'     => $label,
+                        'txtFieldType'      => $type,
+                        'txtFieldValue'     => is_array($value) ? json_encode($value) : $value,
+                        'jsonFieldMeta'     => $meta,
+                        'bitActive'         => 1,
+                        'txtInsertedBy'     => auth()->user()->txtFullName ?? 'System',
+                        'dtmInserted'       => now(),
+                        'txtUpdatedBy'      => auth()->user()->txtFullName ?? 'System',
+                        'dtmUpdated'        => now(),
+                    ]);
+                }
             }
 
-            // Update status kembali ke 'Sedang ditinjau Kaprodi' dan buat entri status baru
+            // Update status kembali ke 'Sedang ditinjau Kaprodi'
             $submission->update([
                 'txtStatus'     => 'Sedang ditinjau Kaprodi',
                 'txtUpdatedBy'  => auth()->user()->txtFullName ?? 'System',
@@ -587,8 +603,11 @@ class SubmissionController extends Controller
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Error revising submission: " . $e->getMessage(), ['submission_id' => $submission->intSubmission_ID, 'exception' => $e]);
-            return response()->json(['error' => 'Gagal menyimpan revisi. ' . $e->getMessage()], 500);
+            Log::error("Error revising submission: " . $e->getMessage(), [
+                'submission_id' => $submission->intSubmission_ID, 
+                'exception' => $e
+            ]);
+            return response()->json(['error' => 'Gagal menyimpan revisi.'], 500);
         }
     }
 
@@ -619,7 +638,7 @@ class SubmissionController extends Controller
                             data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
                             Disetujui Akademik</button>';
             case 'Ditolak Akademik':
-                return '<button class="btn btn-sm btn-warning rounded-pill show-status-modal"
+                return '<button class="btn btn-sm btn-danger rounded-pill show-status-modal"
                             data-bs-toggle="modal" data-bs-target="#submissionModal"
                             data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
                             Ditolak Akademik</button>';

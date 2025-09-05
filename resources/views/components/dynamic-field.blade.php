@@ -1,4 +1,4 @@
-@props(['field', 'options' => [], 'value' => null, 'currentValues' => []])
+@props(['field', 'options' => [], 'value' => null, 'currentValues' => [], 'isRevision' => false])
 
 @php
   $name   = $field->txtFieldName;
@@ -105,12 +105,103 @@
         } elseif (isset($extra['accept'])) {
           $accept = 'accept="'.$extra['accept'].'"';
         }
+        
+        // Ambil data file yang sudah ada untuk mode revisi
+        $existingFile = null;
+        $existingFilePath = null;
+        if ($isRevision && isset($currentValues[$name]) && !empty($currentValues[$name])) {
+          // Cari submission value untuk mendapatkan metadata
+          $submissionValue = null;
+          if (isset($GLOBALS['currentSubmission'])) {
+            $submissionValue = $GLOBALS['currentSubmission']->values()
+              ->where('txtFieldName', $name)
+              ->first();
+          }
+          
+          if ($submissionValue && $submissionValue->jsonFieldMeta) {
+            $existingFile = $submissionValue->jsonFieldMeta;
+            $existingFile['path'] = $submissionValue->txtFieldValue;
+            $existingFilePath = $submissionValue->txtFieldValue;
+          } else {
+            $existingFilePath = $currentValues[$name];
+            $existingFile = [
+              'path' => $existingFilePath,
+              'original_name' => basename($existingFilePath),
+              'url' => asset('storage/' . $existingFilePath)
+            ];
+          }
+        }
       @endphp
-      <input
-        type="file"
-        class="filepond @error("fields.$name") is-invalid @enderror"
-        id="{{ $name }}" name="fields[{{ $name }}]"
-        {{ $req ? 'required' : '' }} {!! $attrs ? ''.$attrs : '' !!} {!! $accept !!} data-max-files="1">
+      
+      @if($isRevision)
+        {{-- File input untuk revisi (tidak menggunakan FilePond) --}}
+        <input
+          type="file"
+          class="form-control bg-white shadow-sm @error("fields.$name") is-invalid @enderror"
+          id="{{ $name }}" 
+          name="fields[{{ $name }}]"
+          {!! $accept !!}
+        >
+        
+        {{-- Info file yang sudah ada --}}
+        @if($existingFile)
+          <div class="mt-3 p-3 bg-light rounded border">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h6 class="mb-1 text-dark">File Saat Ini:</h6>
+                <p class="mb-1 text-muted">
+                  <i class="fas fa-file me-1"></i>
+                  {{ $existingFile['original_name'] ?? basename($existingFilePath) }}
+                </p>
+                @if(isset($existingFile['size']))
+                  <small class="text-muted">
+                    Ukuran: {{ number_format($existingFile['size'] / 1024, 2) }} KB
+                  </small>
+                @endif
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="btn-group" role="group">
+                  <a href="{{ $existingFile['url'] ?? asset('storage/' . $existingFilePath) }}" 
+                     class="btn btn-sm btn-outline-primary" 
+                     target="_blank"
+                     title="Preview File">
+                    <i class="fas fa-eye"></i> Preview
+                  </a>
+                  <a href="{{ $existingFile['url'] ?? asset('storage/' . $existingFilePath) }}" 
+                     class="btn btn-sm btn-outline-success" 
+                     download="{{ $existingFile['original_name'] ?? basename($existingFilePath) }}"
+                     title="Download File">
+                    <i class="fas fa-download"></i> Download
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <small class="text-muted d-block mt-2">
+            <i class="fas fa-info-circle"></i> 
+            Biarkan kosong jika tidak ingin mengganti file. Upload file baru jika ingin mengganti.
+          </small>
+        @endif
+        
+        @if(!$existingFile && $req)
+          <small class="text-danger d-block mt-1">
+            <i class="fas fa-exclamation-circle"></i> 
+            File wajib diupload karena sebelumnya tidak ada file.
+          </small>
+        @endif
+      @else
+        {{-- File input untuk create (menggunakan FilePond) --}}
+        <input
+          type="file"
+          class="filepond @error("fields.$name") is-invalid @enderror"
+          id="{{ $name }}" 
+          name="fields[{{ $name }}]"
+          {{ $req ? 'required' : '' }} 
+          {!! $attrs ? ''.$attrs : '' !!} 
+          {!! $accept !!} 
+          data-max-files="1"
+        >
+      @endif
       @break
   @endswitch
 
