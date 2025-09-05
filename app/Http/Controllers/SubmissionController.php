@@ -433,6 +433,9 @@ class SubmissionController extends Controller
             abort(403, 'Pengajuan ini tidak dapat direvisi.');
         }
 
+        // Set global variable untuk diakses di blade component
+        $GLOBALS['currentSubmission'] = $submission;
+
         $letterType = $submission->letterType()->with(['letterFields' => function ($q) {
             $q->where('bitActive', 1)->where('bitAkademik', 0)->orderBy('intFieldOrder');
         }])->first();
@@ -454,7 +457,6 @@ class SubmissionController extends Controller
             }
         }
 
-        // Return view partial yang berisi komponen dinamis
         return view('pages.submissions.history.components._revise_form_modal_content', [
             'submission'    => $submission,
             'letterType'    => $letterType,
@@ -462,7 +464,6 @@ class SubmissionController extends Controller
             'fieldOptions'  => $fieldOptions,
         ]);
     }
-
 
     public function update(Request $request, Submission $submission)
     {
@@ -503,8 +504,11 @@ class SubmissionController extends Controller
 
         DB::beginTransaction();
         try {
-            // Simpan tiap nilai field yang baru
+            // Ambil data lama SEBELUM dihapus
+            $existingValues = $submission->values()->get()->keyBy('txtFieldName');
+            
             $fieldInputs = $request->input('fields', []);
+            
             foreach ($letterType->letterFields as $field) {
                 $name   = $field->txtFieldName;
                 $label  = $field->txtFieldLabel;
@@ -520,12 +524,11 @@ class SubmissionController extends Controller
                         // Ada file baru diupload, ganti dengan yang baru
                         $file = $request->file("fields.$name");
 
-                        // Hapus file lama jika ada
-                        $oldValues = $submission->values()->where('txtFieldName', $name)->get();
-                        foreach ($oldValues as $oldValue) {
-                            if ($oldValue->txtFieldValue && Storage::disk('public')->exists($oldValue->txtFieldValue)) {
-                                Storage::disk('public')->delete($oldValue->txtFieldValue);
-                            }
+                        // Hapus file lama jika ada (menggunakan data yang sudah diambil sebelumnya)
+                        $oldValue = $existingValues->get($name);
+                        if ($oldValue && $oldValue->txtFieldValue && Storage::disk('public')->exists($oldValue->txtFieldValue)) {
+                            Storage::disk('public')->delete($oldValue->txtFieldValue);
+                            Log::info("Deleted old file: " . $oldValue->txtFieldValue);
                         }
 
                         $dir  = "submissions/{$submission->intSubmission_ID}";
@@ -539,12 +542,15 @@ class SubmissionController extends Controller
                             'disk'          => 'public',
                             'url'           => Storage::disk('public')->url($path),
                         ];
+
+                        Log::info("Uploaded new file for field {$name}: {$path}");
                     } else {
                         // Tidak ada file baru, pertahankan file lama
-                        $oldFileValue = $submission->values()->where('txtFieldName', $name)->first();
-                        if ($oldFileValue) {
-                            $value = $oldFileValue->txtFieldValue;
-                            $meta = $oldFileValue->jsonFieldMeta;
+                        $oldValue = $existingValues->get($name);
+                        if ($oldValue) {
+                            $value = $oldValue->txtFieldValue;
+                            $meta = $oldValue->jsonFieldMeta;
+                            Log::info("Keeping existing file for field {$name}: {$value}");
                         }
                     }
                 } else {
@@ -568,6 +574,8 @@ class SubmissionController extends Controller
                         'txtUpdatedBy'      => auth()->user()->txtFullName ?? 'System',
                         'dtmUpdated'        => now(),
                     ]);
+
+                    Log::info("Created SubmissionValue for field {$name} with value: " . (is_array($value) ? json_encode($value) : $value));
                 }
             }
 
@@ -596,18 +604,22 @@ class SubmissionController extends Controller
 
             DB::commit();
 
+            Log::info("Submission {$submission->intSubmission_ID} updated successfully");
             return response()->json(['success' => 'Revisi berhasil disimpan dan pengajuan dikirim ulang.']);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+            Log::error("Validation error updating submission {$submission->intSubmission_ID}: " . json_encode($e->errors()));
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Error revising submission: " . $e->getMessage(), [
-                'submission_id' => $submission->intSubmission_ID, 
-                'exception' => $e
+            Log::error("Error updating submission {$submission->intSubmission_ID}: " . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'files' => $request->allFiles()
             ]);
-            return response()->json(['error' => 'Gagal menyimpan revisi.'], 500);
+            return response()->json(['error' => 'Gagal menyimpan revisi: ' . $e->getMessage()], 500);
         }
     }
 

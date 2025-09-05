@@ -227,7 +227,7 @@ class KaprodiController extends Controller
             foreach ($attachments as $attachment) {
                 if ($attachment->txtFieldValue && file_exists(storage_path('app/public/' . $attachment->txtFieldValue))) {
                     $filePath = $attachment->txtFieldValue;
-                    $fileName = basename($filePath);
+                    $fileName = $attachment->jsonFieldMeta['original_name'] ?? basename($filePath);
                     $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
                     $fileUrl = asset('storage/' . $filePath);
 
