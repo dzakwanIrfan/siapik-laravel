@@ -22,20 +22,25 @@
 @endsection
 
 @section('content')
-<div class="container mt-5">
-    <h3>Manajemen Jenis Surat</h3>
-    <table class="table table-bordered" id="letter-types-table" style="width:100%">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nama Jenis Surat</th>
-                <th>Kode</th>
-                <th>Deskripsi</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title">Data Jenis Surat</h4>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-primary mb-3" id="btn-add">Tambah Jenis Surat</button>
+        <table class="table table-striped table-bordered align-middle table-dark table-hover" id="letter-types-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Jenis Surat</th>
+                    <th>Kode</th>
+                    <th>Deskripsi</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
 </div>
 
 <!-- Modal Form -->
@@ -83,6 +88,39 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Template Editor Full Height -->
+<div class="modal fade" id="template-editor-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content d-flex flex-column">
+            <div class="modal-header">
+                <h5 class="modal-title" id="templateEditorModalLabel">Edit Template Surat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body flex-fill p-3">
+                <div class="h-100 d-flex flex-column">
+                    <div class="mb-2">
+                        <label class="form-label fw-bold mb-1">Template Editor</label>
+                    </div>
+                    <div class="flex-fill">
+                        <div id="template-editor" class="h-100 border"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-success" id="btn-preview">Update Preview</button>
+                <button type="button" class="btn btn-primary" id="btn-save-template">Simpan Template</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Form untuk Preview di tab baru -->
+<form id="preview-form" method="POST" target="_blank" style="display: none;">
+    @csrf
+    <input type="hidden" name="content" id="preview-content">
+</form>
 
 <!-- Modal Template Editor Full Height -->
 <div class="modal fade" id="template-editor-modal" tabindex="-1" aria-hidden="true">
@@ -174,7 +212,7 @@ $(document).ready(function() {
                     }
                 }
             });
-            
+
             // Set tinggi editor secara manual setelah inisialisasi
             resizeEditor();
         }
@@ -188,15 +226,15 @@ $(document).ready(function() {
             const modalHeader = document.querySelector('#template-editor-modal .modal-header');
             const modalFooter = document.querySelector('#template-editor-modal .modal-footer');
             const label = document.querySelector('#template-editor-modal .form-label');
-            
+
             const windowHeight = window.innerHeight;
             const headerHeight = modalHeader ? modalHeader.offsetHeight : 60;
             const footerHeight = modalFooter ? modalFooter.offsetHeight : 70;
             const labelHeight = label ? label.offsetHeight : 25;
             const padding = 50; // padding dan margin tambahan
-            
+
             const availableHeight = windowHeight - headerHeight - footerHeight - labelHeight - padding;
-            
+
             // Set tinggi editor
             const editorElement = document.querySelector('.CodeMirror');
             if (editorElement) {
@@ -212,14 +250,14 @@ $(document).ready(function() {
             const content = editor.getValue();
             const form = document.getElementById('preview-form');
             const contentInput = document.getElementById('preview-content');
-            
+
             // Set form action ke route preview
             form.action = "{{ url('letter-types') }}/" + currentLetterTypeId + "/preview-template";
             contentInput.value = content;
-            
+
             // Submit form ke tab baru
             form.submit();
-            
+
             // Tampilkan notifikasi
             Swal.fire({
                 title: 'Preview Dibuka',
@@ -257,14 +295,14 @@ $(document).ready(function() {
     $('body').on('click', '.edit-template-btn', function() {
         var id = $(this).data('id');
         currentLetterTypeId = id;
-        
+
         initializeEditor();
-        
+
         $.get("{{ url('letter-types') }}/" + id + '/edit-template', function(response) {
             if (response.success) {
                 $('#templateEditorModalLabel').text('Edit Template: ' + response.letterType.txtNameLetterType);
                 editor.setValue(response.content);
-                
+
                 $('#template-editor-modal').modal('show');
             } else {
                 Swal.fire('Error!', response.error, 'error');
@@ -324,7 +362,7 @@ $(document).ready(function() {
         }
 
         const content = editor.getValue();
-        
+
         if (!content.trim()) {
             Toast.fire('Error!', 'Konten template tidak boleh kosong', 'error');
             return;

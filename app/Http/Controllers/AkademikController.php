@@ -22,7 +22,7 @@ class AkademikController extends Controller
 
         // Tentukan status berdasarkan parameter
         $statusConditions = $this->getStatusConditions($type, $status);
-        
+
         // Hitung jumlah submission berdasarkan kondisi
         $count = Submission::where('submissions.bitActive', 1)
             ->whereIn('submissions.txtStatus', $statusConditions)
@@ -135,18 +135,25 @@ class AkademikController extends Controller
     private function getActionButtons($r, $status)
     {
         $buttons = '<div class="d-flex gap-1" role="group">';
-        
+
+        // Tombol Chat
+        $buttons .= '<button type="button" class="btn btn-primary btn-sm rounded-pill icon chat-btn"
+                    data-bs-toggle="tooltip" data-bs-placement="top" title="Diskusi Surat"
+                    data-id="'.$r->intSubmission_ID.'">
+                    <i class="fas fa-comments"></i>
+                </button>';
+
         // Tombol Cek Lampiran
-        $buttons .= '<button type="button" class="btn btn-info btn-sm rounded-pill icon show-attachment-modal" 
-                        data-bs-toggle="tooltip" data-bs-placement="top" title="Cek bukti lampiran" 
+        $buttons .= '<button type="button" class="btn btn-info btn-sm rounded-pill icon show-attachment-modal"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Cek bukti lampiran"
                         data-submission-id="'.$r->intSubmission_ID.'">
                         <i class="fas fa-eye"></i>
                     </button>';
 
         // Tombol Edit hanya untuk status proses
         if ($status === 'proses') {
-            $buttons .= '<button type="button" class="btn btn-secondary btn-sm rounded-pill icon btn-open-letter" 
-                            data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Inputan Mahasiswa" 
+            $buttons .= '<button type="button" class="btn btn-secondary btn-sm rounded-pill icon btn-open-letter"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Inputan Mahasiswa"
                             data-submission-id="'.$r->intSubmission_ID.'">
                             <i class="fas fa-edit"></i>
                         </button>';
@@ -154,15 +161,15 @@ class AkademikController extends Controller
 
         // Tombol berdasar status
         if (in_array($r->txtStatus, ['Disetujui Akademik', 'Sudah dicetak', 'Disetujui Kaprodi'])) {
-            $buttons .= '<a href="'.route('akademik.submissions.preview', $r->intSubmission_ID).'" 
-                            class="btn btn-primary btn-sm rounded-pill icon" 
+            $buttons .= '<a href="'.route('akademik.submissions.preview', $r->intSubmission_ID).'"
+                            class="btn btn-primary btn-sm rounded-pill icon"
                             data-bs-toggle="tooltip" data-bs-placement="top" title="Proses Surat" target="_blank">
                             <i class="fas fa-cog"></i>
                         </a>';
         }
-        
+
         $buttons .= '</div>';
-        
+
         return $buttons;
     }
 
@@ -221,7 +228,7 @@ class AkademikController extends Controller
                     $fileName = basename($filePath);
                     $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
                     $fileUrl = asset('storage/' . $filePath);
-                    
+
                     $attachmentData[] = [
                         'field_label' => $attachment->letterField->txtFieldLabel ?? $attachment->txtFieldLabel,
                         'field_name' => $attachment->letterField->txtFieldName ?? $attachment->txtFieldName,
@@ -273,12 +280,20 @@ class AkademikController extends Controller
                                 $q->where('txtFieldType', 'file');
                             })->with('letterField')->get();
 
+            // Tentukan type berdasarkan bitUjian
+            $type = $submission->letterType->bitUjian == 1 ? 'ujian' : 'surat';
+
+            // Tentukan status berdasarkan txtStatus submission
+            $status = in_array($submission->txtStatus, ['Disetujui Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak']) ? 'proses' : 'selesai';
+
             return view('pages.submissions.akademik.preview', [
                 'submission' => $submission,
                 'data' => $submissionData,
-                'attachments' => $attachments
+                'attachments' => $attachments,
+                'type' => $type,
+                'status' => $status
             ]);
-            
+
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Gagal memuat preview surat: ' . $e->getMessage());
@@ -300,13 +315,13 @@ class AkademikController extends Controller
             }
 
             $templatePath = $submission->letterType->txtTemplatePath ?? 'templates.default_letter';
-            
+
             if (View::exists($templatePath)) {
                 return view($templatePath, ['data' => $submissionData, 'submission' => $submission]);
             } else {
                 return view('templates.default_letter', ['data' => $submissionData, 'submission' => $submission]);
             }
-            
+
         } catch (\Exception $e) {
             return response('<div style="padding: 20px; text-align: center; color: red; font-family: Arial;">Error: ' . $e->getMessage() . '</div>');
         }
@@ -317,6 +332,7 @@ class AkademikController extends Controller
         $request->validate([
             'action' => 'required|in:approve,reject',
             'txtLetterNumber' => 'required_if:action,approve|nullable|string|max:255',
+            'txtCatatan' => 'required_if:action,reject|nullable|string|max:1000',
         ]);
 
         try {
@@ -341,9 +357,9 @@ class AkademikController extends Controller
                     'txtUpdatedBy' => auth()->user()->txtFullName,
                     'dtmUpdated' => now()
                 ]);
-    
+
                 $txtInReview = $newStatus === 'Disetujui Akademik' ? 'Menunggu dicetak' : 'Ditolak';
-    
+
                 SubmissionStatus::create([
                     'intSubmission_ID' => $submission->intSubmission_ID,
                     'txtStatus' => $newStatus,
@@ -354,10 +370,17 @@ class AkademikController extends Controller
                 ]);
             }
 
+            if ($request->action === 'reject' && $request->filled('txtCatatan')) {
+                $submission->chats()->create([
+                    'intUser_ID' => auth()->id(),
+                    'txtMessage' => 'Catatan Penolakan: ' . $request->txtCatatan,
+                ]);
+            }
+
             DB::commit();
 
-            $message = $request->action === 'approve' 
-                ? 'Pengajuan surat berhasil disetujui!' 
+            $message = $request->action === 'approve'
+                ? 'Pengajuan surat berhasil disetujui!'
                 : 'Pengajuan surat berhasil ditolak!';
 
             return redirect()->route('akademik.submissions.preview', $submission->intSubmission_ID)->with('success', $message);
@@ -377,7 +400,7 @@ class AkademikController extends Controller
             }
 
             return view($templatePath, compact('data', 'submission'))->render();
-            
+
         } catch (\Exception $e) {
             // Fallback ke template default
             return view('templates.default_letter', compact('data', 'submission'))->render();
@@ -389,7 +412,7 @@ class AkademikController extends Controller
         try {
             $submission = Submission::with(['letterType.letterFields' => function ($q) {
                 $q->where('bitActive', 1)
-                ->where('txtFieldType', '!=', 'file')  
+                ->where('txtFieldType', '!=', 'file')
                 ->orderBy('intFieldOrder');
             }, 'values.letterField'])->findOrFail($submissionId);
 
@@ -398,7 +421,7 @@ class AkademikController extends Controller
             foreach ($submission->values as $value) {
                 $fieldName = $value->letterField->txtFieldName ?? $value->txtFieldName;
                 $fieldType = $value->letterField->txtFieldType ?? null;
-                
+
                 // Hanya ambil nilai untuk field non-file
                 if ($fieldType !== 'file') {
                     $currentValues[$fieldName] = $value->txtFieldValue;
@@ -435,7 +458,7 @@ class AkademikController extends Controller
                 'submission_id' => $submissionId,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response('<div class="alert alert-danger">Gagal memuat formulir edit: ' . $e->getMessage() . '</div>', 500);
         }
     }
@@ -512,7 +535,7 @@ class AkademikController extends Controller
 
             // Update nilai field yang sudah ada (hanya field non-file)
             $fieldInputs = $request->input('fields', []);
-            
+
             foreach ($editableFields as $field) {
                 $name = $field->txtFieldName;
                 $type = $field->txtFieldType;
@@ -659,10 +682,10 @@ class AkademikController extends Controller
             }
 
             $templatePath = $submission->letterType->txtTemplatePath ?? 'templates.default_letter';
-            
+
             if (View::exists($templatePath)) {
                 return view($templatePath, [
-                    'data' => $submissionData, 
+                    'data' => $submissionData,
                     'submission' => $submission,
                     'isPrint' => true // flag untuk print
                 ]);
@@ -670,7 +693,7 @@ class AkademikController extends Controller
                 return redirect()->route('akademik.submissions.preview', $submissionId)
                     ->with('error', 'Template surat tidak ditemukan.');
             }
-            
+
         } catch (\Exception $e) {
             return redirect()->route('akademik.submissions.preview', $submissionId)
                 ->with('error', 'Gagal memuat halaman print: ' . $e->getMessage());
@@ -694,21 +717,21 @@ class AkademikController extends Controller
             }
 
             $templatePath = $submission->letterType->txtTemplatePath ?? 'templates.default_letter';
-            
+
             // Generate PDF menggunakan DomPDF
             $pdf = Pdf::loadView($templatePath, [
-                'data' => $submissionData, 
+                'data' => $submissionData,
                 'submission' => $submission,
                 'isPdf' => true // flag untuk PDF
             ]);
-            
+
             $pdf->setPaper('A4', 'portrait');
-            
-            $filename = 'Surat_' . ($submission->letterType->txtCode ?? 'Letter') . '_' . 
+
+            $filename = 'Surat_' . ($submission->letterType->txtCode ?? 'Letter') . '_' .
                     $submission->letterType->txtCode . '_' . date('Y-m-d') . '.pdf';
-            
+
             return $pdf->download($filename);
-            
+
         } catch (\Exception $e) {
             return redirect()->route('akademik.submissions.preview', $submissionId)
                 ->with('error', 'Gagal mendownload surat: ' . $e->getMessage());
@@ -740,7 +763,7 @@ class AkademikController extends Controller
                         'txtUpdatedBy' => auth()->user()->txtFullName ?? 'System',
                         'dtmUpdated' => now()
                     ]);
-    
+
                 // Buat status baru
                 SubmissionStatus::create([
                     'intSubmission_ID' => $submission->intSubmission_ID,

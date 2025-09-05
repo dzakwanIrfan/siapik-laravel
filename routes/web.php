@@ -29,7 +29,7 @@ Route::middleware(['auth'])->group(function () {
 Route::name('submissions.')->middleware(['web','auth'])->group(function () {
     Route::get('/submissions', [SubmissionController::class, 'index'])->name('create');
 
-    // form dinamis 
+    // form dinamis
     Route::get('/submissions/types/{letterTypeId}/form', [SubmissionController::class, 'form'])->name('type.form');
 
     // store pengajuan
@@ -37,10 +37,10 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
 
     // receipt
     Route::get('/submissions/{submission}/receipt', [SubmissionController::class, 'receipt'])->name('receipt');
-    
+
     // download receipt as PDF
     Route::get('/submissions/{submission}/receipt/download', [SubmissionController::class, 'downloadReceipt'])->name('receipt.download');
-    
+
     // print receipt
     Route::get('/submissions/{submission}/receipt/print', [SubmissionController::class, 'printReceipt'])->name('receipt.print');
 
@@ -48,6 +48,14 @@ Route::name('submissions.')->middleware(['web','auth'])->group(function () {
     Route::get('/my-submissions/datatable', [SubmissionController::class, 'mySubmissionsDatatable'])->name('index.datatable');
 
     Route::get('/submissions/{submission}/statuses/data', [SubmissionController::class, 'submissionStatusesDatatable'])->name('statuses.data');
+
+    //chat routes
+    Route::get('/submissions/{submission}/chat', [SubmissionController::class, 'chatIndex'])->name('chat.index');
+    Route::post('/submissions/{submission}/chat', [SubmissionController::class, 'chatStore'])->name('chat.store');
+
+    // edit submission rute
+    Route::get('/submissions/{submission}/edit-modal', [SubmissionController::class, 'editFormModal'])->name('submissions.editModal');
+    Route::put('/submissions/{submission}', [SubmissionController::class, 'update'])->name('update');
 });
 
 Route::group(['middleware' => ['role:kaprodi']], function() {
@@ -58,7 +66,7 @@ Route::group(['middleware' => ['role:kaprodi']], function() {
         Route::get('/submissions/{type}/{status}/datatable', 'indexDatatable')->name('submissions.index.datatable')
             ->where('type', 'surat|ujian')
             ->where('status', 'proses|selesai');
-            
+
         Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
         Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
         Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
@@ -75,7 +83,7 @@ Route::group(['middleware' => ['role:akademik']], function() {
         Route::get('/submissions/{type}/{status}/datatable', 'indexDatatable')->name('submissions.index.datatable')
             ->where('type', 'surat|ujian')
             ->where('status', 'proses|selesai');
-            
+
         Route::get('/submissions/{submission}/attachments', 'getAttachments')->name('submissions.attachments');
         Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
         Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
@@ -124,7 +132,7 @@ Route::group(['middleware' => ['role:akademik']], function () {
         Route::get('/{letter_type}/edit', 'edit')->name('edit');
         Route::put('/{letter_type}', 'update')->name('update');
         Route::delete('/{letter_type}', 'destroy')->name('destroy');
-        
+
         // Route baru untuk template editing dengan iframe approach
         Route::get('/{letter_type}/edit-template', 'editTemplate')->name('edit-template');
         Route::post('/{letter_type}/preview-template', 'previewTemplateHtml')->name('preview-template');

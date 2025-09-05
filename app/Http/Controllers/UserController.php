@@ -40,9 +40,10 @@ class UserController extends Controller
             })
             ->addColumn('action', function ($user) {
                 // Tombol aksi (edit dan hapus)
-                $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $user->intUser_ID . '">Edit</a>';
-                $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $user->intUser_ID . '">Hapus</a>';
-                return $editBtn . ' ' . $deleteBtn;
+                $viewBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm view-btn" data-id="' . $user->intUser_ID . '"><i class="fas fa-eye"></i></a>';
+                $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $user->intUser_ID . '"><i class="fas fa-edit"></i></a>';
+                $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $user->intUser_ID . '"><i class="fas fa-trash-alt"></i></a>';
+                return '<div class="d-flex gap-2">' . $viewBtn . $editBtn . $deleteBtn . '</div>';
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -134,7 +135,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         // Eager load roles
-        $user->load('roles','mahasiswaProfile', 'dosenProfile');
+        $user->load('roles','mahasiswaProfile.major','mahasiswaProfile.concentrate', 'dosenProfile.major');
         return response()->json($user);
     }
 

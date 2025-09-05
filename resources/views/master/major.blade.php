@@ -16,26 +16,32 @@
   <!-- BEGIN page-header -->
   <div>
     <h3>Manajemen Prodi</h3>
-    <p class="text-subtitle text-muted">Welcome back 👋</p>
+    <p class="text-subtitle text-muted">Sistem Manajemen Prodi</p>
   </div>
   <!-- END page-header -->
 @endsection
 
 @section('content')
-<div class="container mt-5">
-    <button class="btn btn-primary mb-3" id="btn-add-major">Tambah Prodi</button>
-    <table class="table table-bordered" id="major-table" style="width:100%">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nama Prodi</th>
-                <th>Strata</th>
-                <th>Gelar Sebutan</th>
-                <th>Gelar Singkatan</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title">Manajemen Prodi</h4>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-primary mb-3" id="btn-add-major">Tambah Prodi</button>
+
+        <table class="table table-striped table-bordered align-middle table-dark table-hover" id="major-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Prodi</th>
+                    <th>Strata</th>
+                    <th>Gelar Sebutan</th>
+                    <th>Gelar Singkatan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
 </div>
 
 <div class="modal fade" id="major-modal" tabindex="-1" aria-labelledby="majorModalLabel" aria-hidden="true">
@@ -74,6 +80,26 @@
                     <button type="button" class="btn btn-primary" id="btn-save">Simpan</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="major-view-modal" tabindex="-1" aria-labelledby="majorViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="majorViewModalLabel">Detail Program Studi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{-- Tempat untuk menampilkan detail prodi --}}
+                <div id="major-detail-content">
+                    <p class="text-center">Memuat data...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
@@ -122,6 +148,30 @@ $(document).ready(function() {
             $('#txtTitle').val(data.txtTitle);
             $('#txtShortTitle').val(data.txtShortTitle);
             $('#major-modal').modal('show');
+        });
+    });
+
+    // Tombol View: Ambil data & buka modal detail
+    $('body').on('click', '.view-btn', function() {
+        var id = $(this).data('id');
+        // Kita bisa gunakan endpoint 'edit' yang sama untuk mengambil data
+        $.get("{{ url('prodi') }}/" + id + '/edit', function(data) {
+
+            // Membangun HTML untuk ditampilkan di modal
+            var detailsHtml = `
+                <table class="table table-bordered">
+                    <tr><th width="30%">Nama Prodi</th><td>${data.txtNameMajor}</td></tr>
+                    <tr><th>Strata</th><td>${data.txtStrata}</td></tr>
+                    <tr><th>Gelar Sebutan</th><td>${data.txtTitle}</td></tr>
+                    <tr><th>Gelar Singkatan</th><td>${data.txtShortTitle}</td></tr>
+                </table>
+            `;
+
+            // Masukkan HTML ke dalam modal view
+            $('#major-detail-content').html(detailsHtml);
+
+            // Tampilkan modal view
+            $('#major-view-modal').modal('show');
         });
     });
 

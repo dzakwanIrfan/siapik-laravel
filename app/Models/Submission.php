@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\User;
 use App\Models\LetterType;
+use App\Models\SubmissionChat;
 use App\Models\SubmissionValue;
 use App\Models\SubmissionStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -52,5 +53,10 @@ class Submission extends Model
     {
         return $this->hasMany(SubmissionStatus::class, 'intSubmission_ID', 'intSubmission_ID')
             ->orderByDesc('dtmInserted');
+    }
+
+    public function chats()
+    {
+        return $this->hasMany(SubmissionChat::class, 'intSubmission_ID', 'intSubmission_ID');
     }
 }
