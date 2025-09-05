@@ -288,27 +288,82 @@ $(document).ready(function() {
         e.preventDefault();
         const form = $(this);
         const submitBtn = form.find('#btn-save-revision');
+        const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
 
-        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Menyimpan...');
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...');
 
         $.ajax({
             url: form.attr('action'),
-            method: 'POST', // Selalu POST, karena kita pakai @method('PUT') di dalam form
+            method: 'POST',
             data: new FormData(this),
             processData: false,
             contentType: false,
             success: function(response) {
                 $('#reviseModal').modal('hide');
                 table.ajax.reload();
-                Swal.fire('Sukses!', response.success, 'success');
+
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: response.success
+                });
             },
             error: function(xhr) {
-                // ... (logika error handling Anda)
+                let errorMessage = 'Terjadi kesalahan saat menyimpan revisi.';
+                
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const errors = xhr.responseJSON.errors;
+                    errorMessage = Object.values(errors).flat().join('\n');
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: errorMessage
+                });
             },
             complete: function() {
-                submitBtn.prop('disabled', false).html('Simpan Revisi');
+                submitBtn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> Simpan Revisi');
             }
         });
+    });
+
+    // Event listener untuk inisialisasi komponen setelah modal content dimuat
+    $('#reviseModal').on('shown.bs.modal', function() {
+        // Inisialisasi Flatpickr untuk date inputs
+        $('.flatpickr-input').flatpickr({
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            locale: 'id'
+        });
+
+        // Inisialisasi Select2
+        $('.default-select2').select2({
+            dropdownParent: $('#reviseModal'),
+            width: '100%'
+        });
+    });
+
+    // Cleanup saat modal ditutup
+    $('#reviseModal').on('hidden.bs.modal', function() {
+        // Cleanup Select2
+        try {
+            $('.default-select2').select2('destroy');
+        } catch(e) {
+            console.error('Error destroying Select2:', e);
+        }
     });
 });
 </script>
