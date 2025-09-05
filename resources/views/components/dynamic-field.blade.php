@@ -5,12 +5,14 @@
   $label  = $field->txtFieldLabel;
   $type   = $field->txtFieldType;
   $req    = (int)$field->bitRequired === 1;
-  //untuk edit form 
-  $value = old("fields.$name", $currentValues[$name] ?? null);
+  
+  // Gunakan variabel berbeda untuk menghindari konflik
+  $fieldValue = old("fields.$name", $value ?? $currentValues[$name] ?? null);
+  
   $extra  = $field->jsonFieldValidation ?? [];
   if (is_string($extra)) $extra = @json_decode($extra, true) ?: [];
 
-  // KHUSUS: Validasi IPK (0.00–4.00, 2 desimal)
+  // Validasi IPK (0.00–4.00, 2 desimal)
 	$isIPK = ($type === 'number' && $name === 'intIPK');
 	if ($isIPK) {
 		// Tambahkan/merge aturan Parsley (frontend)
@@ -52,7 +54,7 @@
         class="form-control bg-white shadow-sm @error("fields.$name") is-invalid @enderror"
         id="{{ $name }}"
         name="fields[{{ $name }}]"
-        value="{{ old("fields.$name", $value) }}"
+        value="{{ $fieldValue }}"
         {{ $req ? 'required' : '' }}
         {!! $attrs ? ''.$attrs : '' !!}
         {{-- Khusus IPK --}}
@@ -66,7 +68,7 @@
         type="text"
         class="form-control flatpickr-input bg-white shadow-sm @error("fields.$name") is-invalid @enderror"
         id="{{ $name }}" name="fields[{{ $name }}]"
-        value="{{ old("fields.$name", $value) }}"
+        value="{{ $fieldValue }}"
         placeholder="Pilih tanggal" autocomplete="off" readonly
         {{ $req ? 'required' : '' }} {!! $attrs ? ''.$attrs : '' !!}>
       @break
@@ -75,7 +77,7 @@
       <textarea
         class="form-control bg-white shadow-sm @error("fields.$name") is-invalid @enderror"
         id="{{ $name }}" name="fields[{{ $name }}]" rows="4"
-        {{ $req ? 'required' : '' }} {!! $attrs ? ''.$attrs : '' !!}>{{ old("fields.$name", $value) }}</textarea>
+        {{ $req ? 'required' : '' }} {!! $attrs ? ''.$attrs : '' !!}>{{ $fieldValue }}</textarea>
       @break
 
     @case('select')
@@ -90,7 +92,7 @@
             $val = is_int($optVal) ? $optLabel : $optVal;
             $lab = is_int($optVal) ? $optLabel : $optLabel;
           @endphp
-          <option value="{{ $val }}" @selected(old("fields.$name", $value)==$val)>{{ $lab }}</option>
+          <option value="{{ $val }}" @selected($fieldValue == $val)>{{ $lab }}</option>
         @endforeach
       </select>
       @break

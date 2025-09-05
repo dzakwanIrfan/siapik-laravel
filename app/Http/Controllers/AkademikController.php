@@ -160,13 +160,11 @@ class AkademikController extends Controller
         }
 
         // Tombol berdasar status
-        if (in_array($r->txtStatus, ['Disetujui Akademik', 'Sudah dicetak', 'Disetujui Kaprodi'])) {
-            $buttons .= '<a href="'.route('akademik.submissions.preview', $r->intSubmission_ID).'"
-                            class="btn btn-primary btn-sm rounded-pill icon"
-                            data-bs-toggle="tooltip" data-bs-placement="top" title="Proses Surat" target="_blank">
-                            <i class="fas fa-cog"></i>
-                        </a>';
-        }
+        $buttons .= '<a href="'.route('akademik.submissions.preview', $r->intSubmission_ID).'"
+                        class="btn btn-primary btn-sm rounded-pill icon"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Proses Surat" target="_blank">
+                        <i class="fas fa-cog"></i>
+                    </a>';
 
         $buttons .= '</div>';
 
