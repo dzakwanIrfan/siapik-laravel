@@ -71,7 +71,7 @@
                     request()->route('type') == 'surat' ? 'active' : ''
                 }}">
                     <a href="#" class="sidebar-link">
-                        <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
+                        <i class="bi bi-envelope-plus-fill" style="{{ $pendingSuratKaprodi > 0 ? 'color: red;' : '' }}"></i><span>Permintaan Surat</span>
                     </a>
                     <ul class="submenu {{
                         request()->routeIs('kaprodi.submissions.index') &&
@@ -135,7 +135,7 @@
                     request()->route('type') == 'surat' ? 'active' : ''
                 }}">
                     <a href="#" class="sidebar-link">
-                        <i class="bi bi-envelope-plus-fill"></i><span>Permintaan Surat</span>
+                        <i class="bi bi-envelope-plus-fill" style="{{ $pendingSuratAkademik > 0 ? 'color: red;' : '' }}"></i><span>Permintaan Surat</span>
                     </a>
                     <ul class="submenu {{
                         request()->routeIs('akademik.submissions.index') &&

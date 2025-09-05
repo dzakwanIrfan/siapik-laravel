@@ -89,20 +89,20 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-primary">
-                    <h5 class="mb-0 text-white">Cetak atau Download Surat</h5>
+                    <h5 class="mb-0 text-white">Cetak & Konfirmasi Surat</h5>
                 </div>
                 <div class="card-body p-3">
                     <div class="d-flex gap-2 justify-content-center">
                         <button type="button"
                                 class="btn btn-warning print-letter-btn"
                                 data-submission-id="{{ $submission->intSubmission_ID }}">
-                            <i class="fas fa-print me-2"></i>Print Surat
+                            <i class="fas fa-print me-2"></i>Cetak Surat
                         </button>
-                        <button type="button"
+                        {{-- <button type="button"
                                 class="btn btn-success download-letter-btn"
                                 data-submission-id="{{ $submission->intSubmission_ID }}">
                             <i class="fas fa-download me-2"></i>Download PDF
-                        </button>
+                        </button> --}}
                     </div>
                 </div>
             </div>
