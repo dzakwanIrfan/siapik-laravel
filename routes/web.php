@@ -5,6 +5,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\MajorController;
 use App\Http\Controllers\KaprodiController;
 use App\Http\Controllers\AkademikController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LetterTypeController;
 use App\Http\Controllers\SubmissionController;
@@ -23,7 +24,14 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
-    Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // API Routes for Dashboard
+    Route::prefix('api/dashboard')->name('api.dashboard.')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'getStats'])->name('stats');
+        Route::get('/chart', [DashboardController::class, 'getChartData'])->name('chart');
+        Route::get('/recent-submissions', [DashboardController::class, 'getRecentSubmissions'])->name('recent-submissions');
+    });
 });
 
 Route::name('submissions.')->middleware(['web','auth'])->group(function () {
