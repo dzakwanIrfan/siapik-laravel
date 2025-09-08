@@ -162,7 +162,7 @@ class KaprodiController extends Controller
                         <i class="fas fa-eye"></i>
                     </button>';
 
-        $buttons .= '<button type="button" class="btn btn-warning btn-action revise-btn" data-id="' . $r->intSubmission_ID . '" title="Revisi Pengajuan"><i class="fas fa-edit"></i></button>';
+        $buttons .= '<button type="button" class="btn btn-warning btn-sm rounded-pill icon revise-btn" data-id="' . $r->intSubmission_ID . '" title="Revisi Pengajuan"><i class="fas fa-edit"></i></button>';
 
         // Tombol Proses - hanya untuk status proses dan jika statusnya "Sedang ditinjau Kaprodi"
         if ($status === 'proses' && ($r->txtStatus ?? null) === 'Sedang ditinjau Kaprodi') {

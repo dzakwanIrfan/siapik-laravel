@@ -111,7 +111,7 @@
         </div>
     @endif
 
-    @if(in_array($submission->txtStatus, ['Disetujui Akademik', 'Sudah dicetak', 'Selesai']))
+    @if(in_array($submission->txtStatus, ['Sudah dicetak', 'Selesai']))
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-success text-white">
@@ -147,7 +147,7 @@
     @endif
 
     <!-- Form Persetujuan -->
-    @if($submission->txtStatus === 'Disetujui Kaprodi')
+    {{-- @if($submission->txtStatus === 'Disetujui Kaprodi') --}}
     <div class="row">
         <div class="col-lg-6">
             <div class="card">
@@ -234,7 +234,7 @@
             </div>
         </div>
     </div>
-    @endif
+    {{-- @endif --}}
 </div>
 
 {{-- Modal Konfirmasi Print/Download --}}
@@ -273,23 +273,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
-	const form = document.querySelector('form');
-	const approveRadio = document.getElementById('approve');
-	const rejectRadio  = document.getElementById('reject');
-	const letterNumberContainer = document.getElementById('letterNumberContainer');
-	const letterNumberInput = document.getElementById('txtLetterNumber');
+    const form = document.querySelector('#approval-form');
+    const approveRadio = document.getElementById('approve');
+    const rejectRadio  = document.getElementById('reject');
+    const letterNumberContainer = document.getElementById('letterNumberContainer');
+    const letterNumberInput = document.getElementById('txtLetterNumber');
     const noteContainer = document.getElementById('noteContainer');
     const noteTextarea = document.getElementById('txtCatatan');
 
-    const parsleyForm = $(form).parsley();
-
-    // Handle print/download buttons
+    // Handle print/download buttons (tetap sama)
     let currentAction = null;
     let currentUrl = null;
 
@@ -334,18 +326,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.location.href = currentUrl;
             }
 
-            // Hide modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('printDownloadModal'));
             modal.hide();
 
-            // Reload page after short delay to show updated status
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
         }
     });
 
-	// Existing form logic (if form exists)
+    // Form approval logic (jika form ada)
     if (form && approveRadio && rejectRadio) {
         function syncLetterNumberVisibility() {
             const show = approveRadio.checked;
@@ -358,7 +348,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Fungsi untuk menampilkan field catatan
         function syncNoteVisibility() {
             const show = rejectRadio.checked;
             noteContainer.classList.toggle('d-none', !show);
@@ -369,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Trigger saat user memilih approve/reject
+        // Event listeners untuk radio buttons
         approveRadio.addEventListener('change', function() {
             syncLetterNumberVisibility();
             syncNoteVisibility();
@@ -379,18 +368,19 @@ document.addEventListener('DOMContentLoaded', function () {
             syncNoteVisibility();
         });
 
-        // Set awal (kalau ada old value / pre-checked)
+        // Set awal
         syncLetterNumberVisibility();
         syncNoteVisibility();
 
+        // Form submit dengan konfirmasi
         $('#btn-process-submission').on('click', function(e) {
             e.preventDefault();
 
-            const form = $('#approval-form');
             const actionRadio = $('input[name="action"]:checked');
             const noteTextarea = $('#txtCatatan');
             const letterNumberInput = $('#txtLetterNumber');
 
+            // Validasi client-side
             if (actionRadio.length === 0) {
                 Swal.fire('Peringatan', 'Silakan pilih tindakan (Setujui atau Tolak)', 'warning');
                 return;
@@ -408,6 +398,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const actionText = actionRadio.val() === 'approve' ? 'menyetujui' : 'menolak';
 
+            // Konfirmasi dengan SweetAlert
             Swal.fire({
                 title: 'Anda Yakin?',
                 text: `Anda akan ${actionText} pengajuan surat ini. Tindakan ini tidak dapat dibatalkan.`,
@@ -417,42 +408,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    var submitButton = $(this);
-                    var originalButtonText = submitButton.html();
-
-                    $.ajax({
-                        url: form.attr('action'),
-                        type: 'POST',
-                        data: form.serialize(),
-                        beforeSend: function() {
-                            submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Memproses...');
-                        },
-                        success: function(response) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Sukses!',
-                                // Ambil pesan dari respons JSON controller
-                                text: response.message,
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                // Arahkan kembali ke halaman daftar setelah berhasil
-                                window.location.href = "{{ route('akademik.submissions.index', ['type' => $type, 'status' => $status]) }}";
-                            });
-                        },
-                        error: function(xhr) {
-                            const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan.';
-                            Swal.fire('Error!', errorMsg, 'error');
-                        },
-                        complete: function() {
-                            submitButton.prop('disabled', false).html(originalButtonText);
-                        }
-                    });
+                    // Submit form secara normal (bukan AJAX)
+                    form.submit();
                 }
             });
         });
     }
 
+    // Upload final form (tetap pakai AJAX karena lebih praktis untuk upload file)
     $('#upload-final-form').on('submit', function(e) {
         e.preventDefault();
         const form = $(this);
@@ -473,7 +436,6 @@ document.addEventListener('DOMContentLoaded', function () {
             success: function(response) {
                 Swal.fire({ icon: 'success', title: 'Berhasil!', text: response.message });
 
-                // Perbarui tampilan file yang sudah diupload tanpa reload
                 const newFileHtml = `
                     <div class="alert alert-success">
                         <h6 class="alert-heading">Surat Final Berhasil Diunggah</h6>
@@ -483,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>`;
 
                 $('#final-letter-display').html(newFileHtml);
-                form.find('#final_letter_file').val(''); // Kosongkan input file
+                form.find('#final_letter_file').val('');
             },
             error: function(xhr) {
                 let errorMsg = 'Terjadi kesalahan.';

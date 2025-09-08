@@ -21,7 +21,7 @@
                 {{-- Ikon kanan default --}}
                 <ul class="navbar-nav ms-auto mb-lg-0 align-items-center">
                     {{-- Mail --}}
-                    <li class="nav-item dropdown me-1">
+                    {{-- <li class="nav-item dropdown me-1">
                         <a class="nav-link dropdown-toggle text-gray-600" href="#" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-envelope bi-sub fs-4"></i>
                         </a>
@@ -29,10 +29,10 @@
                             <li><h6 class="dropdown-header">Mail</h6></li>
                             <li><a class="dropdown-item" href="#">No new mail</a></li>
                         </ul>
-                    </li>
+                    </li> --}}
 
                     {{-- Notifications --}}
-                    <li class="nav-item dropdown me-3">
+                    {{-- <li class="nav-item dropdown me-3">
                         <a class="nav-link dropdown-toggle text-gray-600 position-relative" href="#" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                             <i class="bi bi-bell bi-sub fs-4"></i>
                         <span class="badge badge-notification bg-danger">7</span>
@@ -59,7 +59,7 @@
                             </li>
                             <li><p class="text-center py-2 mb-0"><a href="#">See all notification</a></p></li>
                         </ul>
-                    </li>
+                    </li> --}}
 
                     {{-- User / Auth --}}
                     @auth
@@ -67,24 +67,24 @@
                         <li class="nav-item dropdown">
                         <a href="#" class="nav-link" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="user-menu d-flex">
-                            <div class="user-name text-end me-3">
-                                <h6 class="mb-0 text-gray-600">{{ $user->txtFullName }}</h6>
-                                <p class="mb-0 text-sm text-gray-600">
-                                {{ $user->getRoleNames()->first() ?? '-' }}
-                                </p>
-                            </div>
-                            <div class="user-img d-flex align-items-center">
-                                <div class="avatar avatar-md">
-                                    <img src="{{ asset('mazer/assets/compiled/jpg/1.jpg') }}" alt="avatar">
+                                <div class="user-name text-end me-3">
+                                    <h6 class="mb-0 text-gray-600">{{ $user->txtFullName }}</h6>
+                                    <p class="mb-0 text-sm text-gray-600">
+                                    {{ $user->getRoleNames()->first() ?? '-' }}
+                                    </p>
                                 </div>
-                            </div>
+                                <div class="user-img d-flex align-items-center">
+                                    <div class="avatar avatar-md">
+                                        <img src="{{ asset('mazer/assets/compiled/jpg/1.jpg') }}" alt="avatar">
+                                    </div>
+                                </div>
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" style="min-width: 11rem;">
                             <li><h6 class="dropdown-header">Hello, {{ $user->txtFullName }}</h6></li>
                             <li><a class="dropdown-item" href="{{ route('profile', $user->id) }}"><i class="icon-mid bi bi-person me-2"></i> My Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="icon-mid bi bi-gear me-2"></i> Settings</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="icon-mid bi bi-wallet me-2"></i> Wallet</a></li>
+                            {{-- <li><a class="dropdown-item" href="#"><i class="icon-mid bi bi-gear me-2"></i> Settings</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="icon-mid bi bi-wallet me-2"></i> Wallet</a></li> --}}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 {{-- tombol mengacu ke form logout tersembunyi --}}

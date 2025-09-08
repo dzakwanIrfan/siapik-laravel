@@ -351,6 +351,18 @@ class AkademikController extends Controller
             $submission = Submission::findOrFail($submissionId);
             $oldStatus = $submission->txtStatus;
 
+            // Validasi nomor surat tidak boleh sama jika action adalah approve
+            if ($request->action === 'approve' && $request->filled('txtLetterNumber')) {
+                $existingLetterNumber = Submission::where('txtLetterNumber', $request->txtLetterNumber)
+                    ->where('intSubmission_ID', '!=', $submissionId)
+                    ->first();
+                
+                if ($existingLetterNumber) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Nomor surat tidak boleh sama dengan surat lain!');
+                }
+            }
+
             $newStatus = $request->action === 'approve' ? 'Disetujui Akademik' : 'Ditolak Akademik';
 
             $submission->update([
