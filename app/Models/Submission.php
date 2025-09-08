@@ -22,6 +22,7 @@ class Submission extends Model
         'txtReceiptNumber',
         'txtLetterNumber',
         'txtStatus',
+        'txtFinalFile',
         'txtKaprodiNote',
         'txtAkademikNote',
         'jsonDataForm',

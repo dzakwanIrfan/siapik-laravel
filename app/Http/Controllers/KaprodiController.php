@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Submission;
+use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Models\SubmissionValue;
 use App\Models\SubmissionStatus;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
 
 class KaprodiController extends Controller
 {
@@ -156,6 +161,8 @@ class KaprodiController extends Controller
                         data-submission-id="'.$r->intSubmission_ID.'">
                         <i class="fas fa-eye"></i>
                     </button>';
+
+        $buttons .= '<button type="button" class="btn btn-warning btn-action revise-btn" data-id="' . $r->intSubmission_ID . '" title="Revisi Pengajuan"><i class="fas fa-edit"></i></button>';
 
         // Tombol Proses - hanya untuk status proses dan jika statusnya "Sedang ditinjau Kaprodi"
         if ($status === 'proses' && ($r->txtStatus ?? null) === 'Sedang ditinjau Kaprodi') {
@@ -402,6 +409,269 @@ class KaprodiController extends Controller
 
         } catch (\Exception $e) {
             return view('templates.default_letter', compact('data', 'submission'))->render();
+        }
+    }
+
+    private function buildValidationRules($fields): array
+    {
+        $rules = ['fields' => 'required|array'];
+        $selectIn = []; // map name => allowed values (untuk select)
+
+        foreach ($fields as $f) {
+            $name   = $f->txtFieldName;
+            $type   = $f->txtFieldType;
+            $extra  = $this->decodeJson($f->jsonFieldValidation);
+            $req    = (int)$f->bitRequired === 1;
+
+            $r = [];
+            $r[] = $req ? 'required' : 'nullable';
+
+            switch ($type) {
+                case 'text':
+                case 'textarea':
+                    $r[] = 'string';
+                    if (isset($extra['maxlength'])) $r[] = 'max:'.$extra['maxlength'];
+                    if (isset($extra['minlength'])) $r[] = 'min:'.$extra['minlength'];
+                    if (isset($extra['pattern']))   $r[] = 'regex:'.$extra['pattern'];
+                    break;
+
+                case 'email':
+                    $r[] = 'email';
+                    break;
+
+                case 'number':
+                    $r[] = 'numeric';
+                    if (isset($extra['min'])) $r[] = 'min:'.$extra['min'];
+                    if (isset($extra['max'])) $r[] = 'max:'.$extra['max'];
+                    break;
+
+                case 'date':
+                    $r[] = 'date';
+                    break;
+
+                case 'select':
+                    $r[] = 'string';
+                    $opts = $this->decodeJson($f->jsonFieldOptions);
+                    if (($opts['source'] ?? 'static') === 'static') {
+                        $allowed = array_keys($opts['options'] ?? []);
+                        // handle array numerik [a,b] => value=label
+                        if ($allowed === array_values($allowed)) {
+                            $allowed = $opts['options'] ?? [];
+                        }
+                        if (!empty($allowed)) {
+                            $selectIn[$name] = $allowed;
+                            $r[] = 'in:'.implode(',', array_map(fn($v) => str_replace(',', '\,', $v), $allowed));
+                        }
+                    }
+                    break;
+
+                case 'file':
+                    $r[] = 'file';
+                    if (!empty($extra['mimes']))     $r[] = 'mimes:'.implode(',', (array)$extra['mimes']);
+                    if (!empty($extra['mimetypes'])) $r[] = 'mimetypes:'.implode(',', (array)$extra['mimetypes']);
+                    if (!empty($extra['max']))       $r[] = 'max:'.$extra['max']; // KB
+                    break;
+
+                default:
+                    $r[] = 'nullable';
+            }
+
+            $rules["fields.$name"] = implode('|', $r);
+        }
+
+        return [$rules, $selectIn];
+    }
+
+    private function decodeJson($val): array
+    {
+        if (is_array($val)) return $val;
+        if (is_string($val) && strlen($val)) {
+            $d = json_decode($val, true);
+            return is_array($d) ? $d : [];
+        }
+        return [];
+    }
+
+    public function editFormModal(Submission $submission)
+    {
+        // Set global variable untuk diakses di blade component
+        $GLOBALS['currentSubmission'] = $submission;
+
+        $letterType = $submission->letterType()->with(['letterFields' => function ($q) {
+            $q->where('bitActive', 1)->where('bitAkademik', 0)->orderBy('intFieldOrder');
+        }])->first();
+
+        // Ambil nilai-nilai yang sudah ada
+        $currentValues = $submission->values->pluck('txtFieldValue', 'txtFieldName')->all();
+
+        $fieldOptions = [];
+        foreach ($letterType->letterFields as $f) {
+            if ($f->txtFieldType === 'select') {
+                $opts = [];
+                $cfg  = $this->decodeJson($f->jsonFieldOptions);
+                if (($cfg['source'] ?? 'static') === 'static') {
+                    $opts = $cfg['options'] ?? [];
+                } else {
+                    $opts = $this->buildDynamicOptions($cfg);
+                }
+                $fieldOptions[$f->txtFieldName] = $opts;
+            }
+        }
+
+        return view('pages.submissions.kaprodi.components._revise_form_modal_content', [
+            'submission'    => $submission,
+            'letterType'    => $letterType,
+            'currentValues' => $currentValues,
+            'fieldOptions'  => $fieldOptions,
+        ]);
+    }
+
+    public function update(Request $request, Submission $submission)
+    {
+
+        $letterType = $submission->letterType()->with(['letterFields' => function ($q) {
+            $q->where('bitActive', 1)->where('bitAkademik', 0)->orderBy('intFieldOrder');
+        }])->first();
+
+        // Bangun rules validasi berdasar definisi field
+        [$rules, $selectInMap] = $this->buildValidationRules($letterType->letterFields);
+
+        // Untuk mode revisi, file tidak wajib jika sudah ada file sebelumnya
+        foreach ($letterType->letterFields as $field) {
+            if ($field->txtFieldType === 'file') {
+                $fieldName = $field->txtFieldName;
+                $hasExistingFile = $submission->values()
+                    ->where('txtFieldName', $fieldName)
+                    ->whereNotNull('txtFieldValue')
+                    ->exists();
+
+                if ($hasExistingFile) {
+                    // Jika ada file existing, buat file menjadi optional
+                    $rules["fields.{$fieldName}"] = str_replace('required', 'nullable', $rules["fields.{$fieldName}"]);
+                }
+            }
+        }
+
+        $validated = $request->validate($rules);
+
+        DB::beginTransaction();
+        try {
+            // Ambil data lama SEBELUM dihapus
+            $existingValues = $submission->values()->get()->keyBy('txtFieldName');
+
+            $fieldInputs = $request->input('fields', []);
+
+            foreach ($letterType->letterFields as $field) {
+                $name   = $field->txtFieldName;
+                $label  = $field->txtFieldLabel;
+                $type   = $field->txtFieldType;
+                $value  = null;
+                $meta   = null;
+
+                // Hapus value lama untuk field ini
+                $submission->values()->where('txtFieldName', $name)->delete();
+
+                if ($type === 'file') {
+                    if ($request->hasFile("fields.$name")) {
+                        // Ada file baru diupload, ganti dengan yang baru
+                        $file = $request->file("fields.$name");
+
+                        // Hapus file lama jika ada (menggunakan data yang sudah diambil sebelumnya)
+                        $oldValue = $existingValues->get($name);
+                        if ($oldValue && $oldValue->txtFieldValue && Storage::disk('public')->exists($oldValue->txtFieldValue)) {
+                            Storage::disk('public')->delete($oldValue->txtFieldValue);
+                            Log::info("Deleted old file: " . $oldValue->txtFieldValue);
+                        }
+
+                        $dir  = "submissions/{$submission->intSubmission_ID}";
+                        $path = $file->store($dir, ['disk' => 'public']);
+
+                        $value = $path;
+                        $meta  = [
+                            'original_name' => $file->getClientOriginalName(),
+                            'mime'          => $file->getClientMimeType(),
+                            'size'          => $file->getSize(),
+                            'disk'          => 'public',
+                            'url'           => Storage::disk('public')->url($path),
+                        ];
+
+                        Log::info("Uploaded new file for field {$name}: {$path}");
+                    } else {
+                        // Tidak ada file baru, pertahankan file lama
+                        $oldValue = $existingValues->get($name);
+                        if ($oldValue) {
+                            $value = $oldValue->txtFieldValue;
+                            $meta = $oldValue->jsonFieldMeta;
+                            Log::info("Keeping existing file for field {$name}: {$value}");
+                        }
+                    }
+                } else {
+                    // Field non-file (text/textarea/number/date/select)
+                    $value = Arr::get($fieldInputs, $name);
+                }
+
+                // Buat entry SubmissionValue jika ada value
+                if ($value !== null) {
+                    SubmissionValue::create([
+                        'intSubmission_ID'  => $submission->intSubmission_ID,
+                        'intLetterField_ID' => $field->intLetterField_ID,
+                        'txtFieldName'      => $name,
+                        'txtFieldLabel'     => $label,
+                        'txtFieldType'      => $type,
+                        'txtFieldValue'     => is_array($value) ? json_encode($value) : $value,
+                        'jsonFieldMeta'     => $meta,
+                        'bitActive'         => 1,
+                        'txtInsertedBy'     => auth()->user()->txtFullName ?? 'System',
+                        'dtmInserted'       => now(),
+                        'txtUpdatedBy'      => auth()->user()->txtFullName ?? 'System',
+                        'dtmUpdated'        => now(),
+                    ]);
+
+                    Log::info("Created SubmissionValue for field {$name} with value: " . (is_array($value) ? json_encode($value) : $value));
+                }
+            }
+
+            // Update status kembali ke 'Sedang ditinjau Kaprodi'
+            $submission->update([
+                'txtStatus'     => 'Sedang ditinjau Kaprodi',
+                'txtUpdatedBy'  => auth()->user()->txtFullName ?? 'System',
+                'dtmUpdated'    => now(),
+            ]);
+
+            // Nonaktifkan status lama yang aktif
+            SubmissionStatus::where('intSubmission_ID', $submission->intSubmission_ID)
+                            ->where('bitActive', 1)
+                            ->update(['bitActive' => 0]);
+
+            // Buat status baru
+            SubmissionStatus::create([
+                'intSubmission_ID' => $submission->intSubmission_ID,
+                'txtStatus'        => 'Sedang ditinjau Kaprodi',
+                'txtInReview'      => 'Persetujuan Kaprodi',
+                'txtNotes'         => 'Revisi diajukan ulang oleh pemohon.',
+                'bitActive'        => 1,
+                'txtInsertedBy'    => auth()->user()->txtFullName ?? 'System',
+                'dtmInserted'      => now(),
+            ]);
+
+            DB::commit();
+
+            Log::info("Submission {$submission->intSubmission_ID} updated successfully");
+            return response()->json(['success' => 'Revisi berhasil disimpan dan pengajuan dikirim ulang.']);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            Log::error("Validation error updating submission {$submission->intSubmission_ID}: " . json_encode($e->errors()));
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error("Error updating submission {$submission->intSubmission_ID}: " . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'files' => $request->allFiles()
+            ]);
+            return response()->json(['error' => 'Gagal menyimpan revisi: ' . $e->getMessage()], 500);
         }
     }
 }

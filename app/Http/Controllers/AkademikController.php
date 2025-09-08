@@ -9,7 +9,11 @@ use App\Models\SubmissionValue;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\SubmissionStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
 
 class AkademikController extends Controller
 {
@@ -103,7 +107,7 @@ class AkademikController extends Controller
         if ($status === 'proses') {
             return ['Disetujui Kaprodi', 'Disetujui Akademik', 'Sudah dicetak'];
         } else { // selesai
-            return ['Ditolak Kaprodi', 'Ditolak Akademik'];
+            return ['Ditolak Kaprodi', 'Ditolak Akademik', 'selesai'];
         }
     }
 
@@ -189,6 +193,11 @@ class AkademikController extends Controller
                             data-bs-toggle="modal" data-bs-target="#submissionModal"
                             data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
                             Disetujui Akademik</button>';
+            case 'Selesai':
+                return '<button class="btn btn-sm btn-success rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Selesai</button>';
             case 'Sudah dicetak':
                 return '<button class="btn btn-sm btn-warning rounded-pill show-status-modal"
                             data-bs-toggle="modal" data-bs-target="#submissionModal"
@@ -264,7 +273,7 @@ class AkademikController extends Controller
     {
         try {
             $submission = Submission::with(['letterType', 'user.mahasiswaProfile.major', 'values.letterField'])
-                ->whereIn('txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak'])
+                ->whereIn('txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak','Selesai'])
                 ->findOrFail($submissionId);
 
             // Kumpulkan semua data dari submission values
@@ -289,7 +298,7 @@ class AkademikController extends Controller
                 'data' => $submissionData,
                 'attachments' => $attachments,
                 'type' => $type,
-                'status' => $status
+                'status' => $status,
             ]);
 
         } catch (\Exception $e) {
@@ -302,7 +311,7 @@ class AkademikController extends Controller
     {
         try {
             $submission = Submission::with(['letterType', 'user.mahasiswaProfile.major', 'values.letterField'])
-                ->whereIn('txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak'])
+                ->whereIn('txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak', 'Selesai'])
                 ->findOrFail($submissionId);
 
             // Kumpulkan semua data dari submission values
@@ -780,4 +789,61 @@ class AkademikController extends Controller
             throw $e;
         }
     }
+
+    public function uploadFinalLetter(Request $request, Submission $submission)
+    {
+        $request->validate([
+            'final_letter_file' => 'required|file|mimes:pdf|max:2048', // max 2MB
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $file = $request->file('final_letter_file');
+            $directory = "submissions/{$submission->intSubmission_ID}/final";
+
+            // Hapus file lama jika sudah ada di kolom txtFinalFile
+            if ($submission->txtFinalFile && Storage::disk('public')->exists($submission->txtFinalFile)) {
+                Storage::disk('public')->delete($submission->txtFinalFile);
+            }
+
+            // Simpan file baru
+            $path = $file->store($directory, 'public');
+
+             $submission->update([
+                'txtFinalFile' => $path, // Simpan path di kolom baru
+                'txtStatus'    => 'Selesai',
+                'txtUpdatedBy' => auth()->user()->txtFullName ?? 'System',
+                'dtmUpdated'   => now(),
+            ]);
+
+            SubmissionStatus::where('intSubmission_ID', $submission->intSubmission_ID)
+                            ->where('bitActive', 1)
+                            ->update(['bitActive' => 0]);
+
+            SubmissionStatus::create([
+                'intSubmission_ID' => $submission->intSubmission_ID,
+                'txtStatus'        => 'Selesai',
+                'txtInReview'      => 'Surat sudah dapat diunduh oleh pemohon.',
+                'txtNotes'         => 'File final telah diunggah oleh akademik.',
+                'bitActive'        => 1,
+                'txtInsertedBy'    => auth()->user()->txtFullName ?? 'System',
+                'dtmInserted'      => now(),
+            ]);
+
+        DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'File surat final berhasil diunggah.',
+                'file_url' => asset('storage/' . $path)
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Gagal upload file final: " . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan internal saat mengunggah file.'], 500);
+        }
+    }
+
 }

@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->foreignId('intLetterType_ID')
                   ->constrained('letter_types', 'intLetterType_ID')
                   ->cascadeOnUpdate()->restrictOnDelete();
-                  
+
             $table->foreignId('intUser_ID')
                 ->constrained('users', 'intUser_ID')
                 ->cascadeOnUpdate()->restrictOnDelete();
@@ -22,7 +22,9 @@ return new class extends Migration {
             $table->string('txtLetterNumber')->unique()->nullable();
 
             // status sederhana
-            $table->enum('txtStatus', ['Sedang ditinjau Kaprodi', 'Disetujui Kaprodi', 'Ditolak Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak'])->default('Sedang ditinjau Kaprodi');
+            $table->enum('txtStatus', ['Sedang ditinjau Kaprodi', 'Disetujui Kaprodi', 'Ditolak Kaprodi', 'Disetujui Akademik', 'Ditolak Akademik', 'Sudah dicetak', 'Selesai'])->default('Sedang ditinjau Kaprodi');
+
+            $table->string('txtFinalFile')->nullable();
 
             $table->tinyInteger('bitActive')->default(1);
             $table->string('txtInsertedBy')->nullable();

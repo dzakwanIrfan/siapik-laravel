@@ -165,11 +165,38 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="reviseModal" data-url-template="{{ route('kaprodi.submissions.edit.modal', ['submission' => '__ID__']) }}" tabindex="-1" aria-labelledby="reviseModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <div>
+                        <h5 class="modal-title mb-0" id="reviseModalLabel">Revisi Pengajuan Surat</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    {{-- Konten form akan dimuat di sini via AJAX --}}
+                    <div id="reviseFormContent">
+                        <p class="text-center text-muted">Memuat form revisi...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
+
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
     // inisiasi tabel
     const table = $('#datatables').DataTable({
         serverSide: true,
@@ -419,6 +446,102 @@ $(document).ready(function() {
                 submitButton.html(originalButtonText);
             }
         });
+    });
+
+    $('#datatables tbody').on('click', '.revise-btn', function(e) {
+        e.preventDefault();
+        const submissionId = $(this).data('id');
+        const reviseModal = new bootstrap.Modal(document.getElementById('reviseModal'));
+
+        const urlTemplate = $('#reviseModal').data('url-template');
+        const finalUrl = urlTemplate.replace('__ID__', submissionId);
+
+        console.log('🕵️‍♂️ Memuat form dari URL:', finalUrl);
+        $('#reviseFormContent').html('<p class="text-center text-muted">Memuat form revisi...</p>');
+
+        $.get(finalUrl, function(response) {
+            $('#reviseFormContent').html(response);
+            reviseModal.show();
+        }).fail(function(xhr) {
+            console.error('❌ Gagal memuat form revisi. Status:', xhr.status);
+            const errorMessage = `<div class="alert alert-danger">Gagal memuat form. Server merespons dengan status ${xhr.status}. Silakan coba lagi.</div>`;
+            $('#reviseFormContent').html(errorMessage);
+            reviseModal.show();
+        });
+    });
+
+    $('#reviseModal').on('submit', '#reviseSubmissionForm', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = form.find('#btn-save-revision');
+        const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...');
+
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST',
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#reviseModal').modal('hide');
+                $('#datatables').DataTable().ajax.reload();
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: response.success
+                });
+            },
+            error: function(xhr) {
+                let errorMessage = 'Terjadi kesalahan saat menyimpan revisi.';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: errorMessage
+                });
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> Simpan Revisi');
+            }
+        });
+    });
+
+    $('#reviseModal').on('shown.bs.modal', function() {
+        $('.flatpickr-input').flatpickr({
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            locale: 'id'
+        });
+        $('.default-select2').select2({
+            dropdownParent: $('#reviseModal'),
+            width: '100%'
+        });
+    });
+
+    $('#reviseModal').on('hidden.bs.modal', function() {
+        try {
+            if ($('.default-select2').data('select2')) {
+                $('.default-select2').select2('destroy');
+            }
+        } catch (e) {
+            console.error('Error destroying Select2:', e);
+        }
     });
 });
 
