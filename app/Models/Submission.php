@@ -31,8 +31,13 @@ class Submission extends Model
         'txtUpdatedBy',
         'dtmUpdated',
         'bitActive',
-        'txtInsertedBy', 'dtmInserted',
-        'txtUpdatedBy', 'dtmUpdated',
+    ];
+
+    protected $casts = [
+        'dtmInserted' => 'datetime',
+        'dtmUpdated' => 'datetime',
+        'bitActive' => 'boolean',
+        'jsonDataForm' => 'array'
     ];
 
     public function letterType()
