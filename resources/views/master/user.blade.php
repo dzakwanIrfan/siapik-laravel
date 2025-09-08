@@ -29,8 +29,20 @@
         <h4 class="card-title">Manajemen Users</h4>
     </div>
     <div class="card-body">
-        {{-- PINDAH: Tombol Tambah User dipindah ke sini --}}
-        <button class="btn btn-primary mb-3" id="btn-add-user">Tambah User</button>
+        <div class="mb-3">
+            <button class="btn btn-primary" id="btn-add-user">Tambah User</button>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-file-excel me-2"></i>Import Data
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#import-mahasiswa-modal">Import Mahasiswa</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#import-dosen-modal">Import Dosen & Kaprodi</a></li>
+                </ul>
+            </div>
+        </div>
+
 
         {{-- DIUBAH: Tambahkan class CSS ke tabel agar sesuai dengan template --}}
         <table class="table table-striped table-bordered align-middle table-dark table-hover" id="users-table" style="width:100%">
@@ -194,6 +206,99 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="import-modal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Import Data Users</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('users.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-3">
+                        <p>Silakan unduh template di bawah ini untuk memastikan format data sesuai. Isi data sesuai kolom yang tersedia.</p>
+                        <a href="{{ route('users.downloadTemplate') }}" class="btn btn-light w-100">
+                            <i class="fas fa-download me-2"></i>Unduh Template Excel
+                        </a>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label for="import_file" class="form-label">Pilih File Excel</label>
+                        <input class="form-control" type="file" id="import_file" name="import_file" required accept=".xlsx, .xls">
+                    </div>
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">Mulai Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="import-mahasiswa-modal" tabindex="-1" aria-labelledby="importMahasiswaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importMahasiswaModalLabel">Import Data Mahasiswa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('users.importMahasiswa') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-3">
+                        <p>Unduh template khusus untuk impor data mahasiswa. Kolom 'role' tidak diperlukan karena akan diatur secara otomatis.</p>
+                        <a href="{{ route('users.downloadMahasiswaTemplate') }}" class="btn btn-light w-100">
+                            <i class="fas fa-download me-2"></i>Unduh Template Mahasiswa
+                        </a>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label for="import_file_mhs" class="form-label">Pilih File Excel</label>
+                        <input class="form-control" type="file" id="import_file_mhs" name="import_file" required accept=".xlsx, .xls">
+                    </div>
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">Mulai Import Mahasiswa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="import-dosen-modal" tabindex="-1" aria-labelledby="importDosenModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importDosenModalLabel">Import Data Dosen & Kaprodi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('users.importDosen') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-3">
+                        <p>Unduh template di bawah ini. Isi kolom <strong>role</strong> dengan 'dosen' atau 'kaprodi'.</p>
+                        <a href="{{ route('users.downloadDosenTemplate') }}" class="btn btn-light w-100">
+                            <i class="fas fa-download me-2"></i>Unduh Template Dosen
+                        </a>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label for="import_file_dosen" class="form-label">Pilih File Excel</label>
+                        <input class="form-control" type="file" id="import_file_dosen" name="import_file" required accept=".xlsx, .xls">
+                    </div>
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">Mulai Import Dosen</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -430,6 +535,52 @@ $(document).ready(function() {
                         table.ajax.reload();
                         Swal.fire('Dihapus!', response.success, 'success');
                     }
+                });
+            }
+        });
+    });
+
+    $('body').on('click', '.reset-password-btn', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        var url = "{{ route('users.resetPassword', ['user' => ':id']) }}".replace(':id', id);
+
+        Swal.fire({
+            title: 'Reset Password untuk ' + name,
+            text: 'Masukkan password baru di bawah ini:',
+            input: 'password',
+            inputPlaceholder: 'Masukkan password baru (min. 8 karakter)',
+            inputAttributes: {
+                autocapitalize: 'off',
+                autocorrect: 'off'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Reset Password',
+            cancelButtonText: 'Batal',
+            showLoaderOnConfirm: true,
+            preConfirm: (new_password) => {
+                if (!new_password || new_password.length < 8) {
+                    Swal.showValidationMessage('Password wajib diisi dan minimal 8 karakter');
+                    return false;
+                }
+                return $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        new_password: new_password
+                    },
+                })
+                .catch(error => {
+                    Swal.showValidationMessage(`Request gagal: ${error.responseJSON.error}`);
+                });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Sukses!',
+                    text: result.value.success,
+                    icon: 'success'
                 });
             }
         });

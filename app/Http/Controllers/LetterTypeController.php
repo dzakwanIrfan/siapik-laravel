@@ -25,9 +25,8 @@ class LetterTypeController extends Controller
                 $viewBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm view-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-eye"></i></a>';
                 $editBtn = '<a href="javascript:void(0)" class="btn btn-warning btn-sm edit-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-edit"></i></a>';
                 $editTemplateBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm edit-template-btn" data-id="' . $letterType->intLetterType_ID . '">Edit Template</a>';
-                $editTemplateBtn = '<a href="javascript:void(0)" class="btn btn-info btn-sm edit-template-btn" data-id="' . $letterType->intLetterType_ID . '">Edit Template</a>';
                 $deleteBtn = '<a href="javascript:void(0)" class="btn btn-danger btn-sm delete-btn" data-id="' . $letterType->intLetterType_ID . '"><i class="fas fa-trash-alt"></i></a>';
-                return '<div class="d-flex gap-2">' . $viewBtn . $editBtn . $editTemplateBtn . $editTemplateBtn . $deleteBtn . '</div>';
+                return '<div class="d-flex gap-2">' . $viewBtn . $editBtn . $editTemplateBtn . $deleteBtn . '</div>';
             })
             ->editColumn('bitActive', function ($letterType) {
                 return $letterType->bitActive ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Tidak Aktif</span>';

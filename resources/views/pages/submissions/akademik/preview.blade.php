@@ -22,6 +22,8 @@
 @endsection
 
 @section('content')
+<div id="status-container" data-status="{{ $submission->txtStatus }}"></div>
+
 <div class="row">
     <!-- Informasi Pengajuan -->
     <div class="col-12">
@@ -109,7 +111,43 @@
         </div>
     @endif
 
+    @if(in_array($submission->txtStatus, ['Disetujui Akademik', 'Sudah dicetak', 'Selesai']))
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0 text-white">Upload Surat Final (TTD)</h5>
+                </div>
+                <div class="card-body py-4">
+                    <div id="final-letter-display">
+                        @if($submission->txtStatus === 'Selesai')
+                            <div class="alert alert-success">
+                                <h6 class="alert-heading">Surat Final Sudah Terupload</h6>
+                                <a href="{{ asset('storage/' . $submission->txtFinalFile) }}" target="_blank" class="btn btn-primary mt-2">
+                                    <i class="fas fa-eye me-2"></i>Lihat Surat Final
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                    <form action="{{ route('akademik.submissions.uploadFinal', $submission->intSubmission_ID) }}" id="upload-final-form" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="final_letter_file" class="form-label fw-bold">Pilih File Surat (PDF):</label>
+                            <input class="form-control" type="file" id="final_letter_file" name="final_letter_file" accept=".pdf" required>
+                            <div class="form-text">Upload file surat yang sudah ditandatangani.</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success" id="btn-upload-final">
+                                <i class="fas fa-upload me-2"></i>Unggah File
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Form Persetujuan -->
+    @if($submission->txtStatus === 'Disetujui Kaprodi')
     <div class="row">
         <div class="col-lg-6">
             <div class="card">
@@ -117,7 +155,7 @@
                     <h5 class="mb-0">Tindakan akademik</h5>
                 </div>
                 <div class="card-body py-4">
-                    <form action="{{ route('akademik.submissions.process', $submission->intSubmission_ID) }}" method="POST">
+                    <form action="{{ route('akademik.submissions.process', $submission->intSubmission_ID) }}" id="approval-form" method="POST">
                         @csrf
                         @method('PUT')
 
@@ -145,7 +183,7 @@
                             <div class="form-text">Masukan nomor surat yang sesuai.</div>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-4 d-none" id="noteContainer">
                             <label for="txtCatatan" class="form-label fw-bold">Catatan:</label>
                             <textarea name="txtCatatan" id="txtCatatan" class="form-control" rows="4"
                                     placeholder="Wajib diisi jika menolak..."></textarea>
@@ -153,7 +191,7 @@
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="button" id="btn-process-submission" class="btn btn-primary">
                                 <i class="fas fa-paper-plane me-2"></i>Proses Pengajuan
                             </button>
                             <a href="{{ route('akademik.submissions.index', ['type' => $type, 'status' => $status]) }}" class="btn btn-outline-secondary">
@@ -196,6 +234,7 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 {{-- Modal Konfirmasi Print/Download --}}
@@ -233,11 +272,22 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
 	const form = document.querySelector('form');
 	const approveRadio = document.getElementById('approve');
 	const rejectRadio  = document.getElementById('reject');
 	const letterNumberContainer = document.getElementById('letterNumberContainer');
 	const letterNumberInput = document.getElementById('txtLetterNumber');
+    const noteContainer = document.getElementById('noteContainer');
+    const noteTextarea = document.getElementById('txtCatatan');
+
+    const parsleyForm = $(form).parsley();
 
     // Handle print/download buttons
     let currentAction = null;
@@ -308,46 +358,147 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        // Fungsi untuk menampilkan field catatan
+        function syncNoteVisibility() {
+            const show = rejectRadio.checked;
+            noteContainer.classList.toggle('d-none', !show);
+            if (show) {
+                noteTextarea.setAttribute('required', 'required');
+            } else {
+                noteTextarea.removeAttribute('required');
+            }
+        }
+
         // Trigger saat user memilih approve/reject
-        approveRadio.addEventListener('change', syncLetterNumberVisibility);
-        rejectRadio.addEventListener('change', syncLetterNumberVisibility);
+        approveRadio.addEventListener('change', function() {
+            syncLetterNumberVisibility();
+            syncNoteVisibility();
+        });
+        rejectRadio.addEventListener('change', function() {
+            syncLetterNumberVisibility();
+            syncNoteVisibility();
+        });
 
         // Set awal (kalau ada old value / pre-checked)
         syncLetterNumberVisibility();
+        syncNoteVisibility();
 
-        // --- Handler submit yang sudah ada ---
-        form.addEventListener('submit', function(e) {
+        $('#btn-process-submission').on('click', function(e) {
             e.preventDefault();
 
-            const formData = new FormData(form);
-            const action = formData.get('action');
-            const note = formData.get('txtCatatan') || '';
+            const form = $('#approval-form');
+            const actionRadio = $('input[name="action"]:checked');
+            const noteTextarea = $('#txtCatatan');
+            const letterNumberInput = $('#txtLetterNumber');
 
-            if (!action) {
-                alert('Silakan pilih tindakan (Setujui atau Tolak)');
+            if (actionRadio.length === 0) {
+                Swal.fire('Peringatan', 'Silakan pilih tindakan (Setujui atau Tolak)', 'warning');
                 return;
             }
-
-            // Validasi manual jika approve + nomor surat wajib
-            if (action === 'approve' && !letterNumberInput.value.trim()) {
-                alert('Nomor surat wajib diisi saat menyetujui pengajuan.');
+            if (actionRadio.val() === 'approve' && letterNumberInput.val().trim() === '') {
+                Swal.fire('Peringatan', 'Nomor surat wajib diisi saat menyetujui pengajuan.', 'warning');
                 letterNumberInput.focus();
                 return;
             }
-
-            if (action === 'reject' && !note.trim()) {
-                alert('Catatan wajib diisi saat menolak pengajuan.');
-                document.getElementById('txtCatatan').focus(); // Fokus ke textarea
-                return; // Hentikan proses, jangan tampilkan konfirmasi
+            if (actionRadio.val() === 'reject' && noteTextarea.val().trim() === '') {
+                Swal.fire('Peringatan', 'Catatan wajib diisi saat menolak pengajuan.', 'warning');
+                noteTextarea.focus();
+                return;
             }
 
-            const actionText = action === 'approve' ? 'menyetujui' : 'menolak';
+            const actionText = actionRadio.val() === 'approve' ? 'menyetujui' : 'menolak';
 
-            if (confirm(`Anda yakin akan ${actionText} pengajuan surat ini?`)) {
-                form.submit();
-            }
+            Swal.fire({
+                title: 'Anda Yakin?',
+                text: `Anda akan ${actionText} pengajuan surat ini. Tindakan ini tidak dapat dibatalkan.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var submitButton = $(this);
+                    var originalButtonText = submitButton.html();
+
+                    $.ajax({
+                        url: form.attr('action'),
+                        type: 'POST',
+                        data: form.serialize(),
+                        beforeSend: function() {
+                            submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Memproses...');
+                        },
+                        success: function(response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sukses!',
+                                // Ambil pesan dari respons JSON controller
+                                text: response.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                // Arahkan kembali ke halaman daftar setelah berhasil
+                                window.location.href = "{{ route('akademik.submissions.index', ['type' => $type, 'status' => $status]) }}";
+                            });
+                        },
+                        error: function(xhr) {
+                            const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan.';
+                            Swal.fire('Error!', errorMsg, 'error');
+                        },
+                        complete: function() {
+                            submitButton.prop('disabled', false).html(originalButtonText);
+                        }
+                    });
+                }
+            });
         });
     }
+
+    $('#upload-final-form').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const url = form.attr('action');
+        const submitBtn = $('#btn-upload-final');
+        const originalBtnText = submitBtn.html();
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: function() {
+                submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Mengunggah...');
+            },
+            success: function(response) {
+                Swal.fire({ icon: 'success', title: 'Berhasil!', text: response.message });
+
+                // Perbarui tampilan file yang sudah diupload tanpa reload
+                const newFileHtml = `
+                    <div class="alert alert-success">
+                        <h6 class="alert-heading">Surat Final Berhasil Diunggah</h6>
+                        <a href="${response.file_url}" target="_blank" class="btn btn-primary mt-2">
+                            <i class="fas fa-eye me-2"></i>Lihat Surat Final
+                        </a>
+                    </div>`;
+
+                $('#final-letter-display').html(newFileHtml);
+                form.find('#final_letter_file').val(''); // Kosongkan input file
+            },
+            error: function(xhr) {
+                let errorMsg = 'Terjadi kesalahan.';
+                if (xhr.status === 422) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                Swal.fire({ icon: 'error', title: 'Gagal!', text: errorMsg });
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalBtnText);
+            }
+        });
+    });
 });
 </script>
 @endpush

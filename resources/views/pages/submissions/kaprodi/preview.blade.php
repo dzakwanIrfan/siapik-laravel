@@ -115,7 +115,7 @@
                             </div>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-4 d-none" id="noteContainer">
                             <label for="txtCatatan" class="form-label fw-bold">Catatan:</label>
                             <textarea name="txtCatatan" id="txtCatatan" class="form-control" rows="4"
                                     placeholder="Wajib diisi jika menolak..."></textarea>
@@ -123,7 +123,7 @@
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="click" id="btnProsesPengajuan" class="btn btn-primary">
                                 <i class="fas fa-paper-plane me-2"></i>Proses Pengajuan
                             </button>
                             <a href="{{ route('akademik.submissions.index', ['type' => $type, 'status' => $status]) }}" class="btn btn-outline-secondary">
@@ -180,59 +180,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const approveRadio = document.getElementById('approve');
     const rejectRadio = document.getElementById('reject');
     const noteTextarea = document.getElementById('txtCatatan');
-
-    // Asumsikan Anda punya modal konfirmasi di HTML dengan ID #confirmModal
-    const confirmModalEl = document.getElementById('confirmModal');
-    const confirmModal = new bootstrap.Modal(confirmModalEl);
+    const noteContainer = document.getElementById('noteContainer');
+    const prosesBtn = document.getElementById('btnProsesPengajuan');
 
     // Fungsi untuk mengubah status 'required' pada catatan
     function handleActionChange() {
         if (rejectRadio.checked) {
+            noteContainer.classList.remove('d-none');
             noteTextarea.setAttribute('required', 'required');
         } else {
+            // Jika "Setujui" dipilih:
+            noteContainer.classList.add('d-none');
             noteTextarea.removeAttribute('required');
+            noteTextarea.value = '';
         }
-        // Validasi ulang dengan Parsley setelah mengubah aturan
-        parsleyForm.validate();
+
+        if (typeof parsleyForm !== 'undefined') {
+            parsleyForm.validate();
+        }
     }
 
-    // Pasang listener ke radio button
     approveRadio.addEventListener('change', handleActionChange);
     rejectRadio.addEventListener('change', handleActionChange);
 
-    // Logika konfirmasi submit Anda
-    form.addEventListener('submit', function(e) {
-        // Hentikan submit hanya jika Parsley valid
-        if (parsleyForm.isValid()) {
-            e.preventDefault();
+    handleActionChange();
 
-            const formData = new FormData(form);
-            const action = formData.get('action');
-            const note = formData.get('txtCatatan'); // Ambil dari txtCatatan
+    prosesBtn.addEventListener('click', function() {
+        const selectedAction = document.querySelector('input[name="action"]:checked');
 
-            if (!action) {
-                alert('Silakan pilih tindakan (Setujui atau Tolak)');
-                return;
-            }
+        if (!selectedAction) {
+            Swal.fire({
+                title: 'Tindakan Diperlukan',
+                text: 'Anda harus memilih "Setujui" atau "Tolak" sebelum melanjutkan.',
+                icon: 'warning',
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'Baik, Saya Mengerti'
+            });
+            return;
+        }
 
-            const actionText = action === 'approve' ? 'menyetujui' : 'menolak';
-            const actionClass = action === 'approve' ? 'text-success' : 'text-danger';
-
-            document.getElementById('confirmMessage').innerHTML = `
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Perhatian!</strong> Anda akan <span class="${actionClass} fw-bold">${actionText}</span> pengajuan ini.
-                </div>
-                ${note ? `<div class="mb-2"><strong>Catatan:</strong><br><em>"${note}"</em></div>` : ''}
-                <p class="mb-0 small text-muted">Tindakan ini tidak dapat dibatalkan.</p>
-            `;
-            confirmModal.show();
+        if (!parsleyForm.validate()) {
+            return;
         }
     });
 
     document.getElementById('confirmSubmit').addEventListener('click', function() {
-        confirmModal.hide();
-        form.submit(); // Lanjutkan submit form asli
+
+        prosesBtn.disabled = true;
+        prosesBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memproses...`;
+
+        form.submit();
     });
 });
 </script>

@@ -25,13 +25,16 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::middleware(['auth'])->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // API Routes for Dashboard
     Route::prefix('api/dashboard')->name('api.dashboard.')->group(function () {
         Route::get('/stats', [DashboardController::class, 'getStats'])->name('stats');
         Route::get('/chart', [DashboardController::class, 'getChartData'])->name('chart');
         Route::get('/recent-submissions', [DashboardController::class, 'getRecentSubmissions'])->name('recent-submissions');
     });
+
+    Route::get('/profile', [UserController::class, 'profile'])->name('profile');
+    Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 });
 
 Route::name('submissions.')->middleware(['web','auth'])->group(function () {
@@ -79,6 +82,9 @@ Route::group(['middleware' => ['role:kaprodi']], function() {
         Route::get('/submissions/{submission}/preview', 'previewSubmission')->name('submissions.preview');
         Route::get('/submissions/{submission}/preview/html', 'getLetterPreviewHtml')->name('submissions.preview.html');
         Route::put('/submissions/{submission}/process', 'processSubmission')->name('submissions.process');
+
+        Route::get('/submissions/{submission}/edit-modal', 'editFormModal')->name('submissions.edit.modal');
+        Route::put('/submissions/{submission}/update-revision', 'update')->name('submissions.update.revision');
     });
 });
 
@@ -102,7 +108,24 @@ Route::group(['middleware' => ['role:akademik']], function() {
 
         Route::get('/submissions/{submission}/print', 'printLetter')->name('submissions.print');
         Route::get('/submissions/{submission}/download', 'downloadLetter')->name('submissions.download');
+
+        Route::post('/submissions/{submission}/upload-final', 'uploadFinalLetter')->name('submissions.uploadFinal');
+
+        Route::get('/submissions/export-selesai', [AkademikController::class, 'exportSelesai'])->name('submissions.exportSelesai');
     });
+
+    Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])
+      ->name('users.resetPassword');
+
+    Route::post('/users/import', [UserController::class, 'import'])->name('users.import');
+    Route::get('/users/import-template', [UserController::class, 'downloadTemplate'])->name('users.downloadTemplate');
+
+    Route::post('/users/import-mahasiswa', [UserController::class, 'importMahasiswa'])->name('users.importMahasiswa');
+    Route::get('/users/import-mahasiswa-template', [UserController::class, 'downloadMahasiswaTemplate'])->name('users.downloadMahasiswaTemplate');
+
+    Route::post('/users/import-dosen', [UserController::class, 'importDosen'])->name('users.importDosen');
+    Route::get('/users/import-dosen-template', [UserController::class, 'downloadDosenTemplate'])->name('users.downloadDosenTemplate');
+
 });
 
 Route::group(['middleware' => ['role:akademik']], function () {

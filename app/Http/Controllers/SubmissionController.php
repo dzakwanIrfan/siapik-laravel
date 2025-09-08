@@ -363,6 +363,14 @@ class SubmissionController extends Controller
                     $btnGroup .= '<button type="button" class="btn btn-warning btn-action revise-btn" data-id="' . $r->intSubmission_ID . '" title="Revisi Pengajuan"><i class="fas fa-edit"></i></button>';
                 }
 
+                if ($r->txtFinalFile) {
+                    $downloadUrl = asset('storage/' . $r->txtFinalFile);
+
+                    $btnGroup .= '<a href="' . $downloadUrl . '" class="btn btn-info btn-action" title="Download Surat Final" target="_blank" download>
+                                    <i class="fas fa-download"></i>
+                                </a>';
+                }
+
                 $btnGroup .= '</div>';
                 return $btnGroup;
             })
@@ -492,7 +500,7 @@ class SubmissionController extends Controller
                     ->where('txtFieldName', $fieldName)
                     ->whereNotNull('txtFieldValue')
                     ->exists();
-                
+
                 if ($hasExistingFile) {
                     // Jika ada file existing, buat file menjadi optional
                     $rules["fields.{$fieldName}"] = str_replace('required', 'nullable', $rules["fields.{$fieldName}"]);
@@ -506,9 +514,9 @@ class SubmissionController extends Controller
         try {
             // Ambil data lama SEBELUM dihapus
             $existingValues = $submission->values()->get()->keyBy('txtFieldName');
-            
+
             $fieldInputs = $request->input('fields', []);
-            
+
             foreach ($letterType->letterFields as $field) {
                 $name   = $field->txtFieldName;
                 $label  = $field->txtFieldLabel;
@@ -639,6 +647,11 @@ class SubmissionController extends Controller
                             data-bs-toggle="modal" data-bs-target="#submissionModal"
                             data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$letterTypeName.'">
                             Disetujui Kaprodi</button>';
+            case 'Selesai':
+                return '<button class="btn btn-sm btn-success rounded-pill show-status-modal"
+                            data-bs-toggle="modal" data-bs-target="#submissionModal"
+                            data-submissions-id="'.$r->intSubmission_ID.'" data-type-name="'.$r->letter_type.'">
+                            Selesai</button>';
             case 'Ditolak Kaprodi':
                 return '<button class="btn btn-sm btn-danger rounded-pill show-status-modal"
                             data-bs-toggle="modal" data-bs-target="#submissionModal"
