@@ -12,8 +12,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\View;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
+use App\Exports\SelesaiSubmissionsExport;
 
 class AkademikController extends Controller
 {
@@ -844,6 +846,12 @@ class AkademikController extends Controller
             Log::error("Gagal upload file final: " . $e->getMessage());
             return response()->json(['error' => 'Terjadi kesalahan internal saat mengunggah file.'], 500);
         }
+    }
+
+    public function exportSelesai()
+    {
+        $fileName = 'laporan_surat_selesai_' . date('Y-m-d') . '.xlsx';
+        return Excel::download(new SelesaiSubmissionsExport, $fileName);
     }
 
 }

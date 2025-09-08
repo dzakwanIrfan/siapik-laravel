@@ -110,6 +110,8 @@ Route::group(['middleware' => ['role:akademik']], function() {
         Route::get('/submissions/{submission}/download', 'downloadLetter')->name('submissions.download');
 
         Route::post('/submissions/{submission}/upload-final', 'uploadFinalLetter')->name('submissions.uploadFinal');
+
+        Route::get('/submissions/export-selesai', [AkademikController::class, 'exportSelesai'])->name('submissions.exportSelesai');
     });
 
     Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])
@@ -123,6 +125,7 @@ Route::group(['middleware' => ['role:akademik']], function() {
 
     Route::post('/users/import-dosen', [UserController::class, 'importDosen'])->name('users.importDosen');
     Route::get('/users/import-dosen-template', [UserController::class, 'downloadDosenTemplate'])->name('users.downloadDosenTemplate');
+
 });
 
 Route::group(['middleware' => ['role:akademik']], function () {

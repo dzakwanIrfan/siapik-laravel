@@ -35,6 +35,13 @@
     <div class="card">
         <div class="card-header">
             <h4 class="card-title">Data {{ $pageTitle }}</h4>
+            @if($status === 'selesai')
+            <div class="mb-3">
+                <a href="{{ route('akademik.submissions.exportSelesai') }}" class="btn btn-success">
+                    <i class="fas fa-file-excel me-2"></i>Export ke Excel
+                </a>
+            </div>
+        @endif
         </div>
         <div class="card-body">
             <table class="table table-striped table-bordered align-middle table-dark table-hover" id="datatables">
