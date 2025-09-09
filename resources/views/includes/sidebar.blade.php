@@ -231,8 +231,8 @@
                 </ul>
             </li>
 
-            <li class="sidebar-item">
-                <a href="" class="sidebar-link">
+            <li class="sidebar-item {{ Route::is('reports.submissions.*') ? 'active' : '' }}">
+                <a href="{{ route('reports.submissions.index') }}" class="sidebar-link">
                     <i class="bi bi-file-earmark-spreadsheet-fill"></i><span>Laporan</span>
                 </a>
             </li>
