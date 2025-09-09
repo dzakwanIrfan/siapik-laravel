@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MajorController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\KaprodiController;
 use App\Http\Controllers\AkademikController;
 use App\Http\Controllers\DashboardController;
@@ -33,7 +34,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/recent-submissions', [DashboardController::class, 'getRecentSubmissions'])->name('recent-submissions');
     });
 
-    Route::get('/profile', [UserController::class, 'profile'])->name('profile');
+    Route::get('/profile', [UserColntroller::class, 'profile'])->name('profile');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 });
 
@@ -126,6 +127,9 @@ Route::group(['middleware' => ['role:akademik']], function() {
     Route::post('/users/import-dosen', [UserController::class, 'importDosen'])->name('users.importDosen');
     Route::get('/users/import-dosen-template', [UserController::class, 'downloadDosenTemplate'])->name('users.downloadDosenTemplate');
 
+    Route::get('/reports/submissions', [ReportController::class, 'index'])->name('reports.submissions.index');
+    Route::get('/reports/submissions/data', [ReportController::class, 'data'])->name('reports.submissions.data');
+    Route::get('/reports/submissions/export', [ReportController::class, 'export'])->name('reports.submissions.export');
 });
 
 Route::group(['middleware' => ['role:akademik']], function () {
