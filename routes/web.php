@@ -34,7 +34,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/recent-submissions', [DashboardController::class, 'getRecentSubmissions'])->name('recent-submissions');
     });
 
-    Route::get('/profile', [UserColntroller::class, 'profile'])->name('profile');
+    Route::get('/profile', [UserController::class, 'profile'])->name('profile');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 });
 

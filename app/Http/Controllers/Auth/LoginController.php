@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use Illuminate\Http\Request;
+use App\Models\MahasiswaProfile;
 use App\Http\Requests\LoginRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
@@ -16,30 +18,44 @@ class LoginController extends Controller
 
     public function login(LoginRequest $request)
     {
-        $login    = $request->input('login');     // bisa email atau NIM
+        $login    = $request->input('login');
         $password = $request->input('password');
 
-        // Deteksi field yang dipakai
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'txtEmail' : 'txtNim';
+        // Cek apakah input adalah email
+        $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL);
 
-        // Penting: kunci password DIKIRIM sebagai 'password' (bukan txtPassword).
-        // Guard akan memanggil getAuthPassword() di model untuk membandingkan hash.
-        $credentials = [
-            $field      => $login,
-            'password'  => $password,
-            'bitActive' => 1, // hanya akun aktif
-        ];
+        if ($isEmail) {
+            $credentials = [
+                'txtEmail'  => $login,
+                'password'  => $password,
+                'bitActive' => 1,
+            ];
 
-        if (Auth::attempt($credentials, false)) {
-            $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'))->with('success', 'Berhasil masuk.');
+            if (Auth::attempt($credentials, $request->boolean('remember'))) {
+                $request->session()->regenerate();
+                return redirect()->intended(route('dashboard'))->with('success', 'Berhasil masuk.');
+            }
+
+        } else {
+            $profile = MahasiswaProfile::where('txtNIM', $login)->first();
+
+            if ($profile) {
+                $user = $profile->user;
+
+                if ($user && $user->bitActive && Hash::check($password, $user->txtPassword)) {
+
+                    Auth::login($user, $request->boolean('remember'));
+                    $request->session()->regenerate();
+                    return redirect()->intended(route('dashboard'))->with('success', 'Berhasil masuk.');
+                }
+            }
         }
-        
+
         return back()
         ->withErrors(['login' => 'Kredensial salah atau akun tidak aktif.'])
         ->onlyInput('login');
     }
-    
+
     public function logout(Request $request)
     {
         Auth::logout();
