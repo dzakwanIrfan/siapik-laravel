@@ -201,7 +201,7 @@ class UserController extends Controller
                     // Pastikan NIM unik, kecuali untuk profil mahasiswa yang sedang diedit
                     'txtNIM' => 'required|string|unique:mahasiswa_profiles,txtNIM,' . ($user->mahasiswaProfile->intMahasiswaProfile_ID ?? 'NULL') . ',intMahasiswaProfile_ID',
                     'intMajor_ID' => 'required|exists:majors,intMajor_ID',
-                    'intConcentrate_ID' => 'nullable|exists:concentrates,intConcentrate_ID',
+                    'intConcentrate_ID' => 'required|exists:concentrates,intConcentrate_ID',
                 ]);
 
                 // Jika validasi profil gagal, batalkan transaksi
