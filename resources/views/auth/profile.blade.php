@@ -131,8 +131,8 @@
                         </div>
                          <div class="row">
                              <div class="col-md-6">
-                                <label for="intMajor_ID" class="form-label">Homebase Prodi</label>
-                                <select class="form-select mb-3" id="intMajor_ID" name="intMajor_ID">
+                                <label for="intMajor_ID_dosen" class="form-label">Homebase Prodi</label>
+                                <select class="form-select mb-3" id="intMajor_ID_dosen" name="intMajor_ID_dosen">
                                     <option value="">Homebase Prodi</option>
                                     @foreach($majors as $major)
                                         <option value="{{ $major->intMajor_ID }}" {{ $user->dosenProfile->intMajor_ID == $major->intMajor_ID ? 'selected' : '' }}>
