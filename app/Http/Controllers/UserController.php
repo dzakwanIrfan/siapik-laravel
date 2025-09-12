@@ -292,12 +292,16 @@ class UserController extends Controller
             'txtGender'     => 'required|in:L,P',
         ];
 
+        $customMessages = [];
+
         // Aturan validasi kondisional untuk Mahasiswa
         if ($user->hasRole('mahasiswa')) {
             $rules['txtNIM'] = ['required', 'string', Rule::unique('mahasiswa_profiles')->ignore($user->mahasiswaProfile->intMahasiswaProfile_ID ?? null, 'intMahasiswaProfile_ID')];
             $rules['txtYear'] = 'nullable|string|max:4';
             $rules['intMajor_ID'] = 'required|exists:majors,intMajor_ID';
-            $rules['intConcentrate_ID'] = 'nullable|exists:concentrates,intConcentrate_ID';
+            $rules['intConcentrate_ID'] = 'required|exists:concentrates,intConcentrate_ID';
+
+            $customMessages['intConcentrate_ID.required'] = 'Peminatan wajib diisi.';
         }
 
         // Aturan validasi kondisional untuk Dosen/Kaprodi
@@ -307,7 +311,7 @@ class UserController extends Controller
             $rules['intMajor_ID_dosen'] = 'required|exists:majors,intMajor_ID';
         }
 
-        $validatedData = $request->validate($rules);
+        $validatedData = $request->validate($rules, $customMessages);
 
         DB::beginTransaction();
         try {
