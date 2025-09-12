@@ -102,7 +102,7 @@
                     request()->route('type') == 'ujian' ? 'active' : ''
                 }}">
                     <a href="#" class="sidebar-link">
-                        <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
+                        <i class="bi bi-envelope-exclamation-fill" style="{{ $pendingUjianKaprodi > 0 ? 'color: red;' : '' }}"></i><span>Permintaan Ujian</span>
                     </a>
                     <ul class="submenu {{
                         request()->routeIs('kaprodi.submissions.index') &&
@@ -166,7 +166,7 @@
                     request()->route('type') == 'ujian' ? 'active' : ''
                 }}">
                     <a href="#" class="sidebar-link">
-                        <i class="bi bi-envelope-exclamation-fill"></i><span>Permintaan Ujian</span>
+                        <i class="bi bi-envelope-exclamation-fill" style="{{ $pendingUjianAkademik > 0 ? 'color: red;' : '' }}"></i><span>Permintaan Ujian</span>
                     </a>
                     <ul class="submenu {{
                         request()->routeIs('akademik.submissions.index') &&
