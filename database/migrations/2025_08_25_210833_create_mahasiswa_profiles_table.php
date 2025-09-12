@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('txtNIM')->unique();
             $table->string('txtYear')->nullable();
             $table->foreignId('intMajor_ID')->constrained('majors', 'intMajor_ID')->onDelete('cascade');
-            $table->foreignId('intConcentrate_ID')->nullable()->constrained('concentrates', 'intConcentrate_ID')->onDelete('cascade');
+            $table->foreignId('intConcentrate_ID')->constrained('concentrates', 'intConcentrate_ID')->onDelete('cascade');
             $table->string('txtInsertedBy')->nullable();
             $table->datetime('dtmInserted')->nullable();
             $table->string('txtUpdatedBy')->nullable();
