@@ -126,7 +126,7 @@
                             <button type="click" id="btnProsesPengajuan" class="btn btn-primary">
                                 <i class="fas fa-paper-plane me-2"></i>Proses Pengajuan
                             </button>
-                            <a href="{{ route('akademik.submissions.index', ['type' => $type, 'status' => $status]) }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('kaprodi.submissions.index', ['type' => $type, 'status' => 'proses']) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>Kembali
                             </a>
                         </div>
