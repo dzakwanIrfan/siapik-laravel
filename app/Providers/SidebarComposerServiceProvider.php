@@ -32,12 +32,18 @@ class SidebarComposerServiceProvider extends ServiceProvider
 
             if ($isAkademik) {
                 $pendingSuratAkademik = Submission::join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
+                                                    ->join('users', 'submissions.intUser_ID', '=', 'users.intUser_ID')
+                                                    ->join('mahasiswa_profiles', 'users.intUser_ID', '=', 'mahasiswa_profiles.intUser_ID')
+                                                    ->where('mahasiswa_profiles.intMajor_ID', $user->dosenProfile->intMajor_ID)
                                                     ->where('submissions.bitActive', 1)
                                                     ->where('letter_types.bitUjian', 0)
                                                     ->whereIn('submissions.txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Sudah dicetak'])
                                                     ->count();
 
                 $pendingUjianAkademik = Submission::join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
+                                                    ->join('users', 'submissions.intUser_ID', '=', 'users.intUser_ID')
+                                                    ->join('mahasiswa_profiles', 'users.intUser_ID', '=', 'mahasiswa_profiles.intUser_ID')
+                                                    ->where('mahasiswa_profiles.intMajor_ID', $user->dosenProfile->intMajor_ID)
                                                     ->where('submissions.bitActive', 1)
                                                     ->where('letter_types.bitUjian', 1)
                                                     ->whereIn('submissions.txtStatus', ['Disetujui Kaprodi', 'Disetujui Akademik', 'Sudah dicetak'])
@@ -46,12 +52,18 @@ class SidebarComposerServiceProvider extends ServiceProvider
 
             if ($isKaprodi) {
                 $pendingSuratKaprodi = Submission::join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
+                                                    ->join('users', 'submissions.intUser_ID', '=', 'users.intUser_ID')
+                                                    ->join('mahasiswa_profiles', 'users.intUser_ID', '=', 'mahasiswa_profiles.intUser_ID')
+                                                    ->where('mahasiswa_profiles.intMajor_ID', $user->dosenProfile->intMajor_ID)
                                                     ->where('submissions.bitActive', 1)
                                                     ->where('letter_types.bitUjian', 0)
                                                     ->whereIn('submissions.txtStatus', ['Sedang ditinjau Kaprodi'])
                                                     ->count();
 
                 $pendingUjianKaprodi = Submission::join('letter_types', 'submissions.intLetterType_ID', '=', 'letter_types.intLetterType_ID')
+                                                    ->join('users', 'submissions.intUser_ID', '=', 'users.intUser_ID')
+                                                    ->join('mahasiswa_profiles', 'users.intUser_ID', '=', 'mahasiswa_profiles.intUser_ID')
+                                                    ->where('mahasiswa_profiles.intMajor_ID', $user->dosenProfile->intMajor_ID)
                                                     ->where('submissions.bitActive', 1)
                                                     ->where('letter_types.bitUjian', 1)
                                                     ->whereIn('submissions.txtStatus', ['Sedang ditinjau Kaprodi'])
